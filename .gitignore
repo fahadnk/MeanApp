@@ -1,0 +1,38 @@
+# ---------------------------
+# Node.js dependencies
+# ---------------------------
+node_modules/         # Ignore node_modules in root
+**/node_modules/      # Ignore node_modules in any subfolder (e.g., frontend/, backend/)
+
+# ---------------------------
+# Build artifacts
+# ---------------------------
+dist/                 # Ignore dist folder (commonly used for compiled code)
+build/                # Ignore build folder (alternative build output)
+
+# ---------------------------
+# Environment files
+# ---------------------------
+.env                  # Ignore root .env file (contains secrets)
+*.env                 # Ignore any .env file (like .env.local, .env.dev, etc.)
+.env.*.local          # Ignore specific env override files (used in frontend frameworks like Next.js/Angular)
+
+# ---------------------------
+# Logs
+# ---------------------------
+npm-debug.log*        # npm debug logs
+yarn-debug.log*       # yarn debug logs
+pnpm-debug.log*       # pnpm debug logs
+
+# ---------------------------
+# OS / Editor junk files
+# ---------------------------
+.DS_Store             # macOS Finder metadata
+.vscode/              # VS Code workspace settings
+.idea/                # JetBrains IDE (WebStorm, IntelliJ, etc.) project files
+
+# ---------------------------
+# Docker-related
+# ---------------------------
+mongo-data/           # Local MongoDB Docker volume (persistent database files)
+docker-compose.override.yml # Override file for docker-compose (local-only config)

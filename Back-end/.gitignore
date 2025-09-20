@@ -1,0 +1,11 @@
+# Ignore node_modules (third-party dependencies installed by npm/yarn)
+node_modules/
+
+# Ignore environment variables file (contains sensitive data like DB credentials, API keys, etc.)
+.env
+
+# Ignore npm debug log (generated when npm fails)
+npm-debug.log
+
+# Ignore macOS system files (created automatically by Finder)
+.DS_Store

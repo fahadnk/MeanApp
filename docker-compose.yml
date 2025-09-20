@@ -1,0 +1,56 @@
+version: "3.9"
+
+services:
+  # -------------------------
+  # Backend (Node.js API)
+  # -------------------------
+  backend:
+    build:
+      context: ./backend       # look inside backend/
+      dockerfile: Dockerfile
+    container_name: realworld-backend
+    ports:
+      - "5000:5000"
+    env_file:
+      - ./backend/.env         # load env vars
+    depends_on:
+      - mongo
+    volumes:
+      - ./backend:/usr/src/app
+      - /usr/src/app/node_modules
+
+  # -------------------------
+  # Frontend (Angular/React/Vue)
+  # -------------------------
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: realworld-frontend
+    ports:
+      - "4200:4200"            # Angular default (React/Vue usually 3000)
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./frontend:/usr/src/app
+      - /usr/src/app/node_modules
+    depends_on:
+      - backend
+
+  # -------------------------
+  # MongoDB Database
+  # -------------------------
+  mongo:
+    image: mongo:6
+    container_name: realworld-mongo
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+# -------------------------
+# Named Volumes
+# -------------------------
+volumes:
+  mongo-data:

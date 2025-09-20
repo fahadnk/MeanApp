@@ -1,0 +1,14 @@
+# Ignore node_modules (dependencies will be installed inside the container)
+node_modules
+
+# Ignore npm debug logs
+npm-debug.log
+
+# Ignore environment files (never bake secrets into Docker images)
+.env
+
+# Ignore the .dockerignore file itself
+.dockerignore
+
+# Ignore the .git folder (no need to copy Git history into the container)
+.git
