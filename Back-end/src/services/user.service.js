@@ -1,8 +1,8 @@
 // Import the UserRepository for database operations
-import userRepository from "../repositories/user.repository";
+import userRepository from "../repositories/user.repository.js";
 
 // Import the DTO to ensure safe and consistent API responses
-import { userDTO } from"./dto";
+import { userDTO } from"./dto.js";
 
 // Service Layer for Users
 // Encapsulates business logic and orchestrates between repositories and controllers
