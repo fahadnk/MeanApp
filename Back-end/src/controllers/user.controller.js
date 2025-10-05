@@ -1,26 +1,43 @@
-// Import the user service layer which contains business logic
-const userService = require("../services/user.service");
+// backend/src/controllers/user.controller.js
 
-// Import standardized success/error response helpers
-const { success, error } = require("../utils/response");
+// ---------------------------------------------------
+// Import Dependencies
+// ---------------------------------------------------
 
+// Import the service layer (business logic for users).
+// This service interacts with the database and applies business rules.
+import userService from "../services/user.service.js";
+
+// Import response helper functions that standardize API responses.
+// "success" → formats a successful response.
+// "error"   → formats an error response.
+import { success, error } from "../utils/response.js";
+
+
+// ---------------------------------------------------
+// UserController Class
+// ---------------------------------------------------
+// This controller handles incoming HTTP requests related to users,
+// such as registration, login, and fetching profiles.
+// It delegates the actual logic to the "userService" layer.
 class UserController {
   // -------------------------
   // Register a new user
   // -------------------------
   async register(req, res) {
     try {
-      // Call the service to register the user (business logic handles duplicate emails etc.)
+      // Call the service layer to register a new user.
+      // The service will handle validation, duplicate email checks, and DB insert.
       const user = await userService.register(req.body);
 
-      // Send back the created user with 201 Created status
+      // If successful → return HTTP 201 (Created) with the user data.
       return success(res, user, "User registered successfully", 201);
     } catch (err) {
-      // If the error is about duplicate email → use 409 Conflict
-      // Otherwise, fall back to generic 400 Bad Request
+      // If email already exists, send HTTP 409 (Conflict).
+      // Otherwise, default to HTTP 400 (Bad Request).
       const status = err.message.includes("Email already in use") ? 409 : 400;
 
-      // Send standardized error response
+      // Standardized error response with the message from the service.
       return error(res, err.message, status);
     }
   }
@@ -30,21 +47,24 @@ class UserController {
   // -------------------------
   async login(req, res) {
     try {
-      // Extract credentials from request body
+      // Extract email & password from the request body.
       const { email, password } = req.body;
 
-      // Basic validation: both fields must be provided
+      // Validation: Ensure both fields are provided.
       if (!email || !password) {
         return error(res, "Email & password are required", 400);
       }
 
-      // Call the service to validate credentials and return user info (with token later)
+      // Delegate login logic to the service layer:
+      // - Verifies user exists
+      // - Checks password
+      // - (In future) Generates JWT token
       const user = await userService.login(email, password);
 
-      // Send successful login response
+      // If login is successful → return user info (with token later).
       return success(res, user, "Login successful");
     } catch (err) {
-      // Wrong password or user not found → 401 Unauthorized
+      // If credentials are invalid → send HTTP 401 (Unauthorized).
       return error(res, err.message, 401);
     }
   }
@@ -54,20 +74,27 @@ class UserController {
   // -------------------------
   async profile(req, res) {
     try {
-      // `req.user` is expected to be set by an authentication middleware (JWT decoding etc.)
+      // "req.user" is usually populated by the authentication middleware
+      // (e.g., JWT middleware that decodes the token and attaches user data).
       const user = await userService.getUserById(req.user.id);
 
-      // If no user found in DB → send 404 Not Found
+      // If user not found in DB → return 404 (Not Found).
       if (!user) return error(res, "User not found", 404);
 
-      // Send user profile
+      // If found → return profile details.
       return success(res, user, "Profile fetched successfully");
     } catch (err) {
-      // Generic failure → send 400 Bad Request
+      // Catch-all for errors → return HTTP 400 (Bad Request).
       return error(res, err.message, 400);
     }
   }
 }
 
-// Export a singleton instance of UserController for use in routes
-module.exports = new UserController();
+
+// ---------------------------------------------------
+// Export Controller
+// ---------------------------------------------------
+// Export a singleton instance of UserController
+// so it can be directly imported into routes without
+// needing to instantiate it every time.
+export default new UserController();

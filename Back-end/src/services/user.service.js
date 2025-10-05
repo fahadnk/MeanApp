@@ -1,8 +1,8 @@
 // Import the UserRepository for database operations
-const userRepository = require("../repositories/user.repository");
+import userRepository from "../repositories/user.repository";
 
 // Import the DTO to ensure safe and consistent API responses
-const { userDTO } = require("./dto");
+import { userDTO } from"./dto";
 
 // Service Layer for Users
 // Encapsulates business logic and orchestrates between repositories and controllers
@@ -49,4 +49,5 @@ class UserService {
 
 // Export a single instance of UserService (Singleton pattern)
 // Ensures consistent usage across controllers
-module.exports = new UserService();
+const userService = new UserService();
+export default userService;

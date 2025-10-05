@@ -1,9 +1,18 @@
 // backend/src/middleware/AuthMiddleware.js
 
-// Import the jsonwebtoken library to verify and decode JWT tokens
-const jwt = require("jsonwebtoken");
+// ---------------------------------------------------
+// Import Dependencies
+// ---------------------------------------------------
 
-// Authentication middleware to protect routes
+// Import the jsonwebtoken library to verify and decode JWT tokens
+import jwt from "jsonwebtoken";
+
+
+// ---------------------------------------------------
+// Authentication Middleware
+// ---------------------------------------------------
+// This middleware protects routes by ensuring that
+// only users with valid JWT tokens can access them.
 function authMiddleware(req, res, next) {
   // Extract the "Authorization" header from the request
   // Expected format: "Bearer <token>"
@@ -39,5 +48,9 @@ function authMiddleware(req, res, next) {
   }
 }
 
+
+// ---------------------------------------------------
+// Export Middleware
+// ---------------------------------------------------
 // Export the middleware so it can be used in routes
-module.exports = authMiddleware;
+export default authMiddleware;

@@ -1,14 +1,25 @@
 // backend/src/routes/users.routes.js
 
-const express = require("express");
-const router = express.Router();
+// -------------------------
+// Import Dependencies
+// -------------------------
+
+import express from "express";
 
 // Controllers
-const userController = require("../controllers/user.controller");
+import userController from "../controllers/user.controller.js";
 
 // Middleware
-const authMiddleware = require("../middleware/AuthMiddleware");
-const roleMiddleware = require("../middleware/RoleMiddleware");
+import authMiddleware from "../middleware/AuthMiddleware.js";
+import roleMiddleware from "../middleware/RoleMiddleware.js";
+
+
+// -------------------------
+// Create Router Instance
+// -------------------------
+
+const router = express.Router();
+
 
 // -------------------------
 // Auth Routes
@@ -23,6 +34,7 @@ router.post("/register", userController.register);
 // @desc    Login user and return JWT
 // @access  Public
 router.post("/login", userController.login);
+
 
 // -------------------------
 // User Profile Routes
@@ -39,4 +51,9 @@ router.get("/profile", authMiddleware, userController.profile);
 // @access  Private (Admin)
 router.get("/", authMiddleware, roleMiddleware("admin"), userController.getAllUsers);
 
-module.exports = router;
+
+// -------------------------
+// Export Router
+// -------------------------
+
+export default router;

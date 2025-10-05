@@ -1,79 +1,79 @@
 // -------------------------
 // Import Dependencies
 // -------------------------
-
 import express from "express";            // Core framework to build APIs
 import cors from "cors";                  // Middleware for Cross-Origin Resource Sharing
 import helmet from "helmet";              // Middleware to set secure HTTP headers
 import mongoSanitize from "express-mongo-sanitize"; // Prevent MongoDB operator injection
 import xss from "xss-clean";              // Prevent Cross-Site Scripting (XSS) attacks
+import morgan from "morgan";              // HTTP request logger middleware
+import { v4 as uuidv4 } from "uuid";      // Generate unique correlation IDs
 
 // Import modular route files
-import healthRoutes from "./routes/health.routes.js"; // Health check endpoints
-import authRoutes from "./routes/auth.routes.js";     // Auth endpoints (register, login, profile)
-import taskRoutes from "./routes/task.routes.js";     // Task CRUD endpoints
+import healthRoutes from "./routes/health.routes.js"; 
+import authRoutes from "./routes/auth.routes.js";     
+import taskRoutes from "./routes/task.routes.js";     
 
-// Import Global Error Handler middleware
+// Import Global Error Handler & Logger
 import errorMiddleware from "./middleware/ErrorMiddleware.js";
+import logger from "./config/logger.js";   // Winston logger instance
 
 
 // -------------------------
 // Create Express App
 // -------------------------
-
-// Initialize the Express application instance
 const app = express();
+
+
+// -------------------------
+// Correlation ID Middleware
+// -------------------------
+// Adds a unique request ID to each request for tracing in logs
+app.use((req, res, next) => {
+  req.id = uuidv4(); // attach correlation ID
+  res.setHeader("X-Request-Id", req.id); // expose to clients
+  next();
+});
 
 
 // -------------------------
 // Global Middlewares
 // -------------------------
+app.use(express.json());      // Parse JSON bodies
+app.use(cors());              // Enable CORS
+app.use(helmet());            // Secure HTTP headers
+app.use(mongoSanitize());     // Prevent MongoDB injection
+app.use(xss());               // Prevent XSS attacks
 
-// Parse incoming JSON requests so `req.body` is automatically available as an object
-app.use(express.json());
 
-// Allow requests from other domains (frontend and backend can be on different hosts/ports)
-app.use(cors());
-
-// Add standard security headers to protect against well-known web vulnerabilities
-app.use(helmet());
-
-// Prevent malicious payloads that try to inject MongoDB operators like `$gt`, `$or`, etc.
-app.use(mongoSanitize());
-
-// Sanitize user input to prevent malicious HTML/JS from being executed (XSS attacks)
-app.use(xss());
+// -------------------------
+// Logging Middleware
+// -------------------------
+// Pipe morgan logs into winston instead of console
+app.use(
+  morgan(":method :url :status :response-time ms - :res[content-length]", {
+    stream: {
+      write: (message) => logger.http(`[${req?.id}] ${message.trim()}`), // log with correlation ID
+    },
+  })
+);
 
 
 // -------------------------
 // Register Routes
 // -------------------------
-
-// Health check endpoint → used to confirm server is running
-// Example: GET http://localhost:5000/api/health
-app.use("/api/health", healthRoutes);
-
-// Authentication endpoints → register, login, and profile routes
-app.use("/api/auth", authRoutes);
-
-// Task endpoints → CRUD operations for tasks (protected by auth middleware later)
-app.use("/api/tasks", taskRoutes);
+app.use("/api/health", healthRoutes); // Health check
+app.use("/api/auth", authRoutes);     // Auth routes
+app.use("/api/tasks", taskRoutes);    // Task routes
 
 
 // -------------------------
 // Global Error Handling
 // -------------------------
-
-// Centralized error handling middleware
-// Any error thrown inside routes/controllers will be caught here
-// Ensures consistent error response structure
 app.use(errorMiddleware);
 
 
 // -------------------------
 // Export Application
 // -------------------------
-
-// Export the Express app instance so it can be imported in server.js
-// server.js is responsible for actually starting the server
 export default app;

@@ -1,7 +1,13 @@
-// Import mongoose to define the schema and interact with MongoDB
-const mongoose = require("mongoose");
+// backend/src/models/Task.js
 
+// -------------------------
+// Import mongoose to define the schema and interact with MongoDB
+// -------------------------
+import mongoose from "mongoose";
+
+// -------------------------
 // Define the Task schema (structure of documents inside the 'tasks' collection)
+// -------------------------
 const taskSchema = new mongoose.Schema(
   {
     // 'title' field: required short text for the task name
@@ -44,9 +50,13 @@ const taskSchema = new mongoose.Schema(
   }
 );
 
+// -------------------------
 // Create a Mongoose model from the schema
 // 'Task' will map to the 'tasks' collection in MongoDB
+// -------------------------
 const Task = mongoose.model("Task", taskSchema);
 
+// -------------------------
 // Export the model to use it in controllers, services, or repositories
-module.exports = Task;
+// -------------------------
+export default Task;

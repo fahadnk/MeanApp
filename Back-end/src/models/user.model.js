@@ -1,8 +1,14 @@
-// Import the mongoose library to interact with MongoDB
-const mongoose = require("mongoose");
+// backend/src/models/User.js
 
+// -------------------------
+// Import the mongoose library to interact with MongoDB
+// -------------------------
+import mongoose from "mongoose";
+
+// -------------------------
 // Define a new schema for the User collection
 // A schema in Mongoose defines the structure of the documents in a collection
+// -------------------------
 const userSchema = new mongoose.Schema(
   {
     // 'name' field: required string, trims whitespace from both ends
@@ -24,10 +30,13 @@ const userSchema = new mongoose.Schema(
   }
 );
 
+// -------------------------
 // Create the User model based on the schema
 // The first argument 'User' will become the collection name 'users' in MongoDB
+// -------------------------
 const User = mongoose.model("User", userSchema);
 
+// -------------------------
 // Export the model so it can be used in other files (e.g., controllers, services)
-module.exports = User;
-
+// -------------------------
+export default User;

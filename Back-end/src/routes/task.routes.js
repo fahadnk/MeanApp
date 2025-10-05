@@ -1,14 +1,25 @@
 // backend/src/routes/tasks.routes.js
 
-const express = require("express");
-const router = express.Router();
+// -------------------------
+// Import Dependencies
+// -------------------------
+
+import express from "express";
 
 // Controllers
-const taskController = require("../controllers/task.controller");
+import taskController from "../controllers/task.controller.js";
 
 // Middleware
-const authMiddleware = require("../middleware/AuthMiddleware");
-const roleMiddleware = require("../middleware/RoleMiddleware");
+import authMiddleware from "../middleware/AuthMiddleware.js";
+import roleMiddleware from "../middleware/RoleMiddleware.js";
+
+
+// -------------------------
+// Create Router Instance
+// -------------------------
+
+const router = express.Router();
+
 
 // -------------------------
 // Task Routes
@@ -47,4 +58,9 @@ router.delete("/:id", authMiddleware, taskController.delete);
 // @access  Private (admin)
 router.delete("/", authMiddleware, roleMiddleware("admin"), taskController.deleteAll);
 
-module.exports = router;
+
+// -------------------------
+// Export Router
+// -------------------------
+
+export default router;
