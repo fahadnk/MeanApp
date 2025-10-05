@@ -1,33 +1,42 @@
-// Import Express to create a router instance
+// backend/src/routes/users.routes.js
+
 const express = require("express");
 const router = express.Router();
 
-// Import the UserController (handles the business logic for routes)
+// Controllers
 const userController = require("../controllers/user.controller");
 
-// -------------------------
-// Auth Endpoints
-// -------------------------
-
-// Register a new user
-// POST /api/users/register
-// Calls UserController.register()
-router.post("/register", (req, res) => userController.register(req, res));
-
-// Login an existing user
-// POST /api/users/login
-// Calls UserController.login()
-router.post("/login", (req, res) => userController.login(req, res));
+// Middleware
+const authMiddleware = require("../middleware/AuthMiddleware");
+const roleMiddleware = require("../middleware/RoleMiddleware");
 
 // -------------------------
-// Profile Endpoint
+// Auth Routes
 // -------------------------
 
-// Get current user profile
-// GET /api/users/profile
-// ⚠️ Requires authentication middleware (e.g., JWT) before this in future
-// For now, directly calls UserController.profile()
-router.get("/profile", (req, res) => userController.profile(req, res));
+// @route   POST /api/users/register
+// @desc    Register a new user
+// @access  Public
+router.post("/register", userController.register);
 
-// Export router so it can be mounted in main app.js/server.js
+// @route   POST /api/users/login
+// @desc    Login user and return JWT
+// @access  Public
+router.post("/login", userController.login);
+
+// -------------------------
+// User Profile Routes
+// -------------------------
+
+// @route   GET /api/users/profile
+// @desc    Get current user profile
+// @access  Private (requires JWT)
+router.get("/profile", authMiddleware, userController.profile);
+
+// Example: Admin-only route (future use)
+// @route   GET /api/users
+// @desc    Get all users (only admins can access)
+// @access  Private (Admin)
+router.get("/", authMiddleware, roleMiddleware("admin"), userController.getAllUsers);
+
 module.exports = router;

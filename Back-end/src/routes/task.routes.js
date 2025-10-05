@@ -1,42 +1,50 @@
-// Import Express and create a new router instance
+// backend/src/routes/tasks.routes.js
+
 const express = require("express");
 const router = express.Router();
 
-// Import the TaskController (handles request/response logic)
+// Controllers
 const taskController = require("../controllers/task.controller");
 
+// Middleware
+const authMiddleware = require("../middleware/AuthMiddleware");
+const roleMiddleware = require("../middleware/RoleMiddleware");
+
 // -------------------------
-// Task CRUD Endpoints
+// Task Routes
 // -------------------------
 
-// Create a new task
-// POST /api/tasks
-router.post("/", (req, res) => taskController.create(req, res));
+// @route   POST /api/tasks
+// @desc    Create a new task
+// @access  Private (any logged-in user)
+router.post("/", authMiddleware, taskController.create);
 
-// Get all tasks
-// GET /api/tasks
-// - Admins see all tasks
-// - Regular users see only their assigned tasks
-router.get("/", (req, res) => taskController.getAll(req, res));
+// @route   GET /api/tasks
+// @desc    Get all tasks
+// @access  Private
+//          - Admins: see all tasks
+//          - Users: see only their own assigned tasks
+router.get("/", authMiddleware, taskController.getAll);
 
-// Get a single task by ID
-// GET /api/tasks/:id
-// Authorization: 
-//   - Admin can view any task
-//   - Regular user can only view their own assigned tasks
-router.get("/:id", (req, res) => taskController.getById(req, res));
+// @route   GET /api/tasks/:id
+// @desc    Get a single task by ID
+// @access  Private (admin or task assignee/creator)
+router.get("/:id", authMiddleware, taskController.getById);
 
-// Update a task by ID
-// PUT /api/tasks/:id
-// Authorization: 
-//   - Only task creator or admin can update
-router.put("/:id", (req, res) => taskController.update(req, res));
+// @route   PUT /api/tasks/:id
+// @desc    Update a task by ID
+// @access  Private (only task creator or admin)
+router.put("/:id", authMiddleware, taskController.update);
 
-// Delete a task by ID
-// DELETE /api/tasks/:id
-// Authorization: 
-//   - Only task creator or admin can delete
-router.delete("/:id", (req, res) => taskController.delete(req, res));
+// @route   DELETE /api/tasks/:id
+// @desc    Delete a task by ID
+// @access  Private (only task creator or admin)
+router.delete("/:id", authMiddleware, taskController.delete);
 
-// Export the router to be used in app.js/server.js
+// Example: Admin-only task management route
+// @route   DELETE /api/tasks
+// @desc    Delete ALL tasks (⚠️ Admin only)
+// @access  Private (admin)
+router.delete("/", authMiddleware, roleMiddleware("admin"), taskController.deleteAll);
+
 module.exports = router;

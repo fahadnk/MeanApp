@@ -2,33 +2,26 @@
 // Import Dependencies
 // -------------------------
 
-// Import the Express framework to build our backend application.
-// Express makes it easy to handle HTTP requests and responses.
-import express from "express";
+import express from "express";            // Core framework to build APIs
+import cors from "cors";                  // Middleware for Cross-Origin Resource Sharing
+import helmet from "helmet";              // Middleware to set secure HTTP headers
+import mongoSanitize from "express-mongo-sanitize"; // Prevent MongoDB operator injection
+import xss from "xss-clean";              // Prevent Cross-Site Scripting (XSS) attacks
 
-// Import the CORS (Cross-Origin Resource Sharing) middleware.
-// This allows requests from a different domain (like frontend running on http://localhost:3000)
-// to access this backend server (maybe running on http://localhost:5000).
-import cors from "cors";
+// Import modular route files
+import healthRoutes from "./routes/health.routes.js"; // Health check endpoints
+import authRoutes from "./routes/auth.routes.js";     // Auth endpoints (register, login, profile)
+import taskRoutes from "./routes/task.routes.js";     // Task CRUD endpoints
 
-// Import the Helmet middleware.
-// Helmet secures Express apps by setting various HTTP response headers (like disabling "X-Powered-By"),
-// helping to protect against well-known web vulnerabilities (XSS, Clickjacking, etc.).
-import helmet from "helmet";
-
-// Import modular route files. Each of these files contains routes related to a specific feature/domain.
-// This keeps the code organized and maintainable instead of putting all routes in one file.
-import healthRoutes from "./routes/health.routes.js"; // Handles health-check routes
-import authRoutes from "./routes/auth.routes.js";     // Handles authentication routes (register, login, profile)
-import taskRoutes from "./routes/task.routes.js";     // Handles task CRUD operations (create, read, update, delete)
+// Import Global Error Handler middleware
+import errorMiddleware from "./middleware/ErrorMiddleware.js";
 
 
 // -------------------------
 // Create Express App
 // -------------------------
 
-// Create an instance of an Express application.
-// This instance (app) will be used to define middlewares and routes.
+// Initialize the Express application instance
 const app = express();
 
 
@@ -36,44 +29,51 @@ const app = express();
 // Global Middlewares
 // -------------------------
 
-// Middleware to parse incoming requests with JSON payloads.
-// Example: if client sends { "name": "John" }, we can access it using req.body.name.
+// Parse incoming JSON requests so `req.body` is automatically available as an object
 app.use(express.json());
 
-// Enable CORS globally for all routes.
-// Without this, browsers will block API requests coming from different origins (domains/ports).
+// Allow requests from other domains (frontend and backend can be on different hosts/ports)
 app.use(cors());
 
-// Use Helmet middleware to automatically add security headers to responses.
-// Example: removes "X-Powered-By" header, adds Content-Security-Policy, etc.
+// Add standard security headers to protect against well-known web vulnerabilities
 app.use(helmet());
+
+// Prevent malicious payloads that try to inject MongoDB operators like `$gt`, `$or`, etc.
+app.use(mongoSanitize());
+
+// Sanitize user input to prevent malicious HTML/JS from being executed (XSS attacks)
+app.use(xss());
 
 
 // -------------------------
 // Register Routes
 // -------------------------
 
-// Register the "health" routes under the "/api/health" prefix.
-// Example: GET http://localhost:5000/api/health → returns a simple status message like { status: "OK" }.
+// Health check endpoint → used to confirm server is running
+// Example: GET http://localhost:5000/api/health
 app.use("/api/health", healthRoutes);
 
-// Register the "auth" routes under the "/api/auth" prefix.
-// Example: POST http://localhost:5000/api/auth/register → register new user.
-//          POST http://localhost:5000/api/auth/login → user login.
+// Authentication endpoints → register, login, and profile routes
 app.use("/api/auth", authRoutes);
 
-// Register the "task" routes under the "/api/tasks" prefix.
-// Example: GET http://localhost:5000/api/tasks → get all tasks for a user.
-//          POST http://localhost:5000/api/tasks → create new task.
-//          PUT http://localhost:5000/api/tasks/:id → update task by ID.
-//          DELETE http://localhost:5000/api/tasks/:id → delete task by ID.
+// Task endpoints → CRUD operations for tasks (protected by auth middleware later)
 app.use("/api/tasks", taskRoutes);
+
+
+// -------------------------
+// Global Error Handling
+// -------------------------
+
+// Centralized error handling middleware
+// Any error thrown inside routes/controllers will be caught here
+// Ensures consistent error response structure
+app.use(errorMiddleware);
 
 
 // -------------------------
 // Export Application
 // -------------------------
 
-// Export the Express application instance so it can be imported in another file (like server.js).
-// In server.js, we will import this app and start listening on a specific port.
+// Export the Express app instance so it can be imported in server.js
+// server.js is responsible for actually starting the server
 export default app;
