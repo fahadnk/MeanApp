@@ -1,25 +1,63 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environment/environment';
-import { tap } from 'rxjs/operators';
+import { tap, map } from 'rxjs/operators';
+import { Observable } from 'rxjs';
+import { jwtDecode } from 'jwt-decode';
+
+interface LoginResponse {
+  token: string;
+  // optionally other payload
+}
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private api = `${environment.apiUrl}/auth`;
+  private base = `${environment.apiUrl}/auth`; // e.g. http://localhost:5000/api/auth
+  private tokenKey = 'token';
 
   constructor(private http: HttpClient) {}
 
-  login(data: any) {
-    return this.http.post(`${this.api}/login`, data).pipe(
-      tap((res: any) => localStorage.setItem('token', res.token))
+  login(payload: { email: string; password: string }) {
+    return this.http.post<LoginResponse>(`${this.base}/login`, payload).pipe(
+      tap(res => {
+        if (res && res.token) {
+          localStorage.setItem(this.tokenKey, res.token);
+        }
+      })
     );
   }
 
-  register(data: any) {
-    return this.http.post(`${this.api}/register`, data);
+  register(payload: { name: string; email: string; password: string }) {
+    return this.http.post(`${this.base}/register`, payload);
   }
 
   logout() {
-    localStorage.removeItem('token');
+    localStorage.removeItem(this.tokenKey);
+  }
+
+  getToken(): string | null {
+    return localStorage.getItem(this.tokenKey);
+  }
+
+  isAuthenticated(): boolean {
+    const token = this.getToken();
+    if (!token) return false;
+    try {
+      const decoded: any = jwtDecode(token);
+      return decoded.exp * 1000 > Date.now();
+    } catch {
+      return false;
+    }
+  }
+
+  // convenience to get current user info from token payload (id, role, etc.)
+  getCurrentUser(): any | null {
+    const token = this.getToken();
+    if (!token) return null;
+    try {
+      return jwtDecode(token);
+    } catch {
+      return null;
+    }
   }
 }
