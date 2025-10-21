@@ -1,0 +1,30 @@
+<div class="auth-container">
+  <mat-card class="auth-card">
+    <h2 class="title">Welcome Back</h2>
+
+    <form [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Email</mat-label>
+        <input matInput formControlName="email" type="email" placeholder="you@example.com" />
+        <mat-error *ngIf="loginForm.get('email')?.invalid">Valid email required</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Password</mat-label>
+        <input matInput [type]="hide ? 'password' : 'text'" formControlName="password" />
+        <button mat-icon-button matSuffix type="button" (click)="hide = !hide">
+          <mat-icon>{{ hide ? 'visibility_off' : 'visibility' }}</mat-icon>
+        </button>
+      </mat-form-field>
+
+      <button mat-raised-button color="primary" class="full-width" [disabled]="loginForm.invalid">
+        Login
+      </button>
+
+      <p class="text-center mt-2">
+        Don't have an account?
+        <a routerLink="/register">Register here</a>
+      </p>
+    </form>
+  </mat-card>
+</div>

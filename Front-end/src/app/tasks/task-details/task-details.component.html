@@ -1,0 +1,10 @@
+<mat-card class="task-details-card">
+  <mat-card-title>{{ task.title }}</mat-card-title>
+  <mat-card-content>
+    <p><strong>Description:</strong> {{ task.description }}</p>
+    <p><strong>Status:</strong> {{ task.status }}</p>
+    <p><strong>Priority:</strong> {{ task.priority }}</p>
+    <p><strong>Assigned To:</strong> {{ task.assignedTo }}</p>
+    <p><strong>Due Date:</strong> {{ task.dueDate | date: 'mediumDate' }}</p>
+  </mat-card-content>
+</mat-card>

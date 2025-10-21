@@ -1,123 +1,171 @@
-// backend/src/services/task.service.js
+// backend/src/controllers/task.controller.js
 
-// ---------------------------------------------------
+// -------------------------
 // Import Dependencies
-// ---------------------------------------------------
+// -------------------------
+// Import the TaskService — the business logic layer that communicates
+// with repositories and enforces application rules.
+import taskService from "../services/task.service.js";
 
-// Repository → Handles direct database operations for Task.
-// This keeps DB logic separate from business rules.
-import taskRepository from "../repositories/task.repository.js";
-
-// DTO (Data Transfer Object) → Transforms raw DB documents
-// into safe, clean objects for API responses (hides internal fields).
-import { taskDTO } from "../services/dto.js";
-
-
-// ---------------------------------------------------
-// TaskService Class
-// ---------------------------------------------------
-// The service layer contains business logic for tasks.
-// It decides *what* operations are allowed and delegates *how*
-// they are executed to the repository layer.
-class TaskService {
+// -------------------------
+// Task Controller
+// -------------------------
+// Controllers handle HTTP requests and responses.
+// They do not contain business logic — instead, they delegate it to the service layer.
+// Each controller method corresponds to an API endpoint (route handler).
+class TaskController {
   // -------------------------
-  // Create a new task
+  // Create Task
   // -------------------------
-  async createTask(taskData) {
-    // Save task to database via repository
-    const task = await taskRepository.create(taskData);
+  // @route   POST /api/tasks
+  // @access  Protected
+  // @desc    Create a new task in the system.
+  async createTask(req, res) {
+    try {
+      // Delegate creation logic to the service layer
+      // The request body should contain title, description, etc.
+      const task = await taskService.createTask(req.body);
 
-    // Convert raw DB object → DTO before returning
-    return taskDTO(task);
-  }
-
-  // -------------------------
-  // Get task by ID (with access control)
-  // -------------------------
-  async getTaskById(id, currentUser) {
-    // Fetch task by ID (repository populates relations)
-    const task = await taskRepository.findById(id);
-
-    // If task does not exist → throw error
-    if (!task) throw new Error("Task not found");
-
-    // Authorization rules:
-    // - Admins can view all tasks
-    // - Normal users can only view tasks assigned to them
-    if (
-      currentUser.role !== "admin" &&
-      task.assignedTo.toString() !== currentUser.id.toString()
-    ) {
-      throw new Error("Access denied");
-    }
-
-    // Return safe DTO object
-    return taskDTO(task);
-  }
-
-  // -------------------------
-  // Get all tasks (role-based filtering)
-  // -------------------------
-  async getTasks(currentUser) {
-    if (currentUser.role === "admin") {
-      // Admins can fetch all tasks
-      const tasks = await taskRepository.getAll();
-      return tasks.map(taskDTO);
-    } else {
-      // Normal users → fetch only their assigned tasks
-      const tasks = await taskRepository.findByUser(currentUser.id);
-      return tasks.map(taskDTO);
+      // Respond with success message and created task
+      res.status(201).json({ success: true, task });
+    } catch (err) {
+      // Catch validation or database errors and send 400 Bad Request
+      res.status(400).json({ success: false, message: err.message });
     }
   }
 
   // -------------------------
-  // Update task (only creator or admin allowed)
+  // Get Task By ID
   // -------------------------
-  async updateTask(id, updateData, currentUser) {
-    // Fetch task first (needed for authorization check)
-    const task = await taskRepository.findById(id);
-    if (!task) throw new Error("Task not found");
+  // @route   GET /api/tasks/:id
+  // @access  Protected
+  // @desc    Retrieve a single task by its ID.
+  async getTaskById(req, res) {
+    try {
+      // Extract task ID from URL parameters and user info from request (via AuthMiddleware)
+      const task = await taskService.getTaskById(req.params.id, req.user);
 
-    // Only admin or the task creator can update
-    if (
-      currentUser.role !== "admin" &&
-      task.createdBy.toString() !== currentUser.id.toString()
-    ) {
-      throw new Error("Access denied");
+      // Return task data
+      res.json({ success: true, task });
+    } catch (err) {
+      // Handle unauthorized access or not found errors
+      res.status(403).json({ success: false, message: err.message });
     }
-
-    // Apply update in database
-    const updated = await taskRepository.update(id, updateData);
-
-    // Return updated task as DTO
-    return taskDTO(updated);
   }
 
   // -------------------------
-  // Delete task (only creator or admin allowed)
+  // Get All Tasks (Role-based)
   // -------------------------
-  async deleteTask(id, currentUser) {
-    // Fetch task (to check permissions)
-    const task = await taskRepository.findById(id);
-    if (!task) throw new Error("Task not found");
+  // @route   GET /api/tasks
+  // @access  Protected
+  // @desc    Fetch all tasks.
+  //           - Admins see all tasks.
+  //           - Normal users see only their own tasks.
+  async getTasks(req, res) {
+    try {
+      // Pass current user info to service layer for role-based filtering
+      const tasks = await taskService.getTasks(req.user);
 
-    // Only admin or the task creator can delete
-    if (
-      currentUser.role !== "admin" &&
-      task.createdBy.toString() !== currentUser.id.toString()
-    ) {
-      throw new Error("Access denied");
+      // Return list of tasks
+      res.json({ success: true, tasks });
+    } catch (err) {
+      // Catch unexpected server errors
+      res.status(500).json({ success: false, message: err.message });
     }
+  }
 
-    // Delete task via repository
-    return await taskRepository.delete(id);
+  // -------------------------
+  // Update Task
+  // -------------------------
+  // @route   PUT /api/tasks/:id
+  // @access  Protected
+  // @desc    Update an existing task (only admins or task creators allowed).
+  async updateTask(req, res) {
+    try {
+      // Extract ID from params and updated data from request body
+      const updated = await taskService.updateTask(
+        req.params.id,
+        req.body,
+        req.user
+      );
+
+      // Return updated task object
+      res.json({ success: true, task: updated });
+    } catch (err) {
+      // Handle access denied or validation errors
+      res.status(403).json({ success: false, message: err.message });
+    }
+  }
+
+  // -------------------------
+  // Delete Task
+  // -------------------------
+  // @route   DELETE /api/tasks/:id
+  // @access  Protected
+  // @desc    Delete a task (admin or task creator only).
+  async deleteTask(req, res) {
+    try {
+      // Call service to delete task by ID
+      await taskService.deleteTask(req.params.id, req.user);
+
+      // Send success confirmation
+      res.json({ success: true, message: "Task deleted successfully" });
+    } catch (err) {
+      // Handle forbidden or not found scenarios
+      res.status(403).json({ success: false, message: err.message });
+    }
+  }
+
+  // -------------------------
+  // 🔍 Advanced: Query Tasks (Search, Filter, Pagination)
+  // -------------------------
+  // @route   GET /api/tasks/query
+  // @access  Protected
+  // @desc    Fetch tasks using advanced filters like:
+  //           - search by title/description
+  //           - filter by status or priority
+  //           - paginate results (page & limit)
+  async queryTasks(req, res) {
+    try {
+      // `req.query` contains URL query parameters (?search=abc&page=2&limit=10)
+      const data = await taskService.queryTasks(req.query, req.user);
+
+      // Spread `data` to include pagination + results
+      res.json({ success: true, ...data });
+    } catch (err) {
+      // Handle invalid query or missing parameters
+      res.status(400).json({ success: false, message: err.message });
+    }
+  }
+
+  // -------------------------
+  // 📊 Advanced: Aggregation (Tasks per Status/User)
+  // -------------------------
+  // @route   GET /api/tasks/stats/:groupBy
+  // @access  Admin Only (typically)
+  // @desc    Returns aggregated data such as:
+  //           - Tasks grouped by status
+  //           - Tasks grouped by assigned user
+  async getTaskStats(req, res) {
+    try {
+      // `groupBy` could be 'status' or 'user'
+      const { groupBy } = req.params;
+
+      // Delegate aggregation logic to the service
+      const stats = await taskService.getTaskStats(groupBy || "status");
+
+      // Return statistics
+      res.json({ success: true, stats });
+    } catch (err) {
+      // Catch invalid groupBy values or database issues
+      res.status(400).json({ success: false, message: err.message });
+    }
   }
 }
 
-
-// ---------------------------------------------------
-// Export Service
-// ---------------------------------------------------
-// Export a singleton instance so routes/controllers
-// can use `taskService` directly.
-export default new TaskService();
+// -------------------------
+// Export Singleton Controller
+// -------------------------
+// Export a single instance to maintain consistency across routes.
+// This ensures only one shared controller instance handles all incoming requests.
+export default new TaskController();

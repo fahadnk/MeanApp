@@ -1,5 +1,3 @@
-// backend/src/routes/users.routes.js
-
 // -------------------------
 // Import Dependencies
 // -------------------------

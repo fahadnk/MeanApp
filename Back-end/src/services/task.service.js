@@ -1,40 +1,49 @@
 // backend/src/services/task.service.js
 
 // -------------------------
-// Import the TaskRepository for database operations
+// Import Dependencies
 // -------------------------
+// Repository → handles all DB operations
 import taskRepository from "../repositories/task.repository.js";
 
-// -------------------------
-// Import the DTO to ensure safe and consistent API responses
-// -------------------------
+// DTO → ensures safe, consistent response structures
 import { taskDTO } from "./dto.js";
 
+// NotificationService → handles real-time event broadcasting (Observer Pattern)
+import notificationService from "./notification.service.js";
+
+
 // -------------------------
-// Service Layer for Tasks
-// Encapsulates business logic and rules related to tasks
+// TaskService (Business Logic Layer)
+// -------------------------
+// The service layer enforces business logic and communicates
+// between controllers (HTTP layer) and repositories (DB layer).
 // -------------------------
 class TaskService {
   // -------------------------
-  // Create a new task
-  // Example: taskService.createTask({ title, description, createdBy, assignedTo })
+  // 🟢 Create a new task
   // -------------------------
   async createTask(taskData) {
+    // Persist task to DB
     const task = await taskRepository.create(taskData);
-    return taskDTO(task); // return safe DTO
+
+    // Convert DB doc → DTO
+    const dto = taskDTO(task);
+
+    // 🔔 Notify all clients (Observer Pattern)
+    notificationService.emit("taskCreated", dto);
+
+    return dto;
   }
 
   // -------------------------
-  // Get a task by ID with authorization checks
-  // Business rules:
-  // - Admins can view all tasks
-  // - Normal users can only view tasks assigned to them
+  // 🔍 Get task by ID (Access Control)
   // -------------------------
   async getTaskById(id, currentUser) {
     const task = await taskRepository.findById(id);
-
     if (!task) throw new Error("Task not found");
 
+    // Role-based access control
     if (
       currentUser.role !== "admin" &&
       task.assignedTo.toString() !== currentUser.id.toString()
@@ -46,24 +55,28 @@ class TaskService {
   }
 
   // -------------------------
-  // Get all tasks depending on user role
-  // - Admins → all tasks
-  // - Users → only their assigned tasks
+  // 📋 Get all tasks (with Search, Filter, Pagination)
   // -------------------------
-  async getTasks(currentUser) {
-    if (currentUser.role === "admin") {
-      const tasks = await taskRepository.getAll();
-      return tasks.map(taskDTO);
-    } else {
-      const tasks = await taskRepository.findByUser(currentUser.id);
-      return tasks.map(taskDTO);
+  async getTasks(currentUser, queryParams = {}) {
+    const { page = 1, limit = 10, search = "", status, priority } = queryParams;
+    const filters = { search, status, priority };
+
+    if (currentUser.role !== "admin") {
+      filters.assignedTo = currentUser.id;
     }
+
+    const { data, pagination } = await taskRepository.getAll({
+      page: Number(page),
+      limit: Number(limit),
+      ...filters,
+    });
+
+    const dtoList = data.map(taskDTO);
+    return { tasks: dtoList, pagination };
   }
 
   // -------------------------
-  // Update a task with ownership/role validation
-  // Business rules:
-  // - Only the task creator OR an admin can update
+  // ✏️ Update task (with Access Validation)
   // -------------------------
   async updateTask(id, updateData, currentUser) {
     const task = await taskRepository.findById(id);
@@ -77,13 +90,16 @@ class TaskService {
     }
 
     const updated = await taskRepository.update(id, updateData);
-    return taskDTO(updated);
+    const dto = taskDTO(updated);
+
+    // 🔔 Emit "taskUpdated" event in real-time
+    notificationService.emit("taskUpdated", dto);
+
+    return dto;
   }
 
   // -------------------------
-  // Delete a task with ownership/role validation
-  // Business rules:
-  // - Only the task creator OR an admin can delete
+  // 🗑️ Delete task (with Access Validation)
   // -------------------------
   async deleteTask(id, currentUser) {
     const task = await taskRepository.findById(id);
@@ -96,13 +112,28 @@ class TaskService {
       throw new Error("Access denied");
     }
 
-    return await taskRepository.delete(id);
+    // Delete via repository
+    const deletedTask = await taskRepository.delete(id);
+
+    // 🔔 Emit event (optional)
+    notificationService.emit("taskDeleted", { id });
+
+    return deletedTask;
+  }
+
+  // -------------------------
+  // 📊 Task Aggregation (Analytics)
+  // -------------------------
+  async getTaskStats() {
+    const [byUser, byStatus] = await Promise.all([
+      taskRepository.countTasksByUser(),
+      taskRepository.countTasksByStatus(),
+    ]);
+    return { byUser, byStatus };
   }
 }
 
 // -------------------------
-// Export a single instance of TaskService (Singleton pattern)
-// Ensures consistent usage across controllers
+// Export Singleton Instance
 // -------------------------
-const taskService = new TaskService();
-export default taskService;
+export default new TaskService();

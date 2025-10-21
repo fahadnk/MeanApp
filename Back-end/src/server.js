@@ -1,60 +1,127 @@
-// backend/src/server.js
+// ============================================================================
+//  server.js
+//  Entry Point for Backend Application
+// ----------------------------------------------------------------------------
+//  - Initializes Express application (imported from app.js)
+//  - Creates an HTTP server to host both Express and Socket.IO
+//  - Configures WebSocket (Socket.IO) for real-time events
+//  - Handles environment setup, server startup, and graceful shutdown
+// ============================================================================
 
 // -------------------------
-// Import Application
+// 1️⃣ Core & Third-Party Imports
 // -------------------------
-// Import the Express application instance we created in app.js.
-// This file (server.js) only starts the server and manages process-level events.
-import app from "./app.js";
+import http from "http";                   // Native Node.js HTTP module (to create raw server)
+import { Server } from "socket.io";        // Socket.IO for real-time communication
+import dotenv from "dotenv";               // Environment variable manager
 
 // -------------------------
-// Configure Port
+// 2️⃣ Local Application Imports
 // -------------------------
-// PORT is either provided via environment variable (for deployment platforms like Heroku)
-// or defaults to 5000 when running locally.
+import app from "./app.js";                // Express app instance (configured separately)
+import notificationService from "./services/notification.service.js"; // Custom service for socket events
+
+// -------------------------
+// 3️⃣ Load Environment Variables
+// -------------------------
+dotenv.config();                           // Loads variables from .env into process.env
+
+// -------------------------
+// 4️⃣ Configure Server Port
+// -------------------------
+// Default fallback to 5000 if PORT is not defined in .env
 const PORT = process.env.PORT || 5000;
 
 // -------------------------
-// Start Server
+// 5️⃣ Create HTTP Server
 // -------------------------
-// Create the server instance by calling app.listen().
-// This allows us to store the server reference, so we can later close it gracefully on shutdown.
-const server = app.listen(PORT, () => {
+// Express runs on top of an HTTP server instance so that we can
+// integrate both REST API (Express) and WebSocket (Socket.IO) on the same port.
+const server = http.createServer(app);
+
+// -------------------------
+// 6️⃣ Initialize Socket.IO Server
+// -------------------------
+// Attaches WebSocket capabilities to our HTTP server.
+// The 'cors' configuration allows frontend clients to connect across domains.
+const io = new Server(server, {
+  cors: {
+    origin: "*",                          // ⚠️ Allow all origins (safe for dev; restrict in production)
+  },
+});
+
+// -------------------------
+// 7️⃣ Global Socket.IO Access
+// -------------------------
+// Store the `io` instance inside the Express app for global access.
+// Controllers or services can retrieve it later via `req.app.get("io")`.
+app.set("io", io);
+
+// -------------------------
+// 8️⃣ Attach Socket.IO to NotificationService
+// -------------------------
+// Dependency injection pattern: pass the active Socket.IO instance
+// into the notificationService so it can emit events like:
+//   notificationService.emitToUser(userId, "taskCreated", task);
+notificationService.attachIO(io);
+
+// -------------------------
+// 9️⃣ Handle Socket.IO Connection Events
+// -------------------------
+// Listens for new WebSocket connections and disconnections.
+// Each client connected via Socket.IO receives a unique `socket.id`.
+io.on("connection", (socket) => {
+  console.log(`🟢 Client connected: ${socket.id}`);
+
+  // Optional: You could register custom event listeners here (e.g. join rooms)
+  // socket.on("joinRoom", (roomId) => socket.join(roomId));
+
+  socket.on("disconnect", () => {
+    console.log(`🔴 Client disconnected: ${socket.id}`);
+  });
+});
+
+// -------------------------
+// 🔟 Start HTTP + WebSocket Server
+// -------------------------
+// Launch the combined Express + Socket.IO server.
+// The server now listens for both HTTP requests and WebSocket messages.
+server.listen(PORT, () => {
   console.log(`✅ Server is running and listening on port ${PORT}`);
 });
 
 // -------------------------
-// Handle Uncaught Exceptions
+// 1️⃣1️⃣ Global Error Handling: Uncaught Exceptions
 // -------------------------
-// This handles programming errors (e.g., calling an undefined function).
-// If not caught, these will crash the Node.js process.
+// Handles synchronous errors that escape the app’s control flow (e.g. coding bugs).
+// After logging, the app exits to prevent unstable state.
 process.on("uncaughtException", (err) => {
   console.error("❌ Uncaught Exception detected! Shutting down...");
-  console.error(err); // Log the error details
-  // Exit immediately (1 = failure).
-  process.exit(1);
+  console.error(err);
+  process.exit(1); // Forcefully exit to avoid undefined behavior
 });
 
 // -------------------------
-// Handle Unhandled Promise Rejections
+// 1️⃣2️⃣ Global Error Handling: Unhandled Promise Rejections
 // -------------------------
-// This handles cases where a Promise is rejected but no .catch() is provided.
-// Without this, Node.js would crash unexpectedly.
+// Handles rejected Promises that aren’t wrapped in try/catch.
+// Useful for detecting DB connection errors, async bugs, etc.
 process.on("unhandledRejection", (reason) => {
   console.error("❌ Unhandled Promise Rejection detected! Shutting down...");
-  console.error(reason); // Log the rejection reason
-  // Gracefully close the server before shutting down.
+  console.error(reason);
+
+  // Close the server gracefully before exiting
   server.close(() => process.exit(1));
 });
 
 // -------------------------
-// Graceful Shutdown on SIGTERM (e.g., Heroku, Docker)
+// 1️⃣3️⃣ Graceful Shutdown on SIGTERM
 // -------------------------
-// Many deployment environments send a SIGTERM signal before killing the app.
-// We listen for it and close the server gracefully so ongoing requests are not lost.
+// Commonly triggered by hosting platforms (Docker, Heroku, Kubernetes)
+// Allows existing connections to complete before process exit.
 process.on("SIGTERM", () => {
   console.log("👋 SIGTERM received. Shutting down gracefully...");
   server.close(() => {
-    console.log("💤 Process terminated.");
+    console.log("💤 Process terminated cleanly.");
   });
 });
