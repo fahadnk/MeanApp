@@ -1,3 +1,4 @@
+// src/app/core/services/task.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../../environment/environment';
@@ -5,11 +6,11 @@ import { Observable } from 'rxjs';
 
 @Injectable({ providedIn: 'root' })
 export class TaskService {
-  private base = `${environment.apiUrl}/tasks`; // e.g. http://localhost:5000/api/tasks
+  private base = `${environment.apiUrl}/tasks`;
 
   constructor(private http: HttpClient) {}
 
-  // Fetch list with pagination/filter/search
+  // list with pagination, search, filter
   list(options: {
     page?: number;
     limit?: number;
@@ -18,8 +19,8 @@ export class TaskService {
     priority?: string;
   } = {}): Observable<any> {
     let params = new HttpParams();
-    if (options.page) params = params.set('page', String(options.page));
-    if (options.limit) params = params.set('limit', String(options.limit));
+    if (options.page != null) params = params.set('page', String(options.page));
+    if (options.limit != null) params = params.set('limit', String(options.limit));
     if (options.search) params = params.set('search', options.search);
     if (options.status) params = params.set('status', options.status);
     if (options.priority) params = params.set('priority', options.priority);
@@ -43,7 +44,6 @@ export class TaskService {
     return this.http.delete(`${this.base}/${id}`);
   }
 
-  // stats endpoint (admin)
   stats(groupBy = 'status'): Observable<any> {
     return this.http.get(`${this.base}/stats/${groupBy}`);
   }

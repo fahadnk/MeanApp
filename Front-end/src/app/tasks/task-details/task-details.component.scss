@@ -1,5 +1,35 @@
-.task-details-card {
-  padding: 1rem;
-  min-width: 400px;
-  border-radius: 12px;
+.details-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px dashed #e0e0e0;
+  padding: 6px 0;
+
+  .label {
+    font-weight: 600;
+    color: #666;
+  }
+
+  .value {
+    color: #222;
+    max-width: 60%;
+    text-align: right;
+    word-break: break-word;
+  }
+
+  mat-chip {
+    font-weight: 500;
+    text-transform: capitalize;
+  }
+}
+
+mat-dialog-actions {
+  margin-top: 12px;
 }

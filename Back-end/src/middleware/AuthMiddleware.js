@@ -1,50 +1,93 @@
-// backend/src/middleware/AuthMiddleware.js
-
 // ---------------------------------------------------
 // Import Dependencies
 // ---------------------------------------------------
 
-// Import the jsonwebtoken library to verify and decode JWT tokens
+// Import the "jsonwebtoken" library, which allows us to 
+// verify and decode JSON Web Tokens (JWTs).
+// JWTs are used to securely identify authenticated users
+// by embedding user information in a signed token.
 import jwt from "jsonwebtoken";
 
 
 // ---------------------------------------------------
 // Authentication Middleware
 // ---------------------------------------------------
-// This middleware protects routes by ensuring that
-// only users with valid JWT tokens can access them.
+// This middleware protects routes by ensuring the user
+// is authenticated before accessing them.
+// It checks for a valid JWT token in the Authorization header.
+//
+// In Express, middleware functions receive (req, res, next)
+// where:
+// - req → request object (incoming data)
+// - res → response object (used to send replies)
+// - next → function to pass control to the next middleware or route handler
 function authMiddleware(req, res, next) {
-  // Extract the "Authorization" header from the request
-  // Expected format: "Bearer <token>"
+  // ---------------------------------------------------
+  // Step 1: Extract Authorization header from the request
+  // ---------------------------------------------------
+  // The header looks like:  "Authorization: Bearer <token>"
+  // We access it from req.headers["authorization"].
   const authHeader = req.headers["authorization"];
 
-  // If the header exists, split it by space and get the second part (the token)
-  // Example: "Bearer abc123" → token = "abc123"
+  // ---------------------------------------------------
+  // Step 2: Extract the token part from the header
+  // ---------------------------------------------------
+  // If the header exists, split it by space → ["Bearer", "<token>"]
+  // and take the second part (the token itself).
   const token = authHeader && authHeader.split(" ")[1];
 
-  // If no token is found in the header, reject the request with 401 Unauthorized
+  // ---------------------------------------------------
+  // Step 3: Handle missing token
+  // ---------------------------------------------------
+  // If no token is found, it means the request is unauthenticated.
+  // Return HTTP 401 (Unauthorized) and stop further processing.
   if (!token) {
-    return res
-      .status(401)
-      .json({ message: "Access denied. No token provided." });
+    return res.status(401).json({
+      message: "Access denied. No token provided.",
+    });
   }
 
+  // ---------------------------------------------------
+  // Step 4: Verify the token using JWT secret
+  // ---------------------------------------------------
+  // This step ensures the token is valid and not tampered with.
+  // jwt.verify() decodes the token and checks it against your secret key.
   try {
-    // Verify the token using the secret key stored in environment variables
-    // If valid, decode the token to get user data (id, role, etc.)
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // Attach decoded user info to the request object
-    // This allows controllers/services to access `req.user`
+    // ---------------------------------------------------
+    // Step 5: Optional safety check — verify token structure
+    // ---------------------------------------------------
+    // Ensure the decoded token contains expected fields (like user ID).
+    // This helps prevent malformed or incomplete tokens from passing through.
+    if (!decoded || !decoded.id) {
+      return res.status(403).json({
+        message: "Invalid token payload.",
+      });
+    }
+
+    // ---------------------------------------------------
+    // Step 6: Attach decoded user data to req object
+    // ---------------------------------------------------
+    // By setting req.user = decoded, subsequent middlewares and
+    // route handlers can access user info (e.g., req.user.id).
     req.user = decoded;
 
-    // Move on to the next middleware or route handler
+    // ---------------------------------------------------
+    // Step 7: Pass control to the next middleware/route
+    // ---------------------------------------------------
+    // If everything is valid, continue processing the request.
     next();
+
   } catch (err) {
-    // If verification fails (invalid or expired token), reject with 403 Forbidden
-    return res
-      .status(403)
-      .json({ message: "Invalid or expired token." });
+    // ---------------------------------------------------
+    // Step 8: Handle invalid or expired tokens
+    // ---------------------------------------------------
+    // If jwt.verify() throws an error (e.g., token expired, wrong signature),
+    // return HTTP 403 (Forbidden) with an error message.
+    return res.status(403).json({
+      message: "Invalid or expired token.",
+    });
   }
 }
 
@@ -52,5 +95,6 @@ function authMiddleware(req, res, next) {
 // ---------------------------------------------------
 // Export Middleware
 // ---------------------------------------------------
-// Export the middleware so it can be used in routes
+// Export the middleware function so it can be imported
+// and used in route files (e.g., to protect /profile routes).
 export default authMiddleware;

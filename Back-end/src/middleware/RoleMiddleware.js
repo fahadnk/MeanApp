@@ -1,56 +1,96 @@
-// backend/src/middleware/RoleMiddleware.js
-
 /**
  * --------------------------------------------------------
  * Role-Based Access Control (RBAC) Middleware
  * --------------------------------------------------------
  * Purpose:
- * - Restrict access to certain routes based on user roles.
- * - Works in conjunction with `AuthMiddleware` which sets `req.user`.
+ * - Restrict access to specific routes based on user roles.
+ * - Ensures only authorized roles (e.g., admin, manager) 
+ *   can access certain endpoints.
+ * - Works together with `AuthMiddleware`, which attaches 
+ *   the authenticated user's data (req.user) to the request.
  *
- * @param {string|string[]} allowedRoles - A single role (string) or list of roles (array) 
- *                                         that are allowed to access the route.
+ * Example usage:
+ *   router.get("/admin/dashboard", 
+ *     authMiddleware, 
+ *     roleMiddleware("admin"), 
+ *     adminController.dashboard
+ *   );
+ *
+ * @param {string|string[]} allowedRoles - The allowed role(s) for this route.
+ *   Example:
+ *     roleMiddleware("admin")               // only admin
+ *     roleMiddleware(["admin", "manager"])  // admin or manager
+ *
  * @returns {Function} Express middleware function
  */
 function roleMiddleware(allowedRoles) {
+
   // --------------------------------------------------------
-  // Normalize allowedRoles into an array
+  // Step 1: Normalize the roles parameter
+  // --------------------------------------------------------
+  // "allowedRoles" can be a single string or an array of roles.
+  // We ensure it is always an array for consistency.
+  //
   // Example:
-  //   "admin" → ["admin"]
-  //   ["admin", "manager"] → ["admin", "manager"]
-  // --------------------------------------------------------
+  //   - If passed "admin" → becomes ["admin"]
+  //   - If passed ["admin", "manager"] → stays the same
   const roles = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
 
-  // Return the actual middleware function
+  // --------------------------------------------------------
+  // Step 2: Return the actual middleware function
+  // --------------------------------------------------------
+  // Express middlewares must return a function with 
+  // the signature (req, res, next).
+  // This returned function will run on each request 
+  // that uses this middleware.
   return (req, res, next) => {
+
     // --------------------------------------------------------
-    // Ensure user context is available
-    // `req.user` is populated by `AuthMiddleware` after JWT verification.
-    // If it doesn't exist, it means the user is not authenticated.
+    // Step 3: Check if user context exists (set by AuthMiddleware)
     // --------------------------------------------------------
+    // "AuthMiddleware" should have already verified the JWT token
+    // and attached the user object to req.user.
+    //
+    // If req.user is missing, it means authentication failed or 
+    // the middleware was not applied before this one.
     if (!req.user) {
-      return res.status(401).json({ message: "Unauthorized: No user context" });
+      return res.status(401).json({
+        message: "Unauthorized: No user context",
+      });
     }
 
     // --------------------------------------------------------
-    // Role Check
-    // Compare the role of the authenticated user with allowedRoles.
-    // If not included, deny access.
+    // Step 4: Check if the user's role is allowed
     // --------------------------------------------------------
+    // Compare the user's role (req.user.role) with the allowed roles.
+    // If the role is not found in the allowed list, reject the request.
+    //
+    // Example:
+    //   allowedRoles = ["admin"]
+    //   req.user.role = "user"
+    //   → Access denied (403 Forbidden)
     if (!roles.includes(req.user.role)) {
-      return res.status(403).json({ message: "Forbidden: Insufficient role" });
+      return res.status(403).json({
+        message: "Forbidden: Insufficient role",
+      });
     }
 
     // --------------------------------------------------------
-    // If the role check passes → continue to next handler
+    // Step 5: If all checks pass, continue to next middleware/handler
     // --------------------------------------------------------
+    // The user is authenticated AND has a valid role.
+    // Proceed to the next function (e.g., controller or another middleware).
     next();
   };
 }
 
+
 // --------------------------------------------------------
-// Export Middleware
+// Step 6: Export Middleware
 // --------------------------------------------------------
-// Export as default so it can be imported like:
-// import roleMiddleware from "../middleware/RoleMiddleware.js";
+// Export the middleware so it can be used in your routes.
+//
+// Example usage:
+//   import roleMiddleware from "../middleware/RoleMiddleware.js";
+//   router.get("/admin", authMiddleware, roleMiddleware("admin"), adminController.index);
 export default roleMiddleware;

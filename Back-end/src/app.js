@@ -1,79 +1,107 @@
-// -------------------------
-// Import Dependencies
-// -------------------------
-import express from "express";            // Core framework to build APIs
-import cors from "cors";                  // Middleware for Cross-Origin Resource Sharing
-import helmet from "helmet";              // Middleware to set secure HTTP headers
-import mongoSanitize from "express-mongo-sanitize"; // Prevent MongoDB operator injection
-import xss from "xss-clean";              // Prevent Cross-Site Scripting (XSS) attacks
-import morgan from "morgan";              // HTTP request logger middleware
-import { v4 as uuidv4 } from "uuid";      // Generate unique correlation IDs
+// -----------------------------------------------------------------------------
+// src/app.js (or backend/src/app.js)
+// -----------------------------------------------------------------------------
+// 🏗️ Express App Initialization with Security, Logging & Sanitization
+// -----------------------------------------------------------------------------
 
-// Import modular route files
-import healthRoutes from "./routes/health.routes.js"; 
-import authRoutes from "./routes/auth.routes.js";     
-import taskRoutes from "./routes/task.routes.js";     
+// ----------------------------
+// 📦 Core Dependencies
+// ----------------------------
+import express from "express";               // Express framework
+import cors from "cors";                     // Enable Cross-Origin Resource Sharing
+import helmet from "helmet";                 // Sets HTTP headers for better security
+import { xss } from "express-xss-sanitizer"; // Prevents XSS attacks in request bodies
+import morgan from "morgan";                 // HTTP request logger middleware
+import { v4 as uuidv4 } from "uuid";         // Generates unique request IDs for tracing
 
-// Import Global Error Handler & Logger
+// ----------------------------
+// 🧼 Custom Middleware
+// ----------------------------
+import sanitizeRequest from "./middleware/SanitizeMiddleware.js"; // Prevents NoSQL injection
+
+// ----------------------------
+// 🧭 Route Imports
+// ----------------------------
+import healthRoutes from "./routes/health.routes.js";
+import authRoutes from "./routes/auth.routes.js";
+import taskRoutes from "./routes/task.routes.js";
+
+// ----------------------------
+// ⚠️ Error + Logging Utilities
+// ----------------------------
 import errorMiddleware from "./middleware/ErrorMiddleware.js";
-import logger from "./config/logger.js";   // Winston logger instance
+import logger from "./config/logger.js"; // Winston or pino-based logger
 
-
-// -------------------------
-// Create Express App
-// -------------------------
+// ----------------------------
+// 🚀 Initialize Express App
+// ----------------------------
 const app = express();
 
 
-// -------------------------
-// Correlation ID Middleware
-// -------------------------
-// Adds a unique request ID to each request for tracing in logs
+// -----------------------------------------------------------------------------
+// 🧩 1. Correlation ID Middleware
+// -----------------------------------------------------------------------------
+// - Assigns a unique `req.id` to every request for traceability.
+// - The same ID is included in response headers (`X-Request-Id`)
+//   and logs for easy debugging across services.
+// -----------------------------------------------------------------------------
 app.use((req, res, next) => {
-  req.id = uuidv4(); // attach correlation ID
-  res.setHeader("X-Request-Id", req.id); // expose to clients
+  req.id = uuidv4();                  // Generate unique UUID per request
+  res.setHeader("X-Request-Id", req.id); // Attach to response headers
   next();
 });
 
 
-// -------------------------
-// Global Middlewares
-// -------------------------
-app.use(express.json());      // Parse JSON bodies
-app.use(cors());              // Enable CORS
-app.use(helmet());            // Secure HTTP headers
-app.use(mongoSanitize());     // Prevent MongoDB injection
-app.use(xss());               // Prevent XSS attacks
+// -----------------------------------------------------------------------------
+// ⚙️ 2. Global Middlewares
+// -----------------------------------------------------------------------------
+app.use(express.json()); // Parse JSON request bodies
+app.use(cors());         // Enable CORS for all origins
+app.use(helmet());       // Secure HTTP headers
+app.use(xss());          // Sanitize user input from XSS payloads
+app.use(sanitizeRequest); // Sanitize Mongo injection attempts ($ / . keys)
 
 
-// -------------------------
-// Logging Middleware
-// -------------------------
-// Pipe morgan logs into winston instead of console
+// -----------------------------------------------------------------------------
+// 📋 3. Logging Setup (using Morgan + Winston)
+// -----------------------------------------------------------------------------
+// - Custom morgan token "id" injects our correlation ID into each log.
+// - The logs are piped through `logger.http()` (likely Winston).
+// -----------------------------------------------------------------------------
+morgan.token("id", (req) => req.id); // define :id token for logs
+const morganFormat =
+  "[:id] :method :url :status :response-time ms - :res[content-length]";
+
 app.use(
-  morgan(":method :url :status :response-time ms - :res[content-length]", {
-    stream: {
-      write: (message) => logger.http(`[${req?.id}] ${message.trim()}`), // log with correlation ID
-    },
+  morgan(morganFormat, {
+    stream: { write: (msg) => logger.http(msg.trim()) },
   })
 );
 
 
-// -------------------------
-// Register Routes
-// -------------------------
-app.use("/api/health", healthRoutes); // Health check
-app.use("/api/auth", authRoutes);     // Auth routes
-app.use("/api/tasks", taskRoutes);    // Task routes
+// -----------------------------------------------------------------------------
+// 🛣️ 4. API Routes
+// -----------------------------------------------------------------------------
+// Each route module exports an Express Router instance.
+// -----------------------------------------------------------------------------
+app.use("/api/health", healthRoutes); // Health check endpoint
+app.use("/api/auth", authRoutes);     // Auth routes (login/register)
+app.use("/api/tasks", taskRoutes);    // Task CRUD routes
 
 
-// -------------------------
-// Global Error Handling
-// -------------------------
+// -----------------------------------------------------------------------------
+// ❌ 5. Centralized Error Handling
+// -----------------------------------------------------------------------------
+// Any thrown or forwarded errors (next(err)) are handled here.
+// Ensures consistent error response structure.
+// -----------------------------------------------------------------------------
 app.use(errorMiddleware);
 
 
-// -------------------------
-// Export Application
-// -------------------------
+// -----------------------------------------------------------------------------
+// ✅ Export App Instance
+// -----------------------------------------------------------------------------
+// - The server is started in `src/server.js` using `app.listen()`
+// - Keeps this file testable and modular (can be imported into Jest tests)
+// -----------------------------------------------------------------------------
 export default app;

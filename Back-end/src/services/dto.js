@@ -1,6 +1,6 @@
 // Convert a User MongoDB document into a simplified DTO (Data Transfer Object)
 // This hides internal fields (like password, __v, etc.) and ensures consistent API responses
-function userDTO(user) {
+export function userDTO(user) {
   // If no user is provided (null/undefined), return null
   if (!user) return null;
 
@@ -16,7 +16,7 @@ function userDTO(user) {
 
 // Convert a Task MongoDB document into a simplified DTO
 // Includes nested userDTOs for 'assignedTo' and 'createdBy'
-function taskDTO(task) {
+export function taskDTO(task) {
   // If no task is provided, return null
   if (!task) return null;
 
@@ -37,6 +37,3 @@ function taskDTO(task) {
     updatedAt: task.updatedAt, // Last updated timestamp
   };
 }
-
-// Export both DTO functions so they can be reused in services/controllers
-module.exports = { userDTO, taskDTO };

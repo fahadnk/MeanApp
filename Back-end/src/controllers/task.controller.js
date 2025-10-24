@@ -146,22 +146,108 @@ class TaskController {
   // @desc    Returns aggregated data such as:
   //           - Tasks grouped by status
   //           - Tasks grouped by assigned user
-  async getTaskStats(req, res) {
-    try {
-      // `groupBy` could be 'status' or 'user'
-      const { groupBy } = req.params;
+async getTaskStats(req, res) {
+  try {
+    // ---------------------------------------------
+    // 1️⃣ Extract the 'groupBy' parameter from URL
+    // Example:
+    //  - /stats           → groupBy = undefined
+    //  - /stats/status    → groupBy = "status"
+    //  - /stats/user      → groupBy = "user"
+    // ---------------------------------------------
+    const { groupBy } = req.params;
 
-      // Delegate aggregation logic to the service
-      const stats = await taskService.getTaskStats(groupBy || "status");
+    // ---------------------------------------------
+    // 2️⃣ Define a safe fallback if no param is provided
+    // Default to grouping by "status"
+    // ---------------------------------------------
+    const groupField = groupBy || "status";
 
-      // Return statistics
-      res.json({ success: true, stats });
-    } catch (err) {
-      // Catch invalid groupBy values or database issues
-      res.status(400).json({ success: false, message: err.message });
-    }
+    // ---------------------------------------------
+    // 3️⃣ Delegate the actual aggregation logic
+    // The service layer interacts with the DB
+    // Example: taskService.getTaskStats("status")
+    // ---------------------------------------------
+    const stats = await taskService.getTaskStats(groupField);
+
+    // ---------------------------------------------
+    // 4️⃣ Send success response
+    // Wrap data in a consistent API structure
+    // ---------------------------------------------
+    return res.status(200).json({
+      success: true,
+      groupBy: groupField,
+      stats,
+      message: "Task statistics fetched successfully",
+    });
+  } catch (err) {
+    // ---------------------------------------------
+    // 5️⃣ Handle errors gracefully
+    // - Invalid groupBy values (e.g., unknown field)
+    // - Database or aggregation failures
+    // ---------------------------------------------
+    console.error("Error in getTaskStats:", err.message);
+    return res.status(400).json({
+      success: false,
+      message: err.message || "Failed to fetch task statistics",
+    });
   }
 }
+
+// -------------------------
+// Delete All Tasks (Admin Only)
+// -------------------------
+// @route   DELETE /api/tasks
+// @access  Admin Only
+// @desc    Permanently delete ALL tasks from the database.
+async deleteAll(req, res) {
+  try {
+    // ------------------------------------------------------------
+    // 1️⃣ Security Check — Allow Only Admins
+    // ------------------------------------------------------------
+    // Every authenticated request includes `req.user` (set by AuthMiddleware).
+    // We check the user's role to ensure only admins can perform this action.
+    // If the user is NOT an admin, return a "403 Forbidden" response immediately.
+    if (req.user.role !== "admin") {
+      return res.status(403).json({
+        success: false,
+        message: "Access denied", // Inform the client about insufficient privileges
+      });
+    }
+
+    // ------------------------------------------------------------
+    // 2️⃣ Delegate the Deletion Logic to the Service Layer
+    // ------------------------------------------------------------
+    // The controller does NOT interact with the database directly.
+    // Instead, it calls the corresponding service method.
+    // This keeps business logic separate from request handling.
+    await taskService.deleteAllTasks();
+
+    // ------------------------------------------------------------
+    // 3️⃣ Send a Success Response
+    // ------------------------------------------------------------
+    // If no errors occur, respond with a 200 OK status and a success message.
+    // This indicates that all tasks have been deleted successfully.
+    res.json({
+      success: true,
+      message: "All tasks deleted successfully",
+    });
+  } catch (err) {
+    // ------------------------------------------------------------
+    // 4️⃣ Error Handling
+    // ------------------------------------------------------------
+    // If something goes wrong (e.g., database connection failure),
+    // catch the error and return a 500 Internal Server Error response.
+    // This ensures the API never crashes and always returns structured JSON.
+    res.status(500).json({
+      success: false,
+      message: err.message, // Include the error message for debugging/logging
+    });
+  }
+}
+}
+
+
 
 // -------------------------
 // Export Singleton Controller

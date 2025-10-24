@@ -1,25 +1,25 @@
 import { Component } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
+import { AuthService } from '../../core/services/auth.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-login',
-  templateUrl: './login.component.html',
-  styleUrls: ['./login.component.scss']
+  templateUrl: './login.component.html'
 })
 export class LoginComponent {
-  hide = true; // for password toggle
-
-  constructor(private fb: FormBuilder) {}
-
+  hide = true;
+  constructor(private fb: FormBuilder, private auth: AuthService, private router: Router) {}
   loginForm = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
-    password: ['', Validators.required],
+    password: ['', Validators.required]
   });
 
   onSubmit() {
-    if (this.loginForm.valid) {
-      console.log('Login Data:', this.loginForm.value);
-      // TODO: Call AuthService -> login()
-    }
+    if (!this.loginForm.valid) return;
+    this.auth.login(this.loginForm.value as { email: string; password: string }).subscribe({
+      next: () => this.router.navigate(['/tasks']),
+      error: err => console.error('Login failed', err)
+    });
   }
 }

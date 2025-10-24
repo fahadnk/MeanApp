@@ -1,34 +1,38 @@
+// src/app/core/services/auth.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environment/environment';
-import { tap, map } from 'rxjs/operators';
-import { Observable } from 'rxjs';
-import { jwtDecode } from 'jwt-decode';
+import { Observable, of, throwError } from 'rxjs';
+import { tap, catchError, map } from 'rxjs/operators';
+import {jwtDecode} from 'jwt-decode';
 
 interface LoginResponse {
   token: string;
-  // optionally other payload
+  // backend may also return user info
 }
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private base = `${environment.apiUrl}/auth`; // e.g. http://localhost:5000/api/auth
+  private base = `${environment.apiUrl}/auth`;
   private tokenKey = 'token';
 
   constructor(private http: HttpClient) {}
 
-  login(payload: { email: string; password: string }) {
+  register(payload: { name: string; email: string; password: string }): Observable<any> {
+    return this.http.post(`${this.base}/register`, payload).pipe(
+      catchError(err => throwError(() => err))
+    );
+  }
+
+  login(payload: { email: string; password: string }): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.base}/login`, payload).pipe(
       tap(res => {
         if (res && res.token) {
           localStorage.setItem(this.tokenKey, res.token);
         }
-      })
+      }),
+      catchError(err => throwError(() => err))
     );
-  }
-
-  register(payload: { name: string; email: string; password: string }) {
-    return this.http.post(`${this.base}/register`, payload);
   }
 
   logout() {
@@ -43,14 +47,13 @@ export class AuthService {
     const token = this.getToken();
     if (!token) return false;
     try {
-      const decoded: any = jwtDecode(token);
-      return decoded.exp * 1000 > Date.now();
+      const payload: any = jwtDecode(token);
+      return payload?.exp ? payload.exp * 1000 > Date.now() : true;
     } catch {
       return false;
     }
   }
 
-  // convenience to get current user info from token payload (id, role, etc.)
   getCurrentUser(): any | null {
     const token = this.getToken();
     if (!token) return null;
@@ -59,5 +62,12 @@ export class AuthService {
     } catch {
       return null;
     }
+  }
+
+  // optional: get profile from backend
+  profile(): Observable<any> {
+    return this.http.get(`${this.base}/profile`).pipe(
+      catchError(err => throwError(() => err))
+    );
   }
 }

@@ -1,73 +1,83 @@
+// -------------------------------------------------------------
 // backend/src/repositories/task.repository.js
+// -------------------------------------------------------------
+// 🧩 This file defines the TaskRepository class.
+// It encapsulates all database operations related to tasks.
+// By isolating DB logic here, controllers/services remain cleaner
+// and focused on business logic (Repository Pattern).
+// -------------------------------------------------------------
 
-// -------------------------
+
+// -------------------------------------------------------------
 // 📦 Import Dependencies
-// -------------------------
-// The Task model represents the "tasks" collection in MongoDB.
-// Mongoose handles data validation, schema mapping, and CRUD abstraction.
+// -------------------------------------------------------------
+
+// Import the Task Mongoose model
 import Task from "../models/task.model.js";
 
-// -------------------------
+// Import mongoose for ObjectId validation and aggregations
+import mongoose from "mongoose";
+
+
+// -------------------------------------------------------------
 // 🧠 Task Repository
-// -------------------------
-// The Repository Pattern abstracts and centralizes all **data access logic**.
-// This prevents business layers (services/controllers) from directly touching
-// database methods — improving reusability, testability, and separation of concerns.
-//
-// 👉 Responsibilities:
-//    - Interact directly with MongoDB using Mongoose.
-//    - Handle query building, filtering, sorting, pagination, and aggregations.
-//    - Return pure JS objects (via `.lean()`) ready for transformation by DTOs.
-// -------------------------
+// -------------------------------------------------------------
 class TaskRepository {
-  // -------------------------
+
+  // ---------------------------------------------------------
   // 🟢 Create a new Task
-  // -------------------------
-  // @param  {Object} taskData - Task input adhering to the Task schema.
-  // @returns {Promise<Object>} Newly created task document.
+  // ---------------------------------------------------------
   async create(taskData) {
-    return await Task.create(taskData);
+    try {
+      // Create a new Task instance using Mongoose's model
+      const task = new Task(taskData);
+
+      // Save the document to the database
+      // `.save()` is preferred over `Task.create()` in Mongoose v7+
+      // because it gives you better control and middleware support
+      return await task.save();
+
+    } catch (error) {
+      // Log for debugging and rethrow as a custom message
+      console.error("❌ [TaskRepository.create] Error:", error);
+      throw new Error("Failed to create task: " + error.message);
+    }
   }
 
-  // -------------------------
+
+  // ---------------------------------------------------------
   // 🔍 Find a Task by ID
-  // -------------------------
-  // @param  {String} id - MongoDB ObjectId of the task.
-  // @returns {Promise<Object|null>} Task document (populated with user refs).
+  // ---------------------------------------------------------
   async findById(id) {
+    // Validate ObjectId to prevent invalid DB queries
+    if (!mongoose.Types.ObjectId.isValid(id)) return null;
+
+    // Query DB and also populate relational fields
     return await Task.findById(id)
-      // Populate referenced user fields for richer response
-      .populate("assignedTo createdBy")
-      // `.lean()` returns a plain JS object, faster than Mongoose Documents
-      // Ideal for read-heavy APIs and DTO mapping
-      .lean();
+      .populate("assignedTo", "name email role") // Include only specific fields from user
+      .populate("createdBy", "name email role")
+      .lean()   // Converts Mongoose document → plain JS object for better performance
+      .exec();  // Executes the query immediately
   }
 
-  // -------------------------
-  // 📋 Get All Tasks (Advanced Query Support)
-  // -------------------------
-  // Supports multiple optional query features:
-  // - Pagination (page & limit)
-  // - Search (title or description, partial match)
-  // - Filters (status, priority, assignedTo)
-  // - Sorting (newest first)
-  //
-  // @param {Object} options
-  // @returns {Promise<Object>} Paginated tasks with metadata.
+
+  // ---------------------------------------------------------
+  // 📋 Get All Tasks (with filters and pagination)
+  // ---------------------------------------------------------
   async getAll({
-    page = 1,
-    limit = 10,
-    search = "",
-    status,
-    priority,
-    assignedTo,
-  }) {
-    // -------------------------
-    // 🧩 Build dynamic MongoDB query object
-    // -------------------------
+    page = 1,        // default page = 1
+    limit = 10,      // default items per page = 10
+    search = "",     // search keyword (optional)
+    status,          // optional filter
+    priority,        // optional filter
+    assignedTo,      // optional filter
+  } = {}) {
+
+    // Initialize MongoDB query object
     const query = {};
 
-    // Search filter (case-insensitive regex match)
+    // Search filter (case-insensitive)
+    // Matches either title OR description
     if (search) {
       query.$or = [
         { title: { $regex: search, $options: "i" } },
@@ -75,35 +85,28 @@ class TaskRepository {
       ];
     }
 
-    // Status and Priority filters (exact match)
+    // Conditional filters for status/priority/assignedTo
     if (status) query.status = status;
     if (priority) query.priority = priority;
-
-    // Optional restriction by user (non-admin users)
     if (assignedTo) query.assignedTo = assignedTo;
 
-    // -------------------------
-    // 📄 Pagination setup
-    // -------------------------
+    // Pagination skip amount
     const skip = (page - 1) * limit;
 
-    // -------------------------
-    // 🧮 Execute queries in parallel
-    // -------------------------
-    // Promise.all improves performance by fetching results & count simultaneously.
+    // Use Promise.all for performance: fetch tasks + count in parallel
     const [tasks, total] = await Promise.all([
       Task.find(query)
-        .populate("assignedTo createdBy")
-        .skip(skip)
-        .limit(limit)
-        .sort({ createdAt: -1 }) // Newest first
-        .lean(),
-      Task.countDocuments(query),
+        .populate("assignedTo", "name email role")
+        .populate("createdBy", "name email role")
+        .skip(skip)                // skip previous pages
+        .limit(limit)              // limit per page
+        .sort({ createdAt: -1 })   // newest first
+        .lean()
+        .exec(),
+      Task.countDocuments(query),  // total task count for pagination metadata
     ]);
 
-    // -------------------------
-    // 📦 Return paginated structure
-    // -------------------------
+    // Return both tasks and pagination info
     return {
       data: tasks,
       pagination: {
@@ -115,79 +118,97 @@ class TaskRepository {
     };
   }
 
-  // -------------------------
-  // 👤 Get Tasks by Assigned User
-  // -------------------------
-  // Simply reuses the main `getAll` method but pre-fills assignedTo filter.
-  // Promotes DRY (Don't Repeat Yourself) principle.
+
+  // ---------------------------------------------------------
+  // 👤 Get Tasks by a specific User
+  // ---------------------------------------------------------
   async findByUser(userId, queryOptions = {}) {
+    // Validate userId before querying
+    if (!mongoose.Types.ObjectId.isValid(userId))
+      return { data: [], pagination: {} };
+
+    // Reuse getAll() but with a fixed "assignedTo" filter
     return await this.getAll({ ...queryOptions, assignedTo: userId });
   }
 
-  // -------------------------
+
+  // ---------------------------------------------------------
   // ✏️ Update Task by ID
-  // -------------------------
-  // @param  {String} id - Task ObjectId.
-  // @param  {Object} updateData - Fields to update.
-  // @returns {Promise<Object|null>} Updated task document.
+  // ---------------------------------------------------------
   async update(id, updateData) {
-    return await Task.findByIdAndUpdate(id, updateData, { new: true })
-      .populate("assignedTo createdBy")
-      .lean();
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) return null;
+
+    // Update document and return the new one
+    // runValidators ensures schema rules still apply
+    return await Task.findByIdAndUpdate(id, updateData, {
+      new: true,
+      runValidators: true,
+    })
+      .populate("assignedTo", "name email role")
+      .populate("createdBy", "name email role")
+      .lean()
+      .exec();
   }
 
-  // -------------------------
+
+  // ---------------------------------------------------------
   // 🗑️ Delete Task by ID
-  // -------------------------
-  // @param  {String} id - Task ObjectId.
-  // @returns {Promise<Object|null>} Deleted task document.
+  // ---------------------------------------------------------
   async delete(id) {
-    return await Task.findByIdAndDelete(id);
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) return null;
+
+    // Find and remove the document
+    return await Task.findByIdAndDelete(id).lean().exec();
   }
 
-  // -------------------------
-  // 📊 Aggregation: Count Tasks Per User
-  // -------------------------
-  // Uses MongoDB Aggregation Framework to group tasks by `assignedTo`.
-  // Enriched with `$lookup` to fetch user details (join operation).
-  // @returns {Promise<Array>} List of users with total assigned task count.
+
+  // ---------------------------------------------------------
+  // 📊 Count Tasks Per User (for admin dashboards)
+  // ---------------------------------------------------------
   async countTasksByUser() {
+    // MongoDB aggregation pipeline
+    // Groups tasks by assigned user and counts how many each has
     return await Task.aggregate([
-      // Group all tasks by user and count them
+      // Step 1: Group by assigned user
       { $group: { _id: "$assignedTo", totalTasks: { $sum: 1 } } },
-      // Lookup user details from the users collection
+
+      // Step 2: Lookup user details from 'users' collection
       {
         $lookup: {
-          from: "users", // Target collection name
+          from: "users",
           localField: "_id",
           foreignField: "_id",
           as: "user",
         },
       },
-      // Flatten the joined array
+
+      // Step 3: Convert user array → single object
       { $unwind: "$user" },
-      // Project a cleaner structure for frontend use
+
+      // Step 4: Project only useful fields
       { $project: { _id: 0, user: "$user.name", totalTasks: 1 } },
     ]);
   }
 
-  // -------------------------
-  // 📈 Aggregation: Count Tasks Per Status
-  // -------------------------
-  // Groups tasks by their `status` field (e.g., pending, done, in-progress).
-  // @returns {Promise<Array>} Status with count.
+
+  // ---------------------------------------------------------
+  // 📈 Count Tasks Per Status (e.g., Pending, Completed)
+  // ---------------------------------------------------------
   async countTasksByStatus() {
+    // Simple aggregation to count tasks grouped by status
     return await Task.aggregate([
       { $group: { _id: "$status", total: { $sum: 1 } } },
-      // Rename fields for cleaner output
       { $project: { status: "$_id", total: 1, _id: 0 } },
     ]);
   }
 }
 
-// -------------------------
+
+// -------------------------------------------------------------
 // 🧩 Export Singleton Instance
-// -------------------------
-// Exporting a single shared instance ensures the same repository logic
-// is reused across services — consistent state, behavior, and optimization.
+// -------------------------------------------------------------
+// Exporting a single instance (not the class) ensures a shared
+// repository across your application (singleton pattern).
 export default new TaskRepository();

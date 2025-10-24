@@ -1,10 +1,50 @@
-<mat-card class="task-details-card">
-  <mat-card-title>{{ task.title }}</mat-card-title>
-  <mat-card-content>
-    <p><strong>Description:</strong> {{ task.description }}</p>
-    <p><strong>Status:</strong> {{ task.status }}</p>
-    <p><strong>Priority:</strong> {{ task.priority }}</p>
-    <p><strong>Assigned To:</strong> {{ task.assignedTo }}</p>
-    <p><strong>Due Date:</strong> {{ task.dueDate | date: 'mediumDate' }}</p>
-  </mat-card-content>
-</mat-card>
+<h2 mat-dialog-title>Task Details</h2>
+
+<mat-dialog-content class="details-container">
+  <div class="detail-row">
+    <span class="label">Title:</span>
+    <span class="value">{{ task.title }}</span>
+  </div>
+
+  <div class="detail-row">
+    <span class="label">Description:</span>
+    <span class="value">{{ task.description || '-' }}</span>
+  </div>
+
+  <div class="detail-row">
+    <span class="label">Status:</span>
+    <mat-chip [color]="task.status === 'Completed' ? 'primary' : 'accent'" selected>
+      {{ task.status }}
+    </mat-chip>
+  </div>
+
+  <div class="detail-row">
+    <span class="label">Priority:</span>
+    <mat-chip [color]="getPriorityColor(task.priority)" selected>
+      {{ task.priority }}
+    </mat-chip>
+  </div>
+
+  <div class="detail-row">
+    <span class="label">Due Date:</span>
+    <span class="value">{{ task.dueDate | date: 'mediumDate' }}</span>
+  </div>
+
+  <div class="detail-row">
+    <span class="label">Created At:</span>
+    <span class="value">{{ task.createdAt | date: 'medium' }}</span>
+  </div>
+
+  <div class="detail-row">
+    <span class="label">Updated At:</span>
+    <span class="value">{{ task.updatedAt | date: 'medium' }}</span>
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-stroked-button (click)="close()">Close</button>
+  <button mat-flat-button color="primary" (click)="onEdit()">Edit</button>
+  <button mat-flat-button color="warn" (click)="onDelete()" [disabled]="loading">
+    {{ loading ? 'Deleting...' : 'Delete' }}
+  </button>
+</mat-dialog-actions>

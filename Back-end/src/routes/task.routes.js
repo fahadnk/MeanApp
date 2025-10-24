@@ -51,15 +51,36 @@ router.get("/", authMiddleware, taskController.queryTasks);
 // 📊 Aggregation Endpoints (Admin only)
 // -------------------------
 
-// @route   GET /api/tasks/stats/:groupBy?
-// @desc    Get task statistics grouped by "status" or "user"
-// @example /api/tasks/stats/status  or  /api/tasks/stats/user
-// @access  Private (admin only)
+// ---------------------------------------------------
+// ROUTE 1: GET /stats
+// ---------------------------------------------------
+// This route returns general task statistics when no grouping parameter is provided.
+// Example: GET /api/tasks/stats
+// ---------------------------------------------------
 router.get(
-  "/stats/:groupBy?",
-  authMiddleware,
-  roleMiddleware("admin"),
-  taskController.getTaskStats
+  "/stats",                // ✅ The route path — no dynamic parameter here
+  authMiddleware,          // 🧩 Middleware #1: Verifies JWT and attaches user info (req.user)
+  roleMiddleware("admin"), // 🧩 Middleware #2: Allows access only if the user has an 'admin' role
+  taskController.getTaskStats // 🎯 Controller method that handles the request and sends the response
+  // When a GET request hits "/stats", Express runs:
+  // 1. authMiddleware → 2. roleMiddleware → 3. getTaskStats()
+);
+
+
+// ---------------------------------------------------
+// ROUTE 2: GET /stats/:groupBy
+// ---------------------------------------------------
+// This route allows optional grouping of task statistics by a specific field.
+// Example URLs:
+//   - GET /api/tasks/stats/status → Groups by task status (todo, done, etc.)
+//   - GET /api/tasks/stats/user   → Groups by assigned user
+// ---------------------------------------------------
+router.get(
+  "/stats/:groupBy",       // ✅ The ":groupBy" is a route parameter (dynamic value from the URL)
+  authMiddleware,          // 🧩 Middleware #1: Validates JWT and ensures request is authenticated
+  roleMiddleware("admin"), // 🧩 Middleware #2: Checks if user role = "admin" before proceeding
+  taskController.getTaskStats // 🎯 Controller method reuses the same logic as the first route
+  // Inside controller: req.params.groupBy gives access to the value after "/stats/"
 );
 
 // -------------------------

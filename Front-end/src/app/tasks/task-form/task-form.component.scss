@@ -1,13 +1,15 @@
 .task-form {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 400px;
+}
+
+.row {
+  display: flex;
   gap: 1rem;
 }
 
 .full-width {
-  flex: 1 1 100%;
-}
-
-.half-width {
-  flex: 1 1 48%;
+  width: 100%;
 }
