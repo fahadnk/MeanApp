@@ -42,34 +42,42 @@ class UserService {
   // 2️⃣ Uses repository’s password validation (bcrypt.compare inside).
   // 3️⃣ Generates a signed JWT for authentication.
   async login(email, password) {
-    // Find user by email
-    const user = await userRepository.findByEmail(email);
-    if (!user) throw new Error("Invalid email or password.");
+  // Normalize email for consistent lookup
+  const normalizedEmail = email.trim().toLowerCase();
 
-    // Validate password via repository method
-    const isPasswordValid = await userRepository.validatePassword(password, user.password);
-    if (!isPasswordValid) throw new Error("Invalid email or password.");
-
-    // Ensure environment JWT secret is configured
-    if (!process.env.JWT_SECRET) {
-      throw new Error("JWT secret is missing in environment variables.");
-    }
-
-    // Generate JWT token (valid for 1 day)
-    const token = jwt.sign(
-      { id: user._id, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: "1d" }
-    );
-
-    // Return structured and safe response
-    return {
-      success: true,
-      message: "Login successful.",
-      token,
-      user: userDTO(user),
-    };
+  // Step 1: Find user
+  const user = await userRepository.findByEmail(normalizedEmail);
+  if (!user) {
+    throw new Error("Invalid email or password.");
   }
+
+  // Step 2: Validate password
+  const isValid = await userRepository.validatePassword(password, user.password);
+  if (!isValid) {
+    throw new Error("Invalid email or password.");
+  }
+
+  // Step 3: Ensure JWT secret
+  if (!process.env.JWT_SECRET) {
+    throw new Error("JWT secret not configured.");
+  }
+
+  // Step 4: Generate token
+  const token = jwt.sign(
+    { id: user._id, email: user.email },
+    process.env.JWT_SECRET,
+    { expiresIn: "1d" }
+  );
+
+  // Step 5: Return structured response
+  return {
+    success: true,
+    message: "Login successful.",
+    token,
+    user: userDTO(user),
+  };
+}
+
 
   // ---------------------------------------------------------------------------
   // 👤 Get User by ID

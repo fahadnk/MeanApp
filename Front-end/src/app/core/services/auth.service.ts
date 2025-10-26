@@ -7,8 +7,9 @@ import { tap, catchError, map } from 'rxjs/operators';
 import {jwtDecode} from 'jwt-decode';
 
 interface LoginResponse {
-  token: string;
-  // backend may also return user info
+  data:{
+    token:string
+  }
 }
 
 @Injectable({ providedIn: 'root' })
@@ -27,8 +28,8 @@ export class AuthService {
   login(payload: { email: string; password: string }): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.base}/login`, payload).pipe(
       tap(res => {
-        if (res && res.token) {
-          localStorage.setItem(this.tokenKey, res.token);
+        if (res && res.data && res.data.token) {
+          localStorage.setItem(this.tokenKey, res.data.token);
         }
       }),
       catchError(err => throwError(() => err))
