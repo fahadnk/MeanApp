@@ -1,8 +1,8 @@
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, Validators } from '@angular/forms';
-import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TaskService } from 'src/app/core/services/task.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { ActivatedRoute, Router } from '@angular/router';
 
 @Component({
   selector: 'app-task-form',
@@ -12,28 +12,42 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 export class TaskFormComponent implements OnInit {
   isEdit = false;
   loading = false;
+  taskId: string | null = null;
+
+  taskForm = this.fb.group({
+    title: ['', Validators.required],
+    description: [''],
+    status: ['todo', Validators.required],
+    priority: ['medium', Validators.required],
+    dueDate: ['', Validators.required],
+  });
 
   constructor(
     private fb: FormBuilder,
     private taskService: TaskService,
     private snackBar: MatSnackBar,
-    public dialogRef: MatDialogRef<TaskFormComponent>,
-    @Inject(MAT_DIALOG_DATA) public data: any
+    private router: Router,
+    private route: ActivatedRoute
   ) {}
 
-  taskForm = this.fb.group({
-    title: ['', Validators.required],
-    description: [''],
-    status: ['Pending', Validators.required],
-    priority: ['Medium', Validators.required],
-    dueDate: ['', Validators.required],
-  });
-
   ngOnInit(): void {
-    if (this.data && this.data.task) {
+    // Check for edit mode via URL param
+    this.taskId = this.route.snapshot.paramMap.get('id');
+    if (this.taskId) {
       this.isEdit = true;
-      this.taskForm.patchValue(this.data.task);
+      this.loadTask(this.taskId);
     }
+  }
+
+  loadTask(id: string) {
+    this.taskService.getById(id).subscribe({
+      next: (task) => this.taskForm.patchValue(task),
+      error: (err) => {
+        console.error('Failed to load task', err);
+        this.snackBar.open('Failed to load task', 'Close', { duration: 2500 });
+        this.router.navigate(['/tasks']); // redirect back if fail
+      },
+    });
   }
 
   onSubmit() {
@@ -43,18 +57,18 @@ export class TaskFormComponent implements OnInit {
     const payload = this.taskForm.value;
 
     const request = this.isEdit
-      ? this.taskService.update(this.data.task._id, payload)
+      ? this.taskService.update(this.taskId!, payload)
       : this.taskService.create(payload);
 
     request.subscribe({
-      next: (res) => {
+      next: () => {
         this.loading = false;
         this.snackBar.open(
           this.isEdit ? '✅ Task updated successfully!' : '✅ Task created successfully!',
           'Close',
           { duration: 2500 }
         );
-        this.dialogRef.close(true); // true = refresh
+        this.router.navigate(['/tasks']); // navigate to task list
       },
       error: (err) => {
         this.loading = false;
@@ -65,6 +79,6 @@ export class TaskFormComponent implements OnInit {
   }
 
   onCancel() {
-    this.dialogRef.close();
+    this.router.navigate(['/tasks']);
   }
 }

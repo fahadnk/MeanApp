@@ -23,18 +23,20 @@ class TaskService {
   // -------------------------
   // 🟢 Create a new task
   // -------------------------
-  async createTask(taskData) {
-    // Persist task to DB
-    const task = await taskRepository.create(taskData);
+async createTask(taskData, currentUser) {
+  // Ensure createdBy is set automatically
+  const task = await taskRepository.create({
+    ...taskData,
+    createdBy: currentUser.id,         // REQUIRED
+    assignedTo: taskData.assignedTo || currentUser.id, // optional default
+  });
 
-    // Convert DB doc → DTO
-    const dto = taskDTO(task);
+  const dto = taskDTO(task);
+  notificationService.emit("taskCreated", dto);
 
-    // 🔔 Notify all clients (Observer Pattern)
-    notificationService.emit("taskCreated", dto);
+  return dto;
+}
 
-    return dto;
-  }
 
   // -------------------------
   // 🔍 Get task by ID (Access Control)

@@ -24,7 +24,7 @@ class TaskController {
     try {
       // Delegate creation logic to the service layer
       // The request body should contain title, description, etc.
-      const task = await taskService.createTask(req.body);
+      const task = await taskService.createTask(req.body, req.user);
 
       // Respond with success message and created task
       res.status(201).json({ success: true, task });
@@ -128,7 +128,7 @@ class TaskController {
   async queryTasks(req, res) {
     try {
       // `req.query` contains URL query parameters (?search=abc&page=2&limit=10)
-      const data = await taskService.queryTasks(req.query, req.user);
+      const data = await taskService.getTasks(req.query, req.user);
 
       // Spread `data` to include pagination + results
       res.json({ success: true, ...data });

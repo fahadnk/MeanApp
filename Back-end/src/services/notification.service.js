@@ -1,86 +1,56 @@
 // ============================================================================
 //  Notification Service (Observer Pattern)
-// ----------------------------------------------------------------------------
-//  PURPOSE:
-//    This service acts as a decoupled event emitter for all real-time updates
-//    across the system. It listens to domain-level events (like task creation
-//    or updates) and broadcasts them through Socket.IO to connected clients.
-//
-//  WHY:
-//    - Keeps WebSocket logic separate from business logic.
-//    - Maintains clean separation of concerns (Service → Repository → Controller).
-//    - Implements a lightweight Observer pattern: business events trigger
-//      notifications without knowing how they’re delivered.
-//
-//  EXAMPLE USE CASE:
-//    In TaskService after creating a task:
-//        notificationService.taskCreated(createdTask);
-//
-//    The connected frontend automatically receives a `taskCreated` event.
 // ============================================================================
-
 class NotificationService {
-  /**
-   * @constructor
-   * @param {Server} io - Optional Socket.IO instance (injected at runtime)
-   */
   constructor(io) {
-    this.io = io; // Will hold active Socket.IO server instance
+    this.io = io; // Socket.IO instance will be attached at runtime
   }
 
   /**
-   * Attach a live Socket.IO instance after server initialization.
-   * Called once inside `server.js` after the HTTP + Socket.IO server starts.
-   *
-   * @param {Server} io - Active Socket.IO instance from `server.js`
+   * Attach a live Socket.IO instance
    */
   attachIO(io) {
     this.io = io;
   }
 
-  // --------------------------------------------------------------------------
-  // 🟢 Emit Task Created Event
-  // --------------------------------------------------------------------------
   /**
-   * Broadcasts a new task creation event to all connected clients.
-   * The frontend can listen for "taskCreated" to refresh UI or notify users.
-   *
-   * @param {Object} task - Task data object (usually includes title, status, etc.)
+   * Generic emit function — works for any event
+   * Example: notificationService.emit('taskCreated', task)
    */
-  taskCreated(task) {
+  emit(event, data) {
     if (this.io) {
-      // Broadcast event globally — can be optimized to emit to specific rooms
-      this.io.emit("taskCreated", task);
-      console.log("📢 Task Created Event Emitted:", task.title);
+      this.io.emit(event, data);
+      console.log(`📢 Event Emitted: ${event}`, data);
     } else {
-      console.warn("⚠️ Socket.IO instance not attached; cannot emit 'taskCreated'.");
+      console.warn(`⚠️ Socket.IO instance not attached; cannot emit '${event}'.`);
     }
   }
 
-  // --------------------------------------------------------------------------
-  // 🟡 Emit Task Updated Event
-  // --------------------------------------------------------------------------
   /**
-   * Broadcasts a task update event to all connected clients.
-   * Clients can listen for "taskUpdated" to sync their task states in real-time.
-   *
-   * @param {Object} task - Updated task data
+   * Emit Task Created Event (specific helper)
+   */
+  taskCreated(task) {
+    this.emit("taskCreated", task);
+    console.log("📢 Task Created Event Emitted:", task.title);
+  }
+
+  /**
+   * Emit Task Updated Event (specific helper)
    */
   taskUpdated(task) {
-    if (this.io) {
-      this.io.emit("taskUpdated", task);
-      console.log("📢 Task Updated Event Emitted:", task.title);
-    } else {
-      console.warn("⚠️ Socket.IO instance not attached; cannot emit 'taskUpdated'.");
-    }
+    this.emit("taskUpdated", task);
+    console.log("📢 Task Updated Event Emitted:", task.title);
+  }
+
+  /**
+   * Emit Task Deleted Event (specific helper)
+   */
+  taskDeleted(taskId) {
+    this.emit("taskDeleted", { id: taskId });
+    console.log("📢 Task Deleted Event Emitted:", taskId);
   }
 }
 
-// -----------------------------------------------------------------------------
-// 🧩 Export Singleton Instance
-// -----------------------------------------------------------------------------
-// The service is exported as a singleton to maintain a single shared Socket.IO
-// context across the entire backend. This ensures all parts of the system emit
-// events through the same WebSocket connection.
+// Export singleton
 const notificationService = new NotificationService();
 export default notificationService;

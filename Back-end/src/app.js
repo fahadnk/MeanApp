@@ -10,7 +10,7 @@
 import express from "express";               // Express framework
 import cors from "cors";                     // Enable Cross-Origin Resource Sharing
 import helmet from "helmet";                 // Sets HTTP headers for better security
-import { xss } from "express-xss-sanitizer"; // Prevents XSS attacks in request bodies
+// import { xss } from "express-xss-sanitizer"; // Prevents XSS attacks in request bodies
 import morgan from "morgan";                 // HTTP request logger middleware
 import { v4 as uuidv4 } from "uuid";         // Generates unique request IDs for tracing
 
@@ -58,7 +58,7 @@ app.use((req, res, next) => {
 app.use(express.json()); // Parse JSON request bodies
 app.use(cors());         // Enable CORS for all origins
 app.use(helmet());       // Secure HTTP headers
-app.use(xss());          // Sanitize user input from XSS payloads
+// app.use(xss());          // Sanitize user input from XSS payloads
 app.use(sanitizeRequest); // Sanitize Mongo injection attempts ($ / . keys)
 
 

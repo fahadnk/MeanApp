@@ -12,6 +12,7 @@ const routes: Routes = [
   { path: 'register', component: RegisterComponent },
   { path: 'tasks', component: TaskListComponent, canActivate: [AuthGuard] },
   { path: 'tasks/new', component: TaskFormComponent, canActivate: [AuthGuard] },
+  { path: 'tasks/edit/:id', component: TaskFormComponent, canActivate: [AuthGuard]  },
   { path: 'tasks/:id', component: TaskDetailsComponent, canActivate: [AuthGuard] },
   { path: '', redirectTo: '/tasks', pathMatch: 'full' },
 ];
