@@ -32,7 +32,7 @@ async createTask(taskData, currentUser) {
   });
 
   const dto = taskDTO(task);
-  notificationService.emit("taskCreated", dto);
+  notificationService.taskCreated(dto);
 
   return dto;
 }
@@ -95,7 +95,7 @@ async createTask(taskData, currentUser) {
     const dto = taskDTO(updated);
 
     // 🔔 Emit "taskUpdated" event in real-time
-    notificationService.emit("taskUpdated", dto);
+      notificationService.taskUpdated(dto);
 
     return dto;
   }
@@ -116,9 +116,11 @@ async createTask(taskData, currentUser) {
 
     // Delete via repository
     const deletedTask = await taskRepository.delete(id);
+    
 
     // 🔔 Emit event (optional)
-    notificationService.emit("taskDeleted", { id });
+     notificationService.taskDeleted({ id });
+    
 
     return deletedTask;
   }
