@@ -12,7 +12,7 @@ import { PageEvent } from '@angular/material/paginator';
 })
 export class TaskListComponent implements OnInit {
   tasks: any[] = [];
-  displayedColumns: string[] = ['title', 'priority', 'status', 'actions'];
+  displayedColumns: string[] = ['title', 'priority', 'status', 'dueDate', 'actions'];
 
   // filters + pagination
   page = 1;
@@ -39,7 +39,7 @@ export class TaskListComponent implements OnInit {
 
     this.taskService.list(options).subscribe({
       next: (res) => {
-        this.tasks = res.data || res; // supports either paginated or plain array
+        this.tasks = res.tasks || res; // supports either paginated or plain array
         this.total = res.pagination?.total || this.tasks.length;
       },
       error: (err) => {
@@ -62,7 +62,7 @@ export class TaskListComponent implements OnInit {
 
   confirmDelete(task: any): void {
     if (confirm(`Delete task "${task.title}"?`)) {
-      this.taskService.delete(task._id).subscribe({
+      this.taskService.delete(task.id).subscribe({
         next: () => {
           this.snack.open('Task deleted', 'Close', { duration: 2500 });
           this.loadTasks();

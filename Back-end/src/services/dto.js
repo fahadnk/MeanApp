@@ -35,5 +35,7 @@ export function taskDTO(task) {
 
     createdAt: task.createdAt, // Task creation timestamp
     updatedAt: task.updatedAt, // Last updated timestamp
+    dueDate: task.dueDate // Due date set while creating 
+
   };
 }

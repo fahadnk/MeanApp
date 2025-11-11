@@ -43,6 +43,15 @@ const taskSchema = new mongoose.Schema(
       ref: "User", 
       required: true 
     },
+
+    dueDate: {
+      type: Date,
+      required: true,
+      validate: {
+        validator: (value) => value >= new Date(),
+        message: "Due date cannot be in the past",
+      },
+    },
   },
   {
     // Automatically adds 'createdAt' and 'updatedAt' timestamps
