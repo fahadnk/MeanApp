@@ -18,6 +18,19 @@ $my-theme: mat.define-light-theme((
 // 3️⃣ Apply all component themes
 @include mat.all-component-themes($my-theme);
 
+.cdk-overlay-container,
+.cdk-overlay-pane,
+.mat-select-panel {
+  z-index: 2000 !important;
+  position: fixed !important;
+}
+
+.task-page,
+.task-form,
+.mat-card {
+  overflow: visible !important;
+}
+
 .auth-container {
   display: flex;
   justify-content: center;

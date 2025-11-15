@@ -128,7 +128,7 @@ class TaskController {
   async queryTasks(req, res) {
     try {
       // `req.query` contains URL query parameters (?search=abc&page=2&limit=10)
-      const data = await taskService.getTasks(req.query, req.user);
+      const data = await taskService.getTasks(req.user, req.query);
 
       // Spread `data` to include pagination + results
       res.json({ success: true, ...data });

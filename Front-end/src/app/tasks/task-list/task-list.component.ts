@@ -4,6 +4,7 @@ import { Component, OnInit } from '@angular/core';
 import { TaskService } from '../../core/services/task.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { PageEvent } from '@angular/material/paginator';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-task-list',
@@ -22,7 +23,7 @@ export class TaskListComponent implements OnInit {
   status = '';
   priority = '';
 
-  constructor(private taskService: TaskService, private snack: MatSnackBar) {}
+  constructor(private taskService: TaskService, private snack: MatSnackBar,  private router: Router) {}
 
   ngOnInit(): void {
     this.loadTasks();
@@ -73,5 +74,14 @@ export class TaskListComponent implements OnInit {
         },
       });
     }
+  }
+
+    // -------------------------
+  // 🔒 Logout Function
+  // -------------------------
+  logout(): void {
+    localStorage.removeItem('token'); // remove JWT token
+    this.snack.open('Logged out successfully', 'Close', { duration: 2000 });
+    this.router.navigate(['/login']); // navigate to login page
   }
 }

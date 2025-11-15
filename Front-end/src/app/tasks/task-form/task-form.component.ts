@@ -13,6 +13,7 @@ export class TaskFormComponent implements OnInit {
   isEdit = false;
   loading = false;
   taskId: string | null = null;
+  today = new Date();
 
   taskForm = this.fb.group({
     title: ['', Validators.required],
@@ -80,5 +81,16 @@ export class TaskFormComponent implements OnInit {
 
   onCancel() {
     this.router.navigate(['/tasks']);
+  }
+
+    get isPastDate(): boolean {
+    const dueDate = this.taskForm.get('dueDate')?.value;
+    if (!dueDate) return false;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const selected = new Date(dueDate);
+    return selected < today;
   }
 }

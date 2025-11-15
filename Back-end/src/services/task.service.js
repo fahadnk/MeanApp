@@ -111,28 +111,53 @@ async getTaskById(id, currentUser) {
     return { tasks: dtoList, pagination };
   }
 
-  // -------------------------
-  // ✏️ Update task (with Access Validation)
-  // -------------------------
-  async updateTask(id, updateData, currentUser) {
-    const task = await taskRepository.findById(id);
-    if (!task) throw new Error("Task not found");
+ async updateTask(id, updateData, currentUser) {
+  // 1️⃣ Retrieve the task from the database by its unique ID
+  // taskRepository.findById returns a task object if found, otherwise null/undefined
+  const task = await taskRepository.findById(id);
 
-    if (
-      currentUser.role !== "admin" &&
-      task.createdBy.toString() !== currentUser.id.toString()
-    ) {
-      throw new Error("Access denied");
-    }
+  // 2️⃣ If no task exists with the given ID, throw an error
+  // This prevents updating a non-existent task
+  if (!task) throw new Error("Task not found");
 
-    const updated = await taskRepository.update(id, updateData);
-    const dto = taskDTO(updated);
+  // 3️⃣ Normalize the 'createdBy' field from the task
+  // In MongoDB with Mongoose, the 'createdBy' field could either be:
+  // a) an Object (populated reference) → task.createdBy._id
+  // b) a raw ObjectId → task.createdBy
+  // We convert it to a string for reliable comparison with currentUser.id
+  const createdById =
+    typeof task.createdBy === "object"
+      ? task.createdBy._id?.toString() // If populated, get the _id and convert to string
+      : task.createdBy?.toString();    // If raw ObjectId, convert to string
 
-    // 🔔 Emit "taskUpdated" event in real-time
-      notificationService.taskUpdated(dto);
-
-    return dto;
+  // 4️⃣ Authorization check: ensure the user has permission to update this task
+  // Admin users can update any task
+  // Non-admin users can only update tasks they created
+  // If neither condition is met, throw an "Access denied" error
+  if (currentUser.role !== "admin" && createdById !== currentUser.id.toString()) {
+    throw new Error("Access denied"); // This was causing 403 in your API
   }
+
+  // 5️⃣ Perform the update using the repository
+  // taskRepository.update handles the database update operation
+  // updateData contains the fields to be updated
+  const updated = await taskRepository.update(id, updateData);
+
+  // 6️⃣ Transform the updated task object into a DTO
+  // taskDTO filters and structures the data to return only relevant info
+  // This ensures the client does not get sensitive internal fields
+  const dto = taskDTO(updated);
+
+  // 7️⃣ Notify other services or clients about the task update
+  // notificationService.taskUpdated could trigger WebSocket events,
+  // email notifications, or other side-effects
+  notificationService.taskUpdated(dto);
+
+  // 8️⃣ Return the transformed task to the client
+  // Provides a clean, structured response
+  return dto;
+}
+
 
   // Delete Function
 
