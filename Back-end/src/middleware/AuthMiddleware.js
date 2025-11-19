@@ -62,7 +62,7 @@ function authMiddleware(req, res, next) {
     // This helps prevent malformed or incomplete tokens from passing through.
     if (!decoded || !decoded.id) {
       return res.status(403).json({
-        message: "Invalid token payload.",
+        message: "Invalid token",
       });
     }
 

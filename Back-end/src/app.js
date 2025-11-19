@@ -58,7 +58,7 @@ app.use((req, res, next) => {
 app.use(express.json()); // Parse JSON request bodies
 app.use(cors());         // Enable CORS for all origins
 app.use(helmet());       // Secure HTTP headers
-// app.use(xss());          // Sanitize user input from XSS payloads
+// app.use(xss());          // Sanitize user input from XSS payloads //Cross Site Scripting
 app.use(sanitizeRequest); // Sanitize Mongo injection attempts ($ / . keys)
 
 
