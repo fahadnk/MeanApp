@@ -34,6 +34,9 @@ async createTask(taskData, currentUser) {
   const dto = taskDTO(task);
   notificationService.taskCreated(dto);
 
+      // ⭐ ADDED
+  await this.notifyTaskCreatedForUser(task);
+
   return dto;
 }
 
@@ -195,6 +198,14 @@ async getTaskById(id, currentUser) {
       return deletedTask;
     }
 
+  async countTasksForUser(userId) {
+    return await taskRepository.countByAssignedUser(userId);
+  }
+
+  async getTasksByUser(userId, { page = 1, limit = 10 } = {}) {
+    return await taskRepository.findByUser(userId, { page, limit });
+  }
+
 
   // -------------------------
   // 📊 Task Aggregation (Analytics)
@@ -206,6 +217,33 @@ async getTaskById(id, currentUser) {
     ]);
     return { byUser, byStatus };
   }
+
+  // -------------------------
+  // 🔔 Notify specific user when a task is created
+  // -------------------------
+  async notifyTaskCreatedForUser(task) {
+
+    // Extract the user ID assigned to the task.
+    // Because Mongoose can return populated objects OR raw ObjectId,
+    // we safely detect the format.
+
+    const userId =
+      typeof task.assignedTo === "object"          // If `assignedTo` is populated (full user object)
+        ? task.assignedTo._id?.toString()          // → Extract its _id and convert to string
+        : task.assignedTo?.toString();             // Otherwise, use the raw ObjectId directly
+
+    // If a userId was successfully extracted
+    if (userId) {
+
+      // Forward the event to the NotificationService.
+      // This method will:
+      //  - Find the user’s socket room (userId)
+      //  - Emit a "taskCreated" event with task details
+      //  - Notify ONLY that specific user
+      notificationService.taskCreatedForUser(userId, task);
+    }
+  }
+
 }
 
 // -------------------------

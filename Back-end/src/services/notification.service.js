@@ -49,6 +49,21 @@ class NotificationService {
     this.emit("taskDeleted", { id: taskId });
     console.log("📢 Task Deleted Event Emitted:", taskId);
   }
+
+    /**
+   * ⭐ NEW FUNCTION
+   * Send notification only to the assigned user
+   */
+  taskCreatedForUser(userId, task) {
+    if (this.io) {
+      this.io.to(String(userId)).emit("taskAssigned", task);
+      console.log(`🎯 Task Assigned Event sent to user ${userId}`);
+    } else {
+      console.warn(
+        `⚠️ Socket.IO instance not attached; cannot emit 'taskAssigned' to user ${userId}.`
+      );
+    }
+  }
 }
 
 // Export singleton

@@ -25,6 +25,7 @@ import sanitizeRequest from "./middleware/SanitizeMiddleware.js"; // Prevents No
 import healthRoutes from "./routes/health.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import taskRoutes from "./routes/task.routes.js";
+import adminRoutes from "./routes/admin.routes.js";
 
 // ----------------------------
 // ⚠️ Error + Logging Utilities
@@ -87,6 +88,7 @@ app.use(
 app.use("/api/health", healthRoutes); // Health check endpoint
 app.use("/api/auth", authRoutes);     // Auth routes (login/register)
 app.use("/api/tasks", taskRoutes);    // Task CRUD routes
+app.use("/api/admin", adminRoutes);
 
 
 // -----------------------------------------------------------------------------

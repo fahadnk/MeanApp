@@ -23,6 +23,14 @@ const userSchema = new mongoose.Schema(
     // 'role' field: can only be either 'user' or 'admin'
     // defaults to 'user' if not specified
     role: { type: String, enum: ["user", "admin"], default: "user" },
+
+    notifications: [
+      {
+        message: String,
+        createdAt: Date,
+        read: { type: Boolean, default: false }
+      }
+    ]
   },
   {
     // Adds 'createdAt' and 'updatedAt' fields automatically to each document

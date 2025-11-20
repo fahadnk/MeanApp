@@ -203,6 +203,11 @@ class TaskRepository {
       { $project: { status: "$_id", total: 1, _id: 0 } },
     ]);
   }
+
+  async countByAssignedUser(userId) {
+    if (!mongoose.Types.ObjectId.isValid(userId)) return 0;
+    return await Task.countDocuments({ assignedTo: userId });
+  }
 }
 
 

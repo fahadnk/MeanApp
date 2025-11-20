@@ -1,0 +1,13 @@
+<mat-card *ngIf="user">
+  <h2>{{ user.name }}</h2>
+  <p>Email: {{ user.email }}</p>
+  <p>Role: {{ user.role }}</p>
+</mat-card>
+
+<mat-card>
+  <h3>Assigned Tasks</h3>
+
+  <div *ngFor="let t of tasks" class="task-item">
+    <div>{{ t.title }} — {{ t.status }}</div>
+  </div>
+</mat-card>
