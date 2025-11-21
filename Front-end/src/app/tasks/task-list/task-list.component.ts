@@ -5,6 +5,7 @@ import { TaskService } from '../../core/services/task.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
+import { AuthService } from 'src/app/core/services/auth.service';
 
 @Component({
   selector: 'app-task-list',
@@ -22,10 +23,12 @@ export class TaskListComponent implements OnInit {
   search = '';
   status = '';
   priority = '';
+  isAdmin = false;
 
-  constructor(private taskService: TaskService, private snack: MatSnackBar,  private router: Router) {}
+  constructor(private taskService: TaskService, private snack: MatSnackBar, private authService: AuthService) {}
 
   ngOnInit(): void {
+    this.isAdmin = this.authService.userRole === 'admin';
     this.loadTasks();
   }
 
@@ -74,14 +77,5 @@ export class TaskListComponent implements OnInit {
         },
       });
     }
-  }
-
-    // -------------------------
-  // 🔒 Logout Function
-  // -------------------------
-  logout(): void {
-    localStorage.removeItem('token'); // remove JWT token
-    this.snack.open('Logged out successfully', 'Close', { duration: 2000 });
-    this.router.navigate(['/login']); // navigate to login page
   }
 }

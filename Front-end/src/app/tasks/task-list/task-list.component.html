@@ -6,9 +6,9 @@
     <div class="toolbar">
       <h2>Tasks</h2>
       <div>
-        <button mat-button color="warn" (click)="logout()">
-          <mat-icon>logout</mat-icon>
-          Logout
+        <button *ngIf="isAdmin" mat-raised-button color="primary" routerLink="/admin/users">
+          <mat-icon>list</mat-icon>
+          Users List
         </button>
         <button mat-raised-button color="primary" routerLink="/tasks/new">
           <mat-icon>add</mat-icon>

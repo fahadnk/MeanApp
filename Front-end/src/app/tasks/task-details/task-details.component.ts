@@ -2,7 +2,8 @@ import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { TaskService } from 'src/app/core/services/task.service';
-import { TaskFormComponent } from '../task-form/task-form.component';
+import { Location } from '@angular/common';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-task-details',
@@ -17,8 +18,9 @@ export class TaskDetailsComponent {
     public dialogRef: MatDialogRef<TaskDetailsComponent>,
     private taskService: TaskService,
     private snackBar: MatSnackBar,
-    private dialog: MatDialog
-  ) {}
+    private router: Router,
+    private location: Location
+  ) { }
 
   // ----------------------------
   // Priority color mapping
@@ -46,28 +48,8 @@ export class TaskDetailsComponent {
   // Edit task
   // ----------------------------
   onEdit(): void {
-    const dialogRef = this.dialog.open(TaskFormComponent, {
-      width: '500px',
-      data: { ...this.task },
-    });
-
-    dialogRef.afterClosed().subscribe((updatedData) => {
-      if (updatedData) {
-        this.loading = true;
-        this.taskService.update(this.task._id, updatedData).subscribe({
-          next: (res) => {
-            this.snackBar.open('✅ Task updated successfully', 'OK', { duration: 2000 });
-            this.loading = false;
-            this.dialogRef.close(true); // trigger parent refresh
-          },
-          error: (err) => {
-            this.loading = false;
-            console.error('❌ Error updating task:', err);
-            this.snackBar.open('Failed to update task', 'Dismiss', { duration: 3000 });
-          },
-        });
-      }
-    });
+    this.dialogRef.close(); // close current dialog
+    this.router.navigate(['/tasks/edit', this.task._id]);
   }
 
   // ----------------------------
@@ -89,5 +71,9 @@ export class TaskDetailsComponent {
         this.snackBar.open('Failed to delete task', 'Dismiss', { duration: 3000 });
       },
     });
+  }
+
+  goBack() {
+    this.location.back();
   }
 }

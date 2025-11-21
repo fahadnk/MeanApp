@@ -43,8 +43,3 @@ mat-card {
   background-color: #f9f9f9;
   transition: background-color 0.2s ease-in-out;
 }
-
-::ng-deep .cdk-overlay-pane {
-  z-index: 10000 !important;
-  overflow: visible !important;
-}

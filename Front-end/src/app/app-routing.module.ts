@@ -15,12 +15,10 @@ const routes: Routes = [
   { path: 'tasks/edit/:id', component: TaskFormComponent, canActivate: [AuthGuard]  },
   { path: 'tasks/:id', component: TaskDetailsComponent, canActivate: [AuthGuard] },
   { path: '', redirectTo: '/tasks', pathMatch: 'full' },
-{
-  path: 'admin',
-  loadChildren: () => import('./admin/admin.module').then(m => m.AdminModule)
-}
-
-+
+  {
+    path: 'admin',
+    loadChildren: () => import('./admin/admin.module').then(m => m.AdminModule)
+  }
 ];
 
 @NgModule({

@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { FormBuilder, Validators } from '@angular/forms';
+import { FormBuilder, Validators, AbstractControl } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from 'src/app/core/services/auth.service';
 
@@ -17,14 +17,27 @@ export class RegisterComponent {
     private authService: AuthService
   ) {}
 
+  // Custom validator
+  passwordMatchValidator(control: AbstractControl) {
+    const pass = control.get('password')?.value;
+    const confirm = control.get('confirmPassword')?.value;
+
+    return pass === confirm ? null : { passwordMismatch: true };
+  }
+
   // ----------------------------
-  // Reactive form definition
+  // Reactive Form
   // ----------------------------
-  registerForm = this.fb.group({
-    name: ['', Validators.required],
-    email: ['', [Validators.required, Validators.email]],
-    password: ['', [Validators.required, Validators.minLength(6)]],
-  });
+  registerForm = this.fb.group(
+    {
+      name: ['', Validators.required],
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]],
+      confirmPassword: ['', Validators.required],
+      role: ['user', Validators.required], // default role
+    },
+    { validators: this.passwordMatchValidator.bind(this) }
+  );
 
   // ----------------------------
   // Submit handler
@@ -32,15 +45,12 @@ export class RegisterComponent {
   onSubmit() {
     if (this.registerForm.invalid) return;
 
-    // Extract safely typed values
-    const { name, email, password } = this.registerForm.value;
+    const { name, email, password, role } = this.registerForm.value;
 
-    // Ensure all required values are present
-    if (!name || !email || !password) return;
+    if (!name || !email || !password || !role) return;
 
-    // Call the backend via AuthService
     this.authService
-      .register({ name, email, password })
+      .register({ name, email, password, role })
       .subscribe({
         next: (res) => {
           console.log('✅ Registration successful', res);
@@ -48,7 +58,6 @@ export class RegisterComponent {
         },
         error: (err) => {
           console.error('❌ Registration failed', err);
-          // Optionally show an error alert or toast here
         },
       });
   }

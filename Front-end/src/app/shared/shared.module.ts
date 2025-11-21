@@ -8,6 +8,7 @@ import { NotificationBellComponent } from './notification-bell/notification-bell
 import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { HeaderComponent } from './header/header.component';
+import { MatToolbarModule } from '@angular/material/toolbar';
 
 @NgModule({
   declarations: [NotificationBellComponent, HeaderComponent],
@@ -17,8 +18,9 @@ import { HeaderComponent } from './header/header.component';
     MatMenuModule,
     MatIconModule,
     MatListModule,
-    MatButtonModule
+    MatButtonModule,
+    MatToolbarModule
   ],
-  exports: [NotificationBellComponent]
+  exports: [NotificationBellComponent, HeaderComponent]
 })
 export class SharedModule {}

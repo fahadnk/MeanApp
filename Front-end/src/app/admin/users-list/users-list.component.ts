@@ -1,17 +1,18 @@
 import { Component, OnInit } from '@angular/core';
 import { AdminService } from '../services/admin.service';
 import { Router } from '@angular/router';
+import { Location } from '@angular/common';
 
 @Component({
   selector: 'app-user-list',
-  templateUrl: './user-list.component.html',
-  styleUrls: ['./user-list.component.scss']
+  templateUrl: './users-list.component.html',
+  styleUrls: ['./users-list.component.scss']
 })
 export class UserListComponent implements OnInit {
   displayedColumns = ['name', 'email', 'role', 'actions'];
   users: any[] = [];
 
-  constructor(private admin: AdminService, private router: Router) {}
+  constructor(private admin: AdminService, private router: Router, private location: Location) {}
 
   ngOnInit() {
     this.admin.getUsers().subscribe((res: any) => {
@@ -25,5 +26,9 @@ export class UserListComponent implements OnInit {
 
   assignTask(user: any) {
     this.router.navigate(['/admin/assign-task', user.id]);
+  }
+
+  goBack() {
+    this.location.back();
   }
 }

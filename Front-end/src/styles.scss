@@ -18,13 +18,6 @@ $my-theme: mat.define-light-theme((
 // 3️⃣ Apply all component themes
 @include mat.all-component-themes($my-theme);
 
-.cdk-overlay-container,
-.cdk-overlay-pane,
-.mat-select-panel {
-  z-index: 2000 !important;
-  position: fixed !important;
-}
-
 .task-page,
 .task-form,
 .mat-card {
@@ -203,4 +196,23 @@ $my-theme: mat.define-light-theme((
   .value {
     color: #333;
   }
+}
+
+// Fix select dropdowns going behind content
+.cdk-overlay-container {
+  z-index: 2000 !important;
+}
+
+.mat-select-panel {
+  z-index: 2100 !important;
+}
+
+.back-btn-container {
+  display: flex;
+  justify-content: flex-end; /* pushes button to the RIGHT */
+  width: 100%;
+}
+
+.back-btn-container button {
+  margin-bottom: 10px;
 }

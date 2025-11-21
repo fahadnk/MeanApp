@@ -16,6 +16,7 @@ interface LoginResponse {
 export class AuthService {
   private base = `${environment.apiUrl}/auth`;
   private tokenKey = 'token';
+  public userRole: string | null = null;
 
   // ---------------------------------------------
   // 🌟 NEW: Current User State (BehaviorSubject)
@@ -25,24 +26,25 @@ export class AuthService {
 
   constructor(private http: HttpClient) {}
 
-  // -------------------
-  // Register
-  // -------------------
-  register(payload: { name: string; email: string; password: string }): Observable<any> {
-    return this.http.post(`${this.base}/register`, payload).pipe(
-      catchError(err => throwError(() => err))
-    );
-  }
+// -------------------
+// Register
+// -------------------
+register(payload: { name: string; email: string; password: string; role: string }): Observable<any> {
+  return this.http.post(`${this.base}/register`, payload).pipe(
+    catchError(err => throwError(() => err))
+  );
+}
+
 
   // -------------------
   // Login
   // -------------------
   login(payload: { email: string; password: string }): Observable<LoginResponse> {
     return this.http.post<LoginResponse>(`${this.base}/login`, payload).pipe(
-      tap(res => {
+      tap((res: any) => {
         if (res?.data?.token) {
           localStorage.setItem(this.tokenKey, res.data.token);
-
+          this.userRole = res.data?.user.role || null;
           // NEW: update currentUser$
           const decoded = this.safeDecode(res.data.token);
           this.currentUserSubject.next(decoded);

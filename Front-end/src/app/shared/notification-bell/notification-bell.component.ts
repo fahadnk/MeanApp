@@ -1,6 +1,6 @@
 // src/app/shared/components/notification-bell/notification-bell.component.ts
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import { NotificationService, NotificationItem } from '../../../core/services/notification.service';
+import { NotificationService, NotificationItem } from '../../core/services/notification.service';
 import { Subscription } from 'rxjs';
 import { Router } from '@angular/router';
 

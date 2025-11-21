@@ -1,28 +1,62 @@
-<mat-card>
+<div class="task-page">
   <h2>Assign Task</h2>
 
-  <form [formGroup]="form" (ngSubmit)="submit()">
+  <div class="back-btn-container">
+    <button mat-icon-button color="primary" (click)="goBack()">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+  </div>
 
-    <mat-form-field appearance="outline" class="w-100">
+  <form [formGroup]="form" class="task-form" (ngSubmit)="submit()">
+
+    <mat-form-field appearance="outline">
       <mat-label>Title</mat-label>
       <input matInput formControlName="title" />
+      <mat-error *ngIf="form.get('title')?.invalid">Title is required</mat-error>
     </mat-form-field>
 
-    <mat-form-field appearance="outline" class="w-100">
+    <mat-form-field appearance="outline">
       <mat-label>Description</mat-label>
       <textarea matInput formControlName="description"></textarea>
     </mat-form-field>
 
-    <mat-form-field appearance="outline" class="w-100">
-      <mat-label>Priority</mat-label>
-      <mat-select formControlName="priority">
-        <mat-option value="low">Low</mat-option>
-        <mat-option value="medium">Medium</mat-option>
-        <mat-option value="high">High</mat-option>
-      </mat-select>
+    <div class="row">
+      <mat-form-field appearance="outline">
+        <mat-label>Status</mat-label>
+        <mat-select formControlName="status">
+          <mat-option value="todo">Pending</mat-option>
+          <mat-option value="in-progress">In Progress</mat-option>
+          <mat-option value="done">Completed</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Priority</mat-label>
+        <mat-select formControlName="priority">
+          <mat-option value="low">Low</mat-option>
+          <mat-option value="medium">Medium</mat-option>
+          <mat-option value="high">High</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <mat-form-field appearance="outline" class="full-width">
+      <mat-label>Due Date</mat-label>
+      <input matInput [matDatepicker]="picker" formControlName="dueDate" />
+      <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+      <mat-datepicker #picker></mat-datepicker>
+      <mat-error *ngIf="isPastDate">
+        Past dates are not allowed
+      </mat-error>
     </mat-form-field>
 
-    <button mat-raised-button color="primary">Create Task</button>
+    <div class="actions">
+      <button mat-button type="button" (click)="goBack()">Cancel</button>
+
+      <button mat-flat-button color="primary" type="submit" [disabled]="form.invalid">
+        Create
+      </button>
+    </div>
 
   </form>
-</mat-card>
+</div>

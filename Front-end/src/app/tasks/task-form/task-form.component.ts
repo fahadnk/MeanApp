@@ -3,6 +3,7 @@ import { FormBuilder, Validators } from '@angular/forms';
 import { TaskService } from 'src/app/core/services/task.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router } from '@angular/router';
+import { Location } from '@angular/common';
 
 @Component({
   selector: 'app-task-form',
@@ -28,8 +29,9 @@ export class TaskFormComponent implements OnInit {
     private taskService: TaskService,
     private snackBar: MatSnackBar,
     private router: Router,
-    private route: ActivatedRoute
-  ) {}
+    private route: ActivatedRoute,
+    private location: Location
+  ) { }
 
   ngOnInit(): void {
     // Check for edit mode via URL param
@@ -83,7 +85,7 @@ export class TaskFormComponent implements OnInit {
     this.router.navigate(['/tasks']);
   }
 
-    get isPastDate(): boolean {
+  get isPastDate(): boolean {
     const dueDate = this.taskForm.get('dueDate')?.value;
     if (!dueDate) return false;
 
@@ -92,5 +94,9 @@ export class TaskFormComponent implements OnInit {
 
     const selected = new Date(dueDate);
     return selected < today;
+  }
+
+  goBack() {
+    this.location.back();
   }
 }
