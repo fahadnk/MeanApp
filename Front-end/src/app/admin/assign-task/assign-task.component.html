@@ -1,12 +1,5 @@
 <div class="task-page">
   <h2>Assign Task</h2>
-
-  <div class="back-btn-container">
-    <button mat-icon-button color="primary" (click)="goBack()">
-      <mat-icon>arrow_back</mat-icon>
-    </button>
-  </div>
-
   <form [formGroup]="form" class="task-form" (ngSubmit)="submit()">
 
     <mat-form-field appearance="outline">

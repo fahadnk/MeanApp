@@ -1,10 +1,5 @@
 <mat-card *ngIf="user" class="mb-4 p-4">
   <h2 class="mb-2">{{ user.name }}</h2>
-  <div class="back-btn-container">
-  <button mat-icon-button color="primary" (click)="goBack()">
-    <mat-icon>arrow_back</mat-icon>
-  </button>
-</div>
 
   <p>Email: <strong>{{ user.email }}</strong></p>
   <p>Role: <strong>{{ user.role }}</strong></p>
@@ -23,9 +18,9 @@
       <mat-label>Status</mat-label>
       <mat-select [(value)]="selectedStatus" (selectionChange)="applyFilters()">
         <mat-option value="">All</mat-option>
-        <mat-option value="pending">Pending</mat-option>
+        <mat-option value="todo">Pending</mat-option>
         <mat-option value="in-progress">In Progress</mat-option>
-        <mat-option value="completed">Completed</mat-option>
+        <mat-option value="done">Completed</mat-option>
       </mat-select>
     </mat-form-field>
 

@@ -6,7 +6,6 @@ import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatDialog } from '@angular/material/dialog';
 import { TaskDetailsComponent } from 'src/app/tasks/task-details/task-details.component';
-import { Location } from '@angular/common';
 
 @Component({
   selector: 'app-user-details',
@@ -30,8 +29,7 @@ export class UserDetailsComponent implements OnInit {
   constructor(
     private admin: AdminService,
     private route: ActivatedRoute,
-    private dialog: MatDialog,
-    private location: Location
+    private dialog: MatDialog
   ) { }
 
   ngOnInit() {
@@ -84,9 +82,5 @@ export class UserDetailsComponent implements OnInit {
       data: task,
       panelClass: 'task-details-dialog'
     });
-  }
-
-  goBack() {
-    this.location.back();
   }
 }

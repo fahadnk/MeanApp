@@ -1,18 +1,27 @@
 <ng-container *ngIf="currentUser$ | async as user">
   <mat-toolbar color="primary" class="header-toolbar">
 
-    <!-- App Logo / Title -->
-    <span class="app-title" routerLink="/tasks" style="cursor: pointer;">
+    <!-- BACK BUTTON (hidden on /tasks) -->
+    <button
+      *ngIf="showBackButton"
+      mat-icon-button
+      class="back-btn"
+      (click)="goBack()"
+    >
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+
+    <!-- APP TITLE -->
+    <span class="app-title" (click)="goToTasks()">
       Task Manager
     </span>
 
     <span class="spacer"></span>
 
-    <!-- ADMIN PANEL BUTTON (only for admins) -->
+    <!-- ADMIN PANEL BUTTON -->
     <button
       *ngIf="user?.role === 'admin'"
       mat-button
-      routerLink="/admin"
       class="admin-btn"
     >
       <mat-icon>admin_panel_settings</mat-icon>
@@ -27,28 +36,24 @@
     >
       <mat-icon>notifications</mat-icon>
 
-      <!-- Unread Badge -->
+      <!-- Badge -->
       <span class="badge" *ngIf="unreadCount > 0">
         {{ unreadCount }}
       </span>
     </button>
 
-    <!-- NOTIFICATION DROPDOWN MENU -->
+    <!-- NOTIFICATION DROPDOWN -->
     <mat-menu #notifMenu="matMenu" class="notifications-menu">
 
-      <!-- EMPTY STATE -->
-      <ng-container *ngIf="notifications.length === 0">
-        <button mat-menu-item disabled>No Notifications</button>
-      </ng-container>
+      <button mat-menu-item disabled *ngIf="notifications.length === 0">
+        No Notifications
+      </button>
 
-      <!-- NOTIFICATION LIST -->
       <ng-container *ngFor="let n of notifications">
         <button mat-menu-item [ngClass]="{ unread: !n.read }">
           <mat-icon class="notif-icon">notifications</mat-icon>
-
           <div class="notif-text">
-            <strong>{{ n.message }}</strong>
-            <br />
+            <strong>{{ n.message }}</strong><br />
             <small>{{ n.createdAt | date: 'short' }}</small>
           </div>
         </button>
@@ -56,14 +61,13 @@
 
       <mat-divider></mat-divider>
 
-      <!-- Mark All Read -->
       <button mat-menu-item *ngIf="unreadCount > 0" (click)="markAllRead()">
         <mat-icon>done_all</mat-icon>
         Mark All Read
       </button>
     </mat-menu>
 
-    <!-- USER EMAIL + MENU -->
+    <!-- USER MENU -->
     <button mat-button [matMenuTriggerFor]="userMenu">
       <mat-icon>account_circle</mat-icon>
       {{ user?.email }}

@@ -3,7 +3,6 @@ import { FormBuilder, Validators } from '@angular/forms';
 import { TaskService } from 'src/app/core/services/task.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Location } from '@angular/common';
 
 @Component({
   selector: 'app-task-form',
@@ -29,8 +28,7 @@ export class TaskFormComponent implements OnInit {
     private taskService: TaskService,
     private snackBar: MatSnackBar,
     private router: Router,
-    private route: ActivatedRoute,
-    private location: Location
+    private route: ActivatedRoute
   ) { }
 
   ngOnInit(): void {
@@ -94,9 +92,5 @@ export class TaskFormComponent implements OnInit {
 
     const selected = new Date(dueDate);
     return selected < today;
-  }
-
-  goBack() {
-    this.location.back();
   }
 }

@@ -1,0 +1,48 @@
+.user-list-container {
+  padding: 1rem;
+  position: relative;
+  overflow: visible !important;
+}
+
+mat-card {
+  padding: 1.5rem;
+  overflow: visible !important;
+}
+
+/* Toolbar */
+.toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1.5rem;
+
+  .title {
+    font-size: 24px;
+    font-weight: 600;
+  }
+
+  .actions {
+    display: flex;
+    gap: 10px;
+  }
+}
+
+/* Filters */
+.filters {
+  display: flex;
+  margin-bottom: 1.3rem;
+
+  .search {
+    width: 200px;   // smaller width
+    min-width: 200px;
+  }
+}
+/* Table */
+.full-width-table {
+  width: 100%;
+}
+
+.mat-row:hover {
+  background: #f9f9f9;
+  transition: 0.15s ease;
+}

@@ -25,10 +25,12 @@ export class TaskListComponent implements OnInit {
   priority = '';
   isAdmin = false;
 
-  constructor(private taskService: TaskService, private snack: MatSnackBar, private authService: AuthService) {}
+  constructor(private taskService: TaskService, private snack: MatSnackBar, private authService: AuthService) { }
 
   ngOnInit(): void {
-    this.isAdmin = this.authService.userRole === 'admin';
+    this.authService.currentUser$.subscribe(user => {
+      this.isAdmin = user?.role === 'admin';
+    });
     this.loadTasks();
   }
 

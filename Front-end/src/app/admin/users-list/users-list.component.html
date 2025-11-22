@@ -1,37 +1,53 @@
-<mat-card>
-  <h2>User Management</h2>
-  <div class="back-btn-container">
-    <button mat-icon-button color="primary" (click)="goBack()">
-      <mat-icon>arrow_back</mat-icon>
-    </button>
-  </div>
-  <table mat-table [dataSource]="users">
+<div class="user-list-container">
+  <mat-card>
 
-    <ng-container matColumnDef="name">
-      <th mat-header-cell *matHeaderCellDef> Name </th>
-      <td mat-cell *matCellDef="let u"> {{ u.name }} </td>
-    </ng-container>
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <h2 class="title">User Management</h2>
+    </div>
 
-    <ng-container matColumnDef="email">
-      <th mat-header-cell *matHeaderCellDef> Email </th>
-      <td mat-cell *matCellDef="let u"> {{ u.email }} </td>
-    </ng-container>
+    <!-- Search Filter -->
+    <div class="filters">
+      <mat-form-field appearance="outline" class="search">
+        <mat-label>Search users</mat-label>
+        <input matInput placeholder="Search users" [(ngModel)]="search" (keyup)="onSearch($event)" class="search-input" />
+        <button matSuffix mat-icon-button *ngIf="search" (click)="clearSearch()">
+          <mat-icon>close</mat-icon>
+        </button>
+      </mat-form-field>
+    </div>
 
-    <ng-container matColumnDef="role">
-      <th mat-header-cell *matHeaderCellDef> Role </th>
-      <td mat-cell *matCellDef="let u"> {{ u.role }} </td>
-    </ng-container>
+    <!-- Users Table -->
+    <table mat-table [dataSource]="users" class="mat-elevation-z2 full-width-table">
+      <!-- Name -->
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef>Name</th>
+        <td mat-cell *matCellDef="let u">{{ u.name }}</td>
+      </ng-container>
 
-    <ng-container matColumnDef="actions">
-      <th mat-header-cell *matHeaderCellDef> Actions </th>
-      <td mat-cell *matCellDef="let u">
-        <button mat-button color="primary" (click)="view(u)">View</button>
-        <button mat-button color="accent" (click)="assignTask(u)">Assign Task</button>
-      </td>
-    </ng-container>
+      <!-- Email -->
+      <ng-container matColumnDef="email">
+        <th mat-header-cell *matHeaderCellDef>Email</th>
+        <td mat-cell *matCellDef="let u">{{ u.email }}</td>
+      </ng-container>
 
-    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      <!-- Role -->
+      <ng-container matColumnDef="role">
+        <th mat-header-cell *matHeaderCellDef>Role</th>
+        <td mat-cell *matCellDef="let u">{{ u.role }}</td>
+      </ng-container>
 
-  </table>
-</mat-card>
+      <!-- Actions -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Actions</th>
+        <td mat-cell *matCellDef="let u">
+          <button mat-menu-item (click)="view(u)">View</button>
+          <button mat-menu-item (click)="assignTask(u)">Assign Task</button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+    </table>
+  </mat-card>
+</div>

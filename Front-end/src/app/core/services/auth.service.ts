@@ -16,7 +16,6 @@ interface LoginResponse {
 export class AuthService {
   private base = `${environment.apiUrl}/auth`;
   private tokenKey = 'token';
-  public userRole: string | null = null;
 
   // ---------------------------------------------
   // 🌟 NEW: Current User State (BehaviorSubject)
@@ -44,7 +43,6 @@ register(payload: { name: string; email: string; password: string; role: string 
       tap((res: any) => {
         if (res?.data?.token) {
           localStorage.setItem(this.tokenKey, res.data.token);
-          this.userRole = res.data?.user.role || null;
           // NEW: update currentUser$
           const decoded = this.safeDecode(res.data.token);
           this.currentUserSubject.next(decoded);

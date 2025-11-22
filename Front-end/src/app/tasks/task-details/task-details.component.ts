@@ -2,7 +2,6 @@ import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialog } from '@angular/material/dialog';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { TaskService } from 'src/app/core/services/task.service';
-import { Location } from '@angular/common';
 import { Router } from '@angular/router';
 
 @Component({
@@ -18,8 +17,7 @@ export class TaskDetailsComponent {
     public dialogRef: MatDialogRef<TaskDetailsComponent>,
     private taskService: TaskService,
     private snackBar: MatSnackBar,
-    private router: Router,
-    private location: Location
+    private router: Router
   ) { }
 
   // ----------------------------
@@ -71,9 +69,5 @@ export class TaskDetailsComponent {
         this.snackBar.open('Failed to delete task', 'Dismiss', { duration: 3000 });
       },
     });
-  }
-
-  goBack() {
-    this.location.back();
   }
 }

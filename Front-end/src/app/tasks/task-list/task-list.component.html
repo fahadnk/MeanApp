@@ -4,12 +4,14 @@
   <mat-card>
     <!-- Toolbar -->
     <div class="toolbar">
-      <h2>Tasks</h2>
-      <div>
-        <button *ngIf="isAdmin" mat-raised-button color="primary" routerLink="/admin/users">
-          <mat-icon>list</mat-icon>
-          Users List
+      <h2 class="title">Tasks</h2>
+
+      <div class="actions">
+        <button *ngIf="isAdmin" mat-stroked-button color="primary" routerLink="/admin/users">
+          <mat-icon>group</mat-icon>
+          Users
         </button>
+
         <button mat-raised-button color="primary" routerLink="/tasks/new">
           <mat-icon>add</mat-icon>
           New Task
@@ -17,16 +19,12 @@
       </div>
     </div>
 
+
     <!-- Filters -->
     <div class="filters">
       <mat-form-field appearance="outline" class="search">
         <mat-label>Search</mat-label>
-        <input
-          matInput
-          [(ngModel)]="search"
-          (keyup)="loadTasks()"
-          placeholder="Search by title or description"
-        />
+        <input matInput [(ngModel)]="search" (keyup)="loadTasks()" placeholder="Search by title or description" />
         <button matSuffix mat-icon-button *ngIf="search" (click)="clearSearch()">
           <mat-icon>close</mat-icon>
         </button>
@@ -36,9 +34,9 @@
         <mat-label>Status</mat-label>
         <mat-select [(ngModel)]="status" (selectionChange)="loadTasks()">
           <mat-option value="">All</mat-option>
-          <mat-option value="pending">Pending</mat-option>
+          <mat-option value="todo">Pending</mat-option>
           <mat-option value="in-progress">In Progress</mat-option>
-          <mat-option value="completed">Completed</mat-option>
+          <mat-option value="done">Completed</mat-option>
         </mat-select>
       </mat-form-field>
 
@@ -54,11 +52,7 @@
     </div>
 
     <!-- Tasks Table -->
-    <table
-      mat-table
-      [dataSource]="tasks"
-      class="mat-elevation-z2 full-width-table"
-    >
+    <table mat-table [dataSource]="tasks" class="mat-elevation-z2 full-width-table">
       <!-- Title -->
       <ng-container matColumnDef="title">
         <th mat-header-cell *matHeaderCellDef>Title</th>
@@ -87,11 +81,7 @@
       <ng-container matColumnDef="actions">
         <th mat-header-cell *matHeaderCellDef>Actions</th>
         <td mat-cell *matCellDef="let task">
-          <button
-            mat-icon-button
-            [matMenuTriggerFor]="menu"
-            aria-label="task actions"
-          >
+          <button mat-icon-button [matMenuTriggerFor]="menu" aria-label="task actions">
             <mat-icon>more_vert</mat-icon>
           </button>
 
@@ -113,12 +103,7 @@
     </table>
 
     <!-- Pagination -->
-    <mat-paginator
-      [length]="total"
-      [pageSize]="limit"
-      [pageIndex]="page - 1"
-      [pageSizeOptions]="[5, 10, 20]"
-      (page)="onPageChange($event)"
-    ></mat-paginator>
+    <mat-paginator [length]="total" [pageSize]="limit" [pageIndex]="page - 1" [pageSizeOptions]="[5, 10, 20]"
+      (page)="onPageChange($event)"></mat-paginator>
   </mat-card>
 </div>

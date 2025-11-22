@@ -33,6 +33,7 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { SharedModule } from './shared/shared.module';
 import { AdminModule } from './admin/admin.module';
 import { HeaderComponent } from './shared/header/header.component';
+import { LoaderComponent } from './core/loader/loader.component';
 
 @NgModule({
   declarations: [
@@ -41,7 +42,8 @@ import { HeaderComponent } from './shared/header/header.component';
     RegisterComponent,
     TaskListComponent,
     TaskFormComponent,
-    TaskDetailsComponent
+    TaskDetailsComponent,
+    LoaderComponent
   ],
   imports: [
     BrowserModule,
