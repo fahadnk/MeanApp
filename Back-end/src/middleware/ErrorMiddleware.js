@@ -5,6 +5,10 @@
 // ---------------------------------------------------
 // Note: This middleware must be registered *after* all routes
 // and other middleware in app.js. Otherwise, it won’t catch errors.
+
+import { error } from "../utils/response.js"; 
+// Using your global API error formatter
+
 function errorHandler(err, req, res, next) {
   // ---------------------------------------------------
   // Log error details
@@ -23,13 +27,9 @@ function errorHandler(err, req, res, next) {
   // ---------------------------------------------------
   // Build JSON Error Response
   // ---------------------------------------------------
-  // - message: a generic, user-friendly error message
-  // - error: detailed error message (useful for debugging,
-  //          but in production you might hide this)
-  res.status(statusCode).json({
-    message: "Something went wrong!",
-    error: err.message,
-  });
+  // Using your standardized error() response helper,
+  // which ensures consistent API responses across the whole backend.
+  return error(res, err.message || "Something went wrong!", statusCode);
 }
 
 

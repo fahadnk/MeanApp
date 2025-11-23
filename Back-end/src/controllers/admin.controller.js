@@ -1,142 +1,105 @@
 // backend/src/controllers/admin.controller.js
 
-// -------------------------
-// 1️⃣ Import Admin Service
-// -------------------------
+// Import admin service layer containing business logic for admin operations
 import adminService from "../services/admin.service.js";
-// ^ Service layer handles all business logic and DB interactions.
-//   Controller should not directly access the database.
-//   Keeps separation of concerns: Controller -> Service -> Repository/DB.
 
+// Import utility functions for standardized API response formatting
+import { success, error } from "../utils/response.js";
 
-// -------------------------
-// 2️⃣ Admin Controller Class
-// -------------------------
+// Admin Controller Class - Handles HTTP requests and responses for admin features
 class AdminController {
 
-  // ---------------------------
-  // Get all users
-  // ---------------------------
+  // Handle GET request to retrieve all users from the system
   async getAllUsers(req, res) {
     try {
-      // Call the service to fetch all users
+      // Call service layer to fetch all users from database
       const users = await adminService.getAllUsers();
-
-      // Send a JSON response with success flag and users array
-      res.json({ success: true, users });
+      // Return success response with users data
+      return success(res, users, "Users fetched successfully");
     } catch (err) {
-      // If something goes wrong, return 500 Internal Server Error
-      res.status(500).json({ success: false, message: err.message });
+      // Return server error response if operation fails
+      return error(res, err.message, 500);
     }
   }
 
-
-  // ---------------------------
-  // Get a single user by ID
-  // ---------------------------
+  // Handle GET request to retrieve a specific user by ID
   async getUserById(req, res) {
     try {
-      // Fetch user from the service using route param :id
+      // Extract user ID from URL parameters and fetch user data
       const user = await adminService.getUserById(req.params.id);
-
-      // Return user in JSON
-      res.json({ success: true, user });
+      // Return success response with user data
+      return success(res, user, "User fetched successfully");
     } catch (err) {
-      // If user not found or invalid ID, return 404 Not Found
-      res.status(404).json({ success: false, message: err.message });
+      // Return not found error if user doesn't exist
+      return error(res, err.message, 404);
     }
   }
 
-
-  // ---------------------------
-  // Update user by ID
-  // ---------------------------
+  // Handle PUT request to update user information
   async updateUser(req, res) {
     try {
-      // Pass user ID and new data from request body to service
+      // Update user with ID from URL and data from request body
       const updated = await adminService.updateUser(req.params.id, req.body);
-
-      // Respond with updated user
-      res.json({ success: true, user: updated });
+      // Return success response with updated user data
+      return success(res, updated, "User updated successfully");
     } catch (err) {
-      // If validation fails or update fails, return 400 Bad Request
-      res.status(400).json({ success: false, message: err.message });
+      // Return bad request error if update fails
+      return error(res, err.message, 400);
     }
   }
 
-
-  // ---------------------------
-  // Delete user by ID
-  // ---------------------------
+  // Handle DELETE request to remove a user from the system
   async deleteUser(req, res) {
     try {
-      // Call service to delete the user
+      // Delete user by ID extracted from URL parameters
       await adminService.deleteUser(req.params.id);
-
-      // Respond with success message
-      res.json({ success: true, message: "User deleted" });
+      // Return success response with no data
+      return success(res, null, "User deleted successfully");
     } catch (err) {
-      // If deletion fails (invalid ID, etc.), return 400
-      res.status(400).json({ success: false, message: err.message });
+      // Return bad request error if deletion fails
+      return error(res, err.message, 400);
     }
   }
 
-
-  // ---------------------------
-  // Get tasks assigned to a user
-  // ---------------------------
+  // Handle GET request to fetch all tasks assigned to a specific user
   async getUserTasks(req, res) {
     try {
-      // Fetch tasks from the service using user ID
+      // Fetch tasks for user ID from URL parameters
       const tasks = await adminService.getUserTasks(req.params.id);
-
-      // Return tasks array
-      res.json({ success: true, tasks });
+      // Return success response with tasks array
+      return success(res, tasks, "User tasks fetched successfully");
     } catch (err) {
-      // If user or tasks not found, return 404
-      res.status(404).json({ success: false, message: err.message });
+      // Return not found error if user or tasks don't exist
+      return error(res, err.message, 404);
     }
   }
 
-
-  // ---------------------------
-  // Create a new task for any user
-  // ---------------------------
+  // Handle POST request to create a new task for any user (admin privilege)
   async createTaskForUser(req, res) {
     try {
-      // Create task using data in request body
+      // Create task using data from request body
       const task = await adminService.createTaskForUser(req.body);
-
-      // Return 201 Created and the task object
-      res.status(201).json({ success: true, task });
+      // Return success response with 201 Created status and new task data
+      return success(res, task, "Task created successfully", 201);
     } catch (err) {
-      // If validation or creation fails, return 400
-      res.status(400).json({ success: false, message: err.message });
+      // Return bad request error if task creation fails
+      return error(res, err.message, 400);
     }
   }
 
-
-  // ---------------------------
-  // Delete any task by taskId
-  // ---------------------------
+  // Handle DELETE request to remove any task in the system (admin override)
   async deleteTask(req, res) {
     try {
-      // Delete task via service layer
+      // Delete task by ID extracted from URL parameters
       await adminService.deleteTask(req.params.taskId);
-
-      // Respond with success message
-      res.json({ success: true, message: "Task deleted" });
+      // Return success response with no data
+      return success(res, null, "Task deleted successfully");
     } catch (err) {
-      // If deletion fails, return 400
-      res.status(400).json({ success: false, message: err.message });
+      // Return bad request error if task deletion fails
+      return error(res, err.message, 400);
     }
   }
 }
 
-
-// -------------------------
-// 3️⃣ Export Singleton Instance
-// -------------------------
+// Export singleton instance of AdminController to ensure single instance usage
 export default new AdminController();
-// ^ Export a single instance of AdminController.
-//   This avoids creating multiple instances across the app and is standard for controllers.

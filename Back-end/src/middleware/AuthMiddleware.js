@@ -8,6 +8,9 @@
 // by embedding user information in a signed token.
 import jwt from "jsonwebtoken";
 
+// Import success/error helpers for consistent API responses
+import { success, error } from "../utils/response.js";
+
 
 // ---------------------------------------------------
 // Authentication Middleware
@@ -42,9 +45,7 @@ function authMiddleware(req, res, next) {
   // If no token is found, it means the request is unauthenticated.
   // Return HTTP 401 (Unauthorized) and stop further processing.
   if (!token) {
-    return res.status(401).json({
-      message: "Access denied. No token provided.",
-    });
+    return error(res, "Access denied. No token provided.", 401);
   }
 
   // ---------------------------------------------------
@@ -61,9 +62,7 @@ function authMiddleware(req, res, next) {
     // Ensure the decoded token contains expected fields (like user ID).
     // This helps prevent malformed or incomplete tokens from passing through.
     if (!decoded || !decoded.id) {
-      return res.status(403).json({
-        message: "Invalid token",
-      });
+      return error(res, "Invalid token.", 403);
     }
 
     // ---------------------------------------------------
@@ -85,9 +84,7 @@ function authMiddleware(req, res, next) {
     // ---------------------------------------------------
     // If jwt.verify() throws an error (e.g., token expired, wrong signature),
     // return HTTP 403 (Forbidden) with an error message.
-    return res.status(403).json({
-      message: "Invalid or expired token.",
-    });
+    return error(res, "Invalid or expired token.", 403);
   }
 }
 

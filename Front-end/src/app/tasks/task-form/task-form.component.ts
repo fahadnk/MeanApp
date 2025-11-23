@@ -4,6 +4,7 @@ import { TaskService } from 'src/app/core/services/task.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Location } from '@angular/common';
+import { AuthService } from 'src/app/core/services/auth.service';
 
 @Component({
   selector: 'app-task-form',
@@ -22,6 +23,8 @@ export class TaskFormComponent implements OnInit {
     status: ['todo', Validators.required],
     priority: ['medium', Validators.required],
     dueDate: ['', Validators.required],
+    assignedTo: [''],
+    createdBy: ['']
   });
 
   constructor(
@@ -30,7 +33,8 @@ export class TaskFormComponent implements OnInit {
     private snackBar: MatSnackBar,
     private router: Router,
     private route: ActivatedRoute,
-    private location: Location
+    private location: Location,
+    private authService: AuthService
   ) { }
 
   ngOnInit(): void {
@@ -39,7 +43,12 @@ export class TaskFormComponent implements OnInit {
     if (this.taskId) {
       this.isEdit = true;
       this.loadTask(this.taskId);
-    }
+    };
+    
+    this.authService.currentUser$.subscribe(user => {
+      this.taskForm.patchValue({ assignedTo:  user?.id });
+      this.taskForm.patchValue({ createdBy: user?.id });
+    });
   }
 
   loadTask(id: string) {

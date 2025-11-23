@@ -16,7 +16,7 @@ import { MatDialog } from '@angular/material/dialog';
 })
 export class TaskListComponent implements OnInit {
   tasks: any[] = [];
-  displayedColumns: string[] = ['title', 'priority', 'status', 'dueDate', 'actions'];
+  displayedColumns: string[] = ['title', 'priority', 'status', 'dueDate', 'createdBy', 'actions'];
 
   // filters + pagination
   page = 1;
@@ -25,6 +25,7 @@ export class TaskListComponent implements OnInit {
   search = '';
   status = '';
   priority = '';
+  createdBy = '';
   isAdmin = false;
 
   constructor(private taskService: TaskService, private snack: MatSnackBar, private authService: AuthService, private dialog: MatDialog) { }
@@ -43,6 +44,7 @@ export class TaskListComponent implements OnInit {
       search: this.search,
       status: this.status,
       priority: this.priority,
+      createdBy: this.createdBy
     };
 
     this.taskService.list(options).subscribe({
