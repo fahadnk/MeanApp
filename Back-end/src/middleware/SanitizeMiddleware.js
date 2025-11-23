@@ -51,7 +51,8 @@ function sanitizeValue(value) {
  * Middleware entrypoint.
  * Safe: will not call Object.assign on undefined.
  */
-export default function sanitizeRequest(req, res, next) {
+export default function 
+sanitizeRequest(req, res, next) {
   try {
     // Only process when these properties are plain objects
     if (req.body && typeof req.body === "object" && req.body.constructor === Object) {

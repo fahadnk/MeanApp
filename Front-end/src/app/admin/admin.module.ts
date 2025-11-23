@@ -16,6 +16,7 @@ import { UserDetailsComponent } from './user-details/user-details.component';
 import { AssignTaskComponent } from './assign-task/assign-task.component';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatDividerModule } from '@angular/material/divider';
 
 @NgModule({
   declarations: [
@@ -35,7 +36,8 @@ import { MatDatepickerModule } from '@angular/material/datepicker';
     MatPaginatorModule,
     MatSelectModule,
     MatIconModule,
-    MatDatepickerModule
+    MatDatepickerModule,
+    MatDividerModule
   ]
 })
 export class AdminModule {}

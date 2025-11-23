@@ -1,6 +1,7 @@
 <div class="register-container">
   <mat-card>
-    <h2 class="title">Create Your Account</h2>
+    <h2 class="title" *ngIf="!isAdmin">Create Your Account</h2>
+    <h2 class="title" *ngIf="isAdmin">Create New User Account</h2>
 
     <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
 
@@ -50,7 +51,7 @@
       </mat-form-field>
 
       <!-- Select Role -->
-      <mat-form-field appearance="outline" class="full-width">
+      <mat-form-field *ngIf="isAdmin" appearance="outline" class="full-width">
         <mat-label>Select Role</mat-label>
         <mat-select formControlName="role">
           <mat-option value="user">User</mat-option>

@@ -1,87 +1,62 @@
 // backend/src/routes/admin.routes.js
 
-// -------------------------
-// 1️⃣ Import Express
-// -------------------------
+// Import Express framework to create router instances for admin endpoints
 import express from "express";
-// ^ Express is used to create modular route handlers (Router instances).
 
-
-// -------------------------
-// 2️⃣ Import Middlewares
-// -------------------------
+// Import middleware functions for authentication, authorization, and validation
 import authMiddleware from "../middleware/AuthMiddleware.js";
-// ^ Middleware to check if a user is logged in (authenticated).
-
 import roleMiddleware from "../middleware/RoleMiddleware.js";
-// ^ Middleware to check user roles (e.g., admin, manager, etc).
+import validateSchema from "../middleware/ValidateMiddleware.js";
 
+// Import validation schemas for user and task data validation
+import { updateUserSchema } from "../validators/user.validator.js";
+import { createTaskSchema } from "../validators/task.validator.js";
 
-// -------------------------
-// 3️⃣ Import Controller
-// -------------------------
+// Import admin controller containing business logic for admin operations
 import adminController from "../controllers/admin.controller.js";
-// ^ Contains all the logic for admin-specific routes (CRUD for users, tasks).
 
-
-// -------------------------
-// 4️⃣ Create Router Instance
-// -------------------------
+// Create Express router instance for admin routes
 const router = express.Router();
-// ^ Create a modular router instance to define admin routes separately.
 
-
-// -------------------------
-// 5️⃣ Apply Global Middleware for All Admin Routes
-// -------------------------
-// Any route defined below will automatically:
-// 1) Require authentication (authMiddleware)
-// 2) Require "admin" role (roleMiddleware("admin"))
+// Apply admin-only protection to all routes in this router
 router.use(authMiddleware, roleMiddleware("admin"));
-// ^ Ensures only logged-in admins can access any route below.
-
 
 // ---------------------------
-// 6️⃣ User Management Routes
+// User Management Routes
 // ---------------------------
 
-// GET /admin/users
-// Fetch all users in the system
+// Get all users with pagination/filtering
 router.get("/users", adminController.getAllUsers);
 
-// GET /admin/users/:id
-// Fetch a single user by their ID
+// Get specific user by ID with detailed information
 router.get("/users/:id", adminController.getUserById);
 
-// PUT /admin/users/:id
-// Update user details by ID
-router.put("/users/:id", adminController.updateUser);
+// Update user profile and role information
+router.put(
+  "/users/:id",
+  validateSchema(updateUserSchema), // Validate update data
+  adminController.updateUser // Process user update
+);
 
-// DELETE /admin/users/:id
-// Remove a user permanently by ID
+// Permanently delete user account
 router.delete("/users/:id", adminController.deleteUser);
 
-
 // ---------------------------
-// 7️⃣ Task Management for Users
+// Task Management For Users
 // ---------------------------
 
-// GET /admin/users/:id/tasks
 // Get all tasks assigned to a specific user
 router.get("/users/:id/tasks", adminController.getUserTasks);
 
-// POST /admin/tasks
-// Create a new task and assign it to a user
-router.post("/tasks", adminController.createTaskForUser);
+// Create new task and assign to any user (admin privilege)
+router.post(
+  "/tasks",
+  validateSchema(createTaskSchema), // Validate task creation data
+  adminController.createTaskForUser // Create task with admin permissions
+);
 
-// DELETE /admin/tasks/:taskId
-// Delete a task by its unique ID
+// Delete any task in the system (admin override)
 router.delete("/tasks/:taskId", adminController.deleteTask);
 
-
-// -------------------------
-// 8️⃣ Export Router
-// -------------------------
+// Export router for use in main application
 export default router;
-// ^ Makes this router available to import in main app.js
-//   Typically mounted as app.use("/admin", adminRoutes)

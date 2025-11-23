@@ -16,7 +16,7 @@ export class UserDetailsComponent implements OnInit {
   user: any;
   tasks: any[] = [];
 
-  displayedColumns = ['title', 'status', 'priority', 'createdAt'];
+  displayedColumns = ['title', 'status', 'priority', 'createdAt', 'createdBy', 'view'];
   dataSource = new MatTableDataSource<any>();
 
   searchTerm = '';
@@ -34,17 +34,10 @@ export class UserDetailsComponent implements OnInit {
 
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id')!;
-
     this.admin.getUser(id).subscribe((res: any) => {
       this.user = res.user;
     });
-
-    this.admin.getUserTasks(id).subscribe((res: any) => {
-      this.tasks = res.tasks;
-      this.dataSource.data = this.tasks;
-      this.dataSource.paginator = this.paginator;
-      this.dataSource.sort = this.sort;
-    });
+    this.loadUSersTasks();
 
     this.dataSource.filterPredicate = (task, filter) => {
       const f = JSON.parse(filter);
@@ -60,6 +53,15 @@ export class UserDetailsComponent implements OnInit {
     };
   }
 
+  loadUSersTasks() {
+    const id = this.route.snapshot.paramMap.get('id')!;
+    this.admin.getUserTasks(id).subscribe((res: any) => {
+      this.tasks = res.tasks;
+      this.dataSource.data = this.tasks;
+      this.dataSource.paginator = this.paginator;
+      this.dataSource.sort = this.sort;
+    });
+  }
   applySearch(event: any) {
     this.searchTerm = event.target.value.toLowerCase().trim();
     this.applyFilters();
@@ -81,6 +83,10 @@ export class UserDetailsComponent implements OnInit {
       restoreFocus: false,
       data: task,
       panelClass: 'task-details-dialog'
+    }).afterClosed().subscribe(result => {
+      if(result){
+        this.loadUSersTasks();
+      }
     });
   }
 }

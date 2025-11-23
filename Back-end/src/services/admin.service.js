@@ -83,7 +83,7 @@ class AdminService {
     // Create the task in DB
     const task = await taskRepository.create({
       ...data,
-      createdBy: data.createdBy || "admin", // Default to "admin" if not provided
+      createdBy: data.createdBy, // Default to "admin" if not provided
     });
 
     const dto = taskDTO(task); // Convert task to DTO

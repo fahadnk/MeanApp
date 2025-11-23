@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FormBuilder, Validators, AbstractControl } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from 'src/app/core/services/auth.service';
@@ -8,14 +8,21 @@ import { AuthService } from 'src/app/core/services/auth.service';
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.scss'],
 })
-export class RegisterComponent {
+export class RegisterComponent implements OnInit {
   hide = true;
+  isAdmin = false;
 
   constructor(
     private fb: FormBuilder,
     private router: Router,
     private authService: AuthService
   ) {}
+
+  ngOnInit(): void {
+    this.authService.currentUser$.subscribe(user => {
+      this.isAdmin = user?.role === 'admin';
+    });
+  }
 
   // Custom validator
   passwordMatchValidator(control: AbstractControl) {

@@ -3,6 +3,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, Validators } from '@angular/forms';
 import { AdminService } from '../services/admin.service';
 import { Location } from '@angular/common';
+import { AuthService } from 'src/app/core/services/auth.service';
 
 @Component({
   selector: 'app-assign-task',
@@ -18,7 +19,8 @@ export class AssignTaskComponent implements OnInit {
     status: ['pending', Validators.required],
     priority: ['medium', Validators.required],
     dueDate: ['', Validators.required],
-    assignedTo: ['']
+    assignedTo: [''],
+    createdBy: ['']
   });
 
   constructor(
@@ -26,12 +28,17 @@ export class AssignTaskComponent implements OnInit {
     private route: ActivatedRoute,
     private admin: AdminService,
     private router: Router,
-    private location: Location
+    private location: Location,
+    private authService: AuthService
   ) { }
 
   ngOnInit() {
     this.userId = this.route.snapshot.paramMap.get('id')!;
     this.form.patchValue({ assignedTo: this.userId });
+    this.authService.currentUser$.subscribe(user => {
+      this.form.patchValue({ createdBy: user?.id });
+    });
+    
   }
 
   submit() {

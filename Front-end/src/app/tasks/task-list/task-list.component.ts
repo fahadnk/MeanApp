@@ -6,6 +6,8 @@ import { MatSnackBar } from '@angular/material/snack-bar';
 import { PageEvent } from '@angular/material/paginator';
 import { Router } from '@angular/router';
 import { AuthService } from 'src/app/core/services/auth.service';
+import { TaskDetailsComponent } from '../task-details/task-details.component';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'app-task-list',
@@ -25,7 +27,7 @@ export class TaskListComponent implements OnInit {
   priority = '';
   isAdmin = false;
 
-  constructor(private taskService: TaskService, private snack: MatSnackBar, private authService: AuthService) { }
+  constructor(private taskService: TaskService, private snack: MatSnackBar, private authService: AuthService, private dialog: MatDialog) { }
 
   ngOnInit(): void {
     this.authService.currentUser$.subscribe(user => {
@@ -80,4 +82,15 @@ export class TaskListComponent implements OnInit {
       });
     }
   }
+
+  openTask(task: any) {
+      this.dialog.open(TaskDetailsComponent, {
+        width: '600px',
+        maxHeight: '90vh',
+        autoFocus: false,
+        restoreFocus: false,
+        data: task,
+        panelClass: 'task-details-dialog'
+      })
+    }
 }

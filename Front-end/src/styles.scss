@@ -18,8 +18,6 @@ $my-theme: mat.define-light-theme((
 // 3️⃣ Apply all component themes
 @include mat.all-component-themes($my-theme);
 
-.task-page,
-.task-form,
 .mat-card {
   overflow: visible !important;
 }
@@ -198,21 +196,129 @@ $my-theme: mat.define-light-theme((
   }
 }
 
-// Fix select dropdowns going behind content
-.cdk-overlay-container {
-  z-index: 2000 !important;
-}
-
-.mat-select-panel {
-  z-index: 2100 !important;
-}
-
 .back-btn-container {
   display: flex;
   justify-content: flex-end; /* pushes button to the RIGHT */
   width: 100%;
 }
 
-.back-btn-container button {
-  margin-bottom: 10px;
+// COMPREHENSIVE OVERLAY FIX
+.cdk-overlay-container {
+  position: fixed !important;
+  z-index: 100000 !important;
+  pointer-events: none;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+}
+
+.cdk-global-overlay-wrapper {
+  display: flex;
+  position: absolute;
+  z-index: 100000 !important;
+  pointer-events: none;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+}
+
+.cdk-overlay-pane {
+  position: absolute !important;
+  z-index: 100001 !important;
+  pointer-events: auto;
+  box-sizing: border-box;
+}
+
+.cdk-overlay-backdrop {
+  position: absolute !important;
+  z-index: 100000 !important;
+  pointer-events: auto;
+}
+
+.mat-select-panel,
+.mat-autocomplete-panel,
+.mat-menu-panel {
+  position: relative !important;
+  z-index: 100002 !important;
+  transform: none !important;
+}
+
+// Force all potential clipping containers
+body, html {
+  overflow: visible !important;
+  position: relative !important;
+}
+
+app-root {
+  display: block;
+  overflow: visible !important;
+  position: relative !important;
+}
+
+// Remove overflow from ALL Material and app containers
+.mat-app-background,
+.mat-drawer-container,
+.mat-sidenav-container,
+.mat-sidenav-content,
+.task-list-container,
+.task-card,
+.mat-card,
+.task-page,
+.task-form,
+.mat-form-field,
+.mat-form-field-wrapper,
+.mat-form-field-flex {
+  overflow: visible !important;
+  position: relative !important;
+}
+
+.status-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  color: #fff;
+  text-transform: capitalize;
+  font-size: 12px;
+
+  &.todo {
+    background: #9e9e9e;
+  }
+
+  &.in-progress {
+    background: #3f51b5;
+  }
+
+  &.done {
+    background: #4caf50;
+  }
+}
+
+/* Priority Badges */
+.priority-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  color: #fff;
+  text-transform: capitalize;
+  font-size: 12px;
+
+  &.low {
+    background: #2196f3;
+  }
+
+  &.medium {
+    background: #ff9800;
+  }
+
+  &.high {
+    background: #f44336;
+  }
+}
+
+.clickable {
+  cursor: pointer;
+
+  &:hover {
+    background: #f7f7f7;
+  }
 }
