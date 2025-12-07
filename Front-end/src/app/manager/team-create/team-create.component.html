@@ -1,0 +1,11 @@
+<mat-card>
+  <h2>Create Team</h2>
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <mat-form-field class="full-width">
+      <mat-label>Team Name</mat-label>
+      <input matInput formControlName="name" />
+      <mat-error *ngIf="form.get('name')?.hasError('required')">Name is required</mat-error>
+    </mat-form-field>
+    <button mat-raised-button color="primary" type="submit" [disabled]="form.invalid">Create</button>
+  </form>
+</mat-card>

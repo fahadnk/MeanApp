@@ -81,7 +81,7 @@ router.get(
 router.get(
   "/", 
   authMiddleware, // Authentication: ensures user is logged in
-  roleMiddleware("admin"), // Authorization: restricts access to users with 'admin' role
+  roleMiddleware(["admin","manager"]), // Authorization: restricts access to users with 'admin' role
   userController.getAllUsers // Controller method: retrieves complete user list (with pagination/filtering)
 );
 

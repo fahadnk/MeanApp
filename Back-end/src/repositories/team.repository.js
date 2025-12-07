@@ -134,6 +134,25 @@ class TeamRepository {
       },
     };
   }
+
+  // -------------------------------------------
+  // Find Team by Manager ID
+  // -------------------------------------------
+  // Retrieves the team document where the given user ID is set as the manager.
+  // Populates the 'members' array with selected user fields (name, email, role)
+  // for efficient access without additional queries.
+  // Uses .lean() to return plain JavaScript objects (faster, immutable).
+  //
+  // Example:
+  //   const team = await teamRepository.findByManagerId("64abc123def456");
+  //   // → returns team object with populated members array or null if not found
+  // -------------------------------------------
+  async findByManagerId(managerId) {
+    return await Team.findOne({ manager: managerId })
+      .populate("members", "name email role")  // Only fetch needed fields from User model
+      .lean()                                   // Convert Mongoose docs → plain objects (better perf)
+      .exec();                                  // Explicitly execute the query
+  }
 }
 
 // ------------------------------------------------------------

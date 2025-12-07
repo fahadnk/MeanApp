@@ -12,6 +12,13 @@ import { taskDTO } from "./dto.js";
 // NotificationService → handles real-time event broadcasting (Observer Pattern)
 import notificationService from "./notification.service.js";
 
+// Additional repositories needed for team & user checks
+import userRepository from "../repositories/user.repository.js";
+import teamRepository from "../repositories/team.repository.js";
+
+// Role constants
+import { ROLES } from "../constants/roles.js";
+
 
 // -------------------------
 // TaskService (Business Logic Layer)
@@ -20,87 +27,207 @@ import notificationService from "./notification.service.js";
 // between controllers (HTTP layer) and repositories (DB layer).
 // -------------------------
 class TaskService {
-  // -------------------------
-  // 🟢 Create a new task
-  // -------------------------
-async createTask(taskData, currentUser) {
-  // Ensure createdBy is set automatically
-  const task = await taskRepository.create({
-    ...taskData,
-    createdBy: currentUser.id,         // REQUIRED
-    assignedTo: taskData.assignedTo || currentUser.id, // optional default
-  });
-
-  const dto = taskDTO(task);
-  notificationService.taskCreated(dto);
-
-      // ⭐ ADDED
-  await this.notifyTaskCreatedForUser(task);
-
-  return dto;
-}
-
 
   // -------------------------
-  // 🔍 Get task by ID (Access Control)
-// -----------------------------
-// 🧩 Get a single task by ID with access control
-// -----------------------------
-async getTaskById(id, currentUser) {
-  // 1️⃣ Fetch the task document from the database using the repository.
-  //     - The repository handles population of "assignedTo" and "createdBy".
-  //     - Returns either a plain object (due to `.lean()`) or null if not found.
-  const task = await taskRepository.findById(id);
+  // Create a new task with full RBAC
+  // -------------------------
+  async createTask(taskData, currentUser) {
+    const assignedToId = taskData.assignedTo;
 
-  // 2️⃣ If no task exists with this ID, throw an error.
-  if (!task) throw new Error("Task not found");
+    // ADMIN: can assign to anyone (or leave unassigned)
+    if (currentUser.role === ROLES.ADMIN) {
+      if (assignedToId) {
+        const user = await userRepository.findById(assignedToId);
+        if (!user) throw new Error("Assigned user not found");
+      }
+    }
+    // MANAGER: can assign only to self or team members
+    else if (currentUser.role === ROLES.MANAGER) {
+      const team = await teamRepository.findByManagerId(currentUser.id);
 
-  // 3️⃣ Extract `assignedToId`
-  //     - When `.populate()` is used, `assignedTo` becomes an *object* like:
-  //         { _id: '65f...', name: 'Ali', email: '...' }
-  //     - When not populated, it’s a simple ObjectId.
-  //     - So we normalize both cases to a clean string `_id`.
-  const assignedToId =
-    typeof task.assignedTo === "object"
-      ? task.assignedTo._id?.toString()   // populated → extract _id
-      : task.assignedTo?.toString();      // raw ObjectId → toString()
+      if (!team) {
+        // Manager without a team → can only assign to self
+        if (assignedToId && assignedToId !== currentUser.id) {
+          throw new Error("Access denied");
+        }
+      } else {
+        // Has team → can assign to self or any team member
+        if (assignedToId && assignedToId !== currentUser.id) {
+          const isMember = team.members.some(
+            m => (m._id ?? m).toString() === assignedToId.toString()
+          );
+          if (!isMember) throw new Error("Access denied - can only assign to team members");
+        }
+      }
+    }
+    // REGULAR USER: can only create tasks for themselves
+    else {
+      taskData.assignedTo = currentUser.id;
+    }
 
-  // 4️⃣ Extract `createdById` using the same logic as above.
-  //     - Ensures safe comparison between IDs regardless of population state.
-  const createdById =
-    typeof task.createdBy === "object"
-      ? task.createdBy._id?.toString()
-      : task.createdBy?.toString();
+    // Final task creation
+    const task = await taskRepository.create({
+      ...taskData,
+      createdBy: currentUser.id,
+      assignedTo: taskData.assignedTo || currentUser.id,
+    });
 
-  // 5️⃣ Apply Role-Based Access Control (RBAC)
-  //     - Admins can view all tasks.
-  //     - Regular users can only view:
-  //         a) tasks assigned to them, OR
-  //         b) tasks they themselves created.
-  //     - If none of these match, deny access.
-  if (
-    currentUser.role !== "admin" &&       // not admin
-    assignedToId !== currentUser.id &&    // not assigned
-    createdById !== currentUser.id        // not creator
-  ) {
-    throw new Error("Access denied");
+    const dto = taskDTO(task);
+    notificationService.taskCreated(dto);
+
+    // Notify the assigned user (if any)
+    await this.notifyTaskCreatedForUser(task);
+
+    return dto;
   }
 
-  // 6️⃣ Convert the database document into a clean DTO (Data Transfer Object)
-  //     - Removes internal fields like `_id`, `__v`, etc.
-  //     - Ensures consistent response shape for the frontend.
-  return taskDTO(task);
-}
+
+  // -------------------------
+  // Get task by ID with full access control
+  // -------------------------
+  async getTaskById(id, currentUser) {
+    const task = await taskRepository.findById(id);
+    if (!task) throw new Error("Task not found");
+
+    const assignedToId =
+      typeof task.assignedTo === "object"
+        ? task.assignedTo._id?.toString()
+        : task.assignedTo?.toString();
+
+    const createdById =
+      typeof task.createdBy === "object"
+        ? task.createdBy._id?.toString()
+        : task.createdBy?.toString();
+
+    // ADMIN → full access
+    if (currentUser.role === ROLES.ADMIN) {
+      return taskDTO(task);
+    }
+
+    // MANAGER → can view if task assigned to team member OR created by him OR assigned to him
+    if (currentUser.role === ROLES.MANAGER) {
+      const team = await teamRepository.findByManagerId(currentUser.id);
+      const isMemberInTeam = team?.members?.some(
+        m => (m._id ?? m).toString() === assignedToId
+      );
+
+      if (isMemberInTeam || createdById === currentUser.id || assignedToId === currentUser.id) {
+        return taskDTO(task);
+      }
+      throw new Error("Access denied");
+    }
+
+    // REGULAR USER → only own assigned or created tasks
+    if (assignedToId !== currentUser.id && createdById !== currentUser.id) {
+      throw new Error("Access denied");
+    }
+
+    return taskDTO(task);
+  }
 
 
   // -------------------------
-  // 📋 Get all tasks (with Search, Filter, Pagination)
+  // Update task with role-based permissions
+  // -------------------------
+  async updateTask(id, updateData, currentUser) {
+    const task = await taskRepository.findById(id);
+    if (!task) throw new Error("Task not found");
+
+    const assignedToId =
+      typeof task.assignedTo === "object"
+        ? task.assignedTo._id?.toString()
+        : task.assignedTo?.toString();
+
+    const createdById =
+      typeof task.createdBy === "object"
+        ? task.createdBy._id?.toString()
+        : task.createdBy?.toString();
+
+    // ADMIN → can update anything
+    if (currentUser.role === ROLES.ADMIN) {
+      // allowed
+    }
+    // MANAGER → can update if task belongs to his team OR he created it OR assigned to him
+    else if (currentUser.role === ROLES.MANAGER) {
+      const team = await teamRepository.findByManagerId(currentUser.id);
+      const isMember = team?.members?.some(
+        m => (m._id ?? m).toString() === assignedToId
+      );
+
+      if (!isMember && createdById !== currentUser.id && assignedToId !== currentUser.id) {
+        throw new Error("Access denied");
+      }
+    }
+    // REGULAR USER → only if assigned to them or they created it
+    else {
+      if (assignedToId !== currentUser.id && createdById !== currentUser.id) {
+        throw new Error("Access denied");
+      }
+    }
+
+    const updated = await taskRepository.update(id, updateData);
+    const dto = taskDTO(updated);
+
+    notificationService.taskUpdated(dto);
+
+    return dto;
+  }
+
+
+  // -------------------------
+  // Delete task with role-based control
+  // -------------------------
+  async deleteTask(id, currentUser) {
+    const task = await taskRepository.findById(id);
+    if (!task) throw new Error("Task not found");
+
+    const assignedToId =
+      typeof task.assignedTo === "object"
+        ? task.assignedTo._id?.toString()
+        : task.assignedTo?.toString();
+
+    const createdById =
+      typeof task.createdBy === "object"
+        ? task.createdBy._id?.toString()
+        : task.createdBy?.toString();
+
+    // ADMIN → can delete anything
+    if (currentUser.role === ROLES.ADMIN) {
+      // allowed
+    }
+    // MANAGER → same rules as update
+    else if (currentUser.role === ROLES.MANAGER) {
+      const team = await teamRepository.findByManagerId(currentUser.id);
+      const isMember = team?.members?.some(
+        m => (m._id ?? m).toString() === assignedToId
+      );
+
+      if (!isMember && createdById !== currentUser.id && assignedToId !== currentUser.id) {
+        throw new Error("Access denied");
+      }
+    }
+    // REGULAR USER → only own created or assigned tasks
+    else {
+      if (createdById !== currentUser.id && assignedToId !== currentUser.id) {
+        throw new Error("Access denied");
+      }
+    }
+
+    const deleted = await taskRepository.delete(id);
+    notificationService.taskDeleted(id);
+
+    return deleted;
+  }
+
+
+  // -------------------------
+  // Get all tasks (with Search, Filter, Pagination)
   // -------------------------
   async getTasks(currentUser, queryParams = {}) {
     const { page = 1, limit = 10, search = "", status, priority } = queryParams;
     const filters = { search, status, priority };
 
-    if (currentUser.role !== "admin") {
+    if (currentUser.role !== ROLES.ADMIN) {
       filters.assignedTo = currentUser.id;
     }
 
@@ -114,89 +241,6 @@ async getTaskById(id, currentUser) {
     return { tasks: dtoList, pagination };
   }
 
- async updateTask(id, updateData, currentUser) {
-  // 1️⃣ Retrieve the task from the database by its unique ID
-  // taskRepository.findById returns a task object if found, otherwise null/undefined
-  const task = await taskRepository.findById(id);
-
-  // 2️⃣ If no task exists with the given ID, throw an error
-  // This prevents updating a non-existent task
-  if (!task) throw new Error("Task not found");
-
-  // 3️⃣ Normalize the 'createdBy' field from the task
-  // In MongoDB with Mongoose, the 'createdBy' field could either be:
-  // a) an Object (populated reference) → task.createdBy._id
-  // b) a raw ObjectId → task.createdBy
-  // We convert it to a string for reliable comparison with currentUser.id
-  const createdById =
-    typeof task.createdBy === "object"
-      ? task.createdBy._id?.toString() // If populated, get the _id and convert to string
-      : task.createdBy?.toString();    // If raw ObjectId, convert to string
-
-  // 4️⃣ Authorization check: ensure the user has permission to update this task
-  // Admin users can update any task
-  // Non-admin users can only update tasks they created
-  // If neither condition is met, throw an "Access denied" error
-  if (currentUser.role !== "admin" && createdById !== currentUser.id.toString()) {
-    throw new Error("Access denied"); // This was causing 403 in your API
-  }
-
-  // 5️⃣ Perform the update using the repository
-  // taskRepository.update handles the database update operation
-  // updateData contains the fields to be updated
-  const updated = await taskRepository.update(id, updateData);
-
-  // 6️⃣ Transform the updated task object into a DTO
-  // taskDTO filters and structures the data to return only relevant info
-  // This ensures the client does not get sensitive internal fields
-  const dto = taskDTO(updated);
-
-  // 7️⃣ Notify other services or clients about the task update
-  // notificationService.taskUpdated could trigger WebSocket events,
-  // email notifications, or other side-effects
-  notificationService.taskUpdated(dto);
-
-  // 8️⃣ Return the transformed task to the client
-  // Provides a clean, structured response
-  return dto;
-}
-
-
-  // Delete Function
-
-  async deleteTask(id, currentUser) {
-      // 1️⃣ Retrieve the task from the database using its ID
-      // This uses the repository layer to abstract DB operations
-      const task = await taskRepository.findById(id);
-
-      // 2️⃣ If the task does not exist, throw an error
-      // This prevents trying to delete a non-existent task
-      if (!task) throw new Error("Task not found");
-
-      // 3️⃣ Determine the task creator's ID in a safe way
-      // Handles both populated documents (object) and raw ObjectId
-      const createdById =
-        typeof task.createdBy === "object" // If populated
-          ? task.createdBy._id?.toString() // Convert _id to string
-          : task.createdBy?.toString();    // If raw ObjectId, convert to string
-
-      // 4️⃣ Role-based access control
-      // Only admins or the creator of the task can delete it
-      if (currentUser.role !== "admin" && createdById !== currentUser.id) {
-        throw new Error("Access denied"); // Throw error if user is not authorized
-      }
-
-      // 5️⃣ Perform the deletion using the repository layer
-      // The repository handles database-specific logic
-      const deletedTask = await taskRepository.delete(id);
-
-      // 6️⃣ Emit a real-time event using Socket.IO
-      // Notifies connected clients that the task was deleted
-      notificationService.taskDeleted({ id });
-
-      // 7️⃣ Return the deleted task (or deletion result) to the caller
-      return deletedTask;
-    }
 
   async countTasksForUser(userId) {
     return await taskRepository.countByAssignedUser(userId);
@@ -208,7 +252,7 @@ async getTaskById(id, currentUser) {
 
 
   // -------------------------
-  // 📊 Task Aggregation (Analytics)
+  // Task Aggregation (Analytics)
   // -------------------------
   async getTaskStats() {
     const [byUser, byStatus] = await Promise.all([
@@ -218,28 +262,17 @@ async getTaskById(id, currentUser) {
     return { byUser, byStatus };
   }
 
+
   // -------------------------
-  // 🔔 Notify specific user when a task is created
+  // Notify specific user when a task is created
   // -------------------------
   async notifyTaskCreatedForUser(task) {
-
-    // Extract the user ID assigned to the task.
-    // Because Mongoose can return populated objects OR raw ObjectId,
-    // we safely detect the format.
-
     const userId =
-      typeof task.assignedTo === "object"          // If `assignedTo` is populated (full user object)
-        ? task.assignedTo._id?.toString()          // → Extract its _id and convert to string
-        : task.assignedTo?.toString();             // Otherwise, use the raw ObjectId directly
+      typeof task.assignedTo === "object"
+        ? task.assignedTo._id?.toString()
+        : task.assignedTo?.toString();
 
-    // If a userId was successfully extracted
     if (userId) {
-
-      // Forward the event to the NotificationService.
-      // This method will:
-      //  - Find the user’s socket room (userId)
-      //  - Emit a "taskCreated" event with task details
-      //  - Notify ONLY that specific user
       notificationService.taskCreatedForUser(userId, task);
     }
   }

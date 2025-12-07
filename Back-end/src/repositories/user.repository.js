@@ -78,13 +78,27 @@ class UserRepository {
   }
 
   // -------------------------------------------
+  // Find Users by Team ID
+  // -------------------------------------------
+  // Returns all users assigned to a specific team.
+  // If teamId is null or not provided, returns users with no team assigned.
+  //
+  // Example:
+  //   const teamUsers = await userRepository.findByTeam("64def456...");
+  // -------------------------------------------
+  async findByTeam(teamId) {
+    return await User.find({ team: teamId });
+  }
+
+  // -------------------------------------------
   // Update User by ID
   // -------------------------------------------
   // Finds a user by ID and updates the specified fields.
   // If a new password is provided, it is re-hashed before update.
+  // Also supports updating role (e.g., promote/demote) and team assignment.
   //
   // Example:
-  //   await userRepository.update("64abc123...", { name: "Updated Name" });
+  //   await userRepository.update("64abc123...", { role: "manager", team: "64xyz..." });
   // -------------------------------------------
   async update(id, updateData) {
     // Re-hash password if user updates it

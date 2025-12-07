@@ -1,0 +1,20 @@
+<div class="manager-dashboard">
+  <mat-card>
+    <mat-card-title>Manager Dashboard</mat-card-title>
+    <mat-card-content>
+      <p>Welcome, {{ currentUser?.email }}</p>
+
+      <div class="actions">
+        <button mat-flat-button color="primary" (click)="createTeam()">Create Team</button>
+      </div>
+
+      <mat-list>
+        <mat-list-item *ngFor="let t of teams">
+          <div matLine>{{ t.name }}</div>
+          <div matLine class="muted">Manager: {{ t.manager?.name || t.manager?.email }}</div>
+          <button mat-button (click)="openTeam(t)">Open</button>
+        </mat-list-item>
+      </mat-list>
+    </mat-card-content>
+  </mat-card>
+</div>

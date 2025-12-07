@@ -58,5 +58,70 @@ router.post(
 // Delete any task in the system (admin override)
 router.delete("/tasks/:taskId", adminController.deleteTask);
 
+// -------------------------------------------
+// Promote a User to Manager Role
+// -------------------------------------------
+// PUT /api/users/:id/promote
+// Allows an admin to elevate a regular user to "manager" role.
+// Used for delegating team management responsibilities.
+//
+// Example:
+//   PUT /users/64abc123def456/promote
+// -------------------------------------------
+router.put(
+  "/users/:id/promote",
+  adminController.promoteUserToManager
+);
+
+// -------------------------------------------
+// Demote a Manager/User Back to Regular User
+// -------------------------------------------
+// PUT /api/users/:id/demote
+// Admin-only action to revoke manager privileges and set role back to "user".
+// Commonly used when a manager leaves a team or role changes.
+//
+// Example:
+//   PUT /users/64abc123def456/demote
+// -------------------------------------------
+router.put(
+  "/users/:id/demote",
+  adminController.demoteUserToUser
+);
+
+// -------------------------------------------
+// Assign User to a Team
+// -------------------------------------------
+// POST /api/users/:id/assign-team
+// Assigns a user to a specific team (sets user.team = teamId).
+// Request body must contain valid teamId.
+// Validation middleware ensures correct payload.
+//
+// Body Example:
+//   { "teamId": "64def789abc123" }
+//
+// Protected + validated route.
+// -------------------------------------------
+router.post(
+  "/users/:id/assign-team",
+  validateSchema(assignTeamSchema),
+  adminController.assignUserToTeam
+);
+
+// -------------------------------------------
+// Remove User from Their Current Team
+// -------------------------------------------
+// POST /api/users/:id/remove-team
+// Sets user.team = null (unassigns from any team).
+// No body required — action is based solely on user ID.
+// Typically allowed for admins or team managers.
+//
+// Example:
+//   POST /users/64abc123def456/remove-team
+// -------------------------------------------
+router.post(
+  "/users/:id/remove-team",
+  adminController.removeUserFromTeam
+);
+
 // Export router for use in main application
 export default router;

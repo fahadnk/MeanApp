@@ -5,197 +5,215 @@
 //  - Loads environment variables
 //  - Initializes Express server (from app.js)
 //  - Creates an HTTP server to attach both Express & Socket.IO
-//  - Sets up real-time WebSocket communication
+//  - Sets up real-time WebSocket communication with room-based architecture
 //  - Binds Notification Service to Socket.IO
+//  - Handles user identification and team room management
 //  - Handles all global crashes & graceful shutdown signals
 // ============================================================================
 
 // -------------------------
-// 1️⃣ Core & Third-Party Imports
+// 1. Core & Third-Party Imports
 // -------------------------
 
 import http from "http";                   
-// ^ Imports Node.js' built-in HTTP module.
-//   We use this to create a raw HTTP server so that Socket.IO can attach to it.
+// ^ Built-in Node.js HTTP module – required to create server for Socket.IO
 
 import { Server } from "socket.io";        
-// ^ Imports the Socket.IO Server class used to create a WebSocket server.
+// ^ Socket.IO server class – enables real-time bidirectional communication
 
 import dotenv from "dotenv";               
-// ^ Imports dotenv so we can load variables from a .env file into process.env.
+// ^ Loads environment variables from .env file into process.env
 
 
 // -------------------------
-// 2️⃣ Local Application Imports
+// 2. Local Application Imports
 // -------------------------
 
 import app from "./app.js";                
-// ^ Imports the Express application (routes, middlewares, etc).
+// ^ Main Express application with all routes, middlewares, error handlers
 
 import notificationService from "./services/notification.service.js";
-// ^ Imports a custom notification service responsible for sending real-time
-//   updates through Socket.IO.
+// ^ Centralized service for emitting real-time events (broadcast + rooms)
 
 
 // -------------------------
-// 3️⃣ Load Environment Variables
+// 3. Load Environment Variables
 // -------------------------
 
 dotenv.config();                           
-// ^ Reads `.env` file and injects variables into `process.env`.
-//   Must be done early before using environment variables.
+// ^ Must be called early – populates process.env.PORT, JWT secrets, etc.
 
 
 // -------------------------
-// 4️⃣ Configure Server Port
+// 4. Configure Server Port
 // -------------------------
 
 const PORT = process.env.PORT || 5000;
-// ^ Determines which port your server will run on.
-//   Uses PORT from environment or defaults to 5000.
+// ^ Server listening port – configurable via environment or defaults to 5000
 
 
 // -------------------------
-// 5️⃣ Create HTTP Server
+// 5. Create HTTP Server
 // -------------------------
 
 const server = http.createServer(app);
-// ^ Wraps the Express application inside a raw HTTP server.
-//   This is required because Socket.IO must attach to an HTTP server,
-//   not directly to the Express app.
+// ^ Wraps Express app in raw HTTP server so Socket.IO can attach to it
 
 
 // -------------------------
-// 6️⃣ Initialize Socket.IO Server
+// 6. Initialize Socket.IO Server
 // -------------------------
 
 const io = new Server(server, {
   cors: {
-    origin: "*", // Allow all origins; adjust later for production security.
+    origin: "*",                      // TODO: Restrict in production (e.g. ["https://yourapp.com"])
+    methods: ["GET", "POST"]
   },
+  // Optional: improve performance & security
+  allowEIO3: true                     // Support older Socket.IO clients if needed
 });
-// ^ Creates a WebSocket server instance.
-//   - Binds it to the HTTP server
-//   - Enables CORS so frontend apps on other domains can connect.
+// ^ Creates WebSocket server with CORS enabled for frontend connectivity
 
 
 // -------------------------
-// 7️⃣ Make Socket.IO Globally Available in Express
+// 7. Make Socket.IO Globally Available in Express
 // -------------------------
 
 app.set("io", io);
-// ^ Stores the io instance inside Express app.
-//   This allows other parts of the backend (like controllers) to access it
-//   via req.app.get("io") and emit real-time events.
+// ^ Allows controllers/middlewares to access via req.app.get("io")
 
 
 // -------------------------
-// 8️⃣ Attach Socket.IO to NotificationService
+// 8. Attach Socket.IO to NotificationService
 // -------------------------
 
 notificationService.attachIO(io);
-// ^ Passes the Socket.IO instance to your notification service.
-//   The service can now send WebSocket notifications to specific users or rooms.
+// ^ Critical: Gives notification service access to live io instance
 
 
 // -------------------------
-// 9️⃣ Handle Socket.IO Connection Events
+// 9. Handle Socket.IO Connection Events (Room-Based Architecture)
 // -------------------------
 
 io.on("connection", (socket) => {
-  // ^ This event triggers whenever a client establishes a WebSocket connection.
+  // ^ Fires every time a new client connects via WebSocket
 
-  console.log(`🟢 Client connected: ${socket.id}`);
-  // ^ Logs each newly connected client's unique socket ID.
+  console.log(`Client connected: ${socket.id}`);
+  // ^ Unique socket ID assigned by Socket.IO – useful for debugging
 
+  // -------------------------------------------------------------------------
+  // CLIENT IDENTIFICATION – Join personal room: "user:<userId>"
+  // -------------------------------------------------------------------------
+  // Frontend must emit after login:
+  //   socket.emit("identify", { userId: "64abc123..." } OR just userId string)
+  // -------------------------------------------------------------------------
+  socket.on("identify", (payload) => {
+    try {
+      // Support both string and object payload for flexibility
+      const { userId } = typeof payload === "object" ? payload : { userId: payload };
 
-  // ⭐ CLIENT IDENTIFICATION FOR PRIVATE ROOMS ⭐
-  // --------------------------------------------
-  // The frontend should emit:
-  //   socket.emit("identify", userId)
-  // after login, passing the logged-in user's ID.
+      if (!userId) {
+        console.warn("identify event received without userId");
+        return;
+      }
 
-  socket.on("identify", (userId) => {
-    // ^ Listens for an event from frontend to identify which user this socket belongs to.
+      // Join private user room → enables targeted notifications
+      socket.join(`user:${userId}`);
+      console.log(`Socket ${socket.id} identified as user:${userId} and joined room`);
 
-    if (!userId) return;
-    // ^ If userId is missing or undefined, ignore and do nothing.
+      // Optional: Store userId on socket for later use
+      socket.userId = userId;
 
-    socket.join(String(userId));
-    // ^ Adds this socket to a room uniquely named after the user’s ID.
-    //   This lets you send notifications to a specific user like:
-    //   io.to(userId).emit("eventName", data);
-
-    console.log(`📌 User ${userId} joined room ${userId}`);
+    } catch (err) {
+      console.warn("identify handler error:", err.message);
+    }
   });
 
+  // -------------------------------------------------------------------------
+  // JOIN TEAM ROOM – Subscribe to team-specific updates
+  // -------------------------------------------------------------------------
+  // Frontend calls when user views a team dashboard or opens team page
+  //   socket.emit("joinTeam", { teamId: "64def456..." })
+  // -------------------------------------------------------------------------
+  socket.on("joinTeam", ({ teamId }) => {
+    if (!teamId) {
+      console.warn("joinTeam called without teamId");
+      return;
+    }
 
-  socket.on("disconnect", () => {
-    // ^ This event triggers when a user disconnects (browser closed, network issue, etc.)
+    socket.join(`team:${teamId}`);
+    console.log(`Socket ${socket.id} joined team room → team:${teamId}`);
+  });
 
-    console.log(`🔴 Client disconnected: ${socket.id}`);
-    // ^ Logs disconnection for debugging.
+  // -------------------------------------------------------------------------
+  // LEAVE TEAM ROOM – Unsubscribe when leaving team view
+  // -------------------------------------------------------------------------
+  socket.on("leaveTeam", ({ teamId }) => {
+    if (!teamId) {
+      console.warn("leaveTeam called without teamId");
+      return;
+    }
+
+    socket.leave(`team:${teamId}`);
+    console.log(`Socket ${socket.id} left team room → team:${teamId}`);
+  });
+
+  // -------------------------------------------------------------------------
+  // DISCONNECT – Cleanup logging
+  // -------------------------------------------------------------------------
+  socket.on("disconnect", (reason) => {
+    console.log(`Client disconnected: ${socket.id} | Reason: ${reason}`);
+    // Note: socket automatically leaves all rooms on disconnect
   });
 });
 
 
 // -------------------------
-// 🔟 Start HTTP + WebSocket Server
+// 10. Start HTTP + WebSocket Server
 // -------------------------
 
 server.listen(PORT, () => {
-  // ^ Starts the HTTP server + Socket.IO listener on specified port.
-
-  console.log(`✅ Server is running and listening on port ${PORT}`);
-  // ^ Logs a success message on startup.
+  console.log(`Server is running and listening on port ${PORT}`);
+  console.log(`WebSocket server active – waiting for clients...`);
 });
 
 
 // -------------------------
-// 1️⃣1️⃣ Global Error Handling: Uncaught Exceptions
+// 11. Global Error Handling: Uncaught Exceptions
 // -------------------------
 
 process.on("uncaughtException", (err) => {
-  // ^ Catches errors thrown outside of promises (sync code)
-  //   that were not handled anywhere in your app.
-
-  console.error("❌ Uncaught Exception detected! Shutting down...");
-  console.error(err);
+  console.error("Uncaught Exception detected! Shutting down...");
+  console.error(err.name, err.message);
+  console.error(err.stack);
 
   process.exit(1);
-  // ^ Forcefully shuts the app down to avoid unstable state.
 });
 
 
 // -------------------------
-// 1️⃣2️⃣ Global Error Handling: Unhandled Promise Rejections
+// 12. Global Error Handling: Unhandled Promise Rejections
 // -------------------------
 
-process.on("unhandledRejection", (reason) => {
-  // ^ Captures rejected promises that weren't awaited with try/catch.
-
-  console.error("❌ Unhandled Promise Rejection detected! Shutting down...");
-  console.error(reason);
-
-  server.close(() => process.exit(1));
-  // ^ First closes the HTTP+Socket.IO server
-  //   then exits the Node process.
+process.on("unhandledRejection", (reason, promise) => {
+  console.error("Unhandled Rejection at:", promise, "reason:", reason);
+  
+  server.close(() => {
+    console.error("Server closed due to unhandled rejection");
+    process.exit(1);
+  });
 });
 
 
 // -------------------------
-// 1️⃣3️⃣ Graceful Shutdown on SIGTERM
+// 13. Graceful Shutdown on SIGTERM (PM2, Docker, Render, etc.)
 // -------------------------
 
 process.on("SIGTERM", () => {
-  // ^ This event fires when platforms like Render, PM2, or Docker
-  //   send SIGTERM before killing the process.
-
-  console.log("👋 SIGTERM received. Shutting down gracefully...");
+  console.log("SIGTERM received. Shutting down gracefully...");
 
   server.close(() => {
-    // ^ Stops the server from accepting new connections.
-
-    console.log("💤 Process terminated cleanly.");
+    console.log("HTTP server closed. WebSocket connections terminated.");
+    process.exit(0);
   });
 });

@@ -1,0 +1,20 @@
+<mat-card *ngIf="team">
+  <mat-card-title>{{ team.name }}</mat-card-title>
+  <mat-card-subtitle>Manager: {{ team.manager?.name || team.manager?.email }}</mat-card-subtitle>
+
+  <h3>Members</h3>
+  <mat-list>
+    <mat-list-item *ngFor="let m of team.members">
+      <div matLine>{{ m.name || m.email }}</div>
+      <button mat-mini-button color="warn" (click)="removeMember(m._id)">Remove</button>
+    </mat-list-item>
+  </mat-list>
+
+  <h4>Add member</h4>
+  <mat-form-field>
+    <mat-select [(value)]="addUserId">
+      <mat-option *ngFor="let u of allUsers" [value]="u._id">{{ u.name || u.email }}</mat-option>
+    </mat-select>
+  </mat-form-field>
+  <button mat-flat-button color="primary" (click)="addMember()">Add</button>
+</mat-card>

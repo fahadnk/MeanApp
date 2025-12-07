@@ -111,6 +111,43 @@ class AdminService {
 
     return true; // Indicate successful deletion
   }
+
+  async promoteUserToManager(req, res) {
+  try {
+    const updated = await adminService.promoteUserToManager(req.params.id, req.user);
+    return success(res, updated, "User promoted to manager");
+  } catch (err) {
+    return error(res, err.message, 400);
+  }
+}
+
+async demoteUserToUser(req, res) {
+  try {
+    const updated = await adminService.demoteUserToUser(req.params.id, req.user);
+    return success(res, updated, "User demoted to user");
+  } catch (err) {
+    return error(res, err.message, 400);
+  }
+}
+
+async assignUserToTeam(req, res) {
+  try {
+    const updated = await adminService.assignUserToTeam(req.params.id, req.body.teamId, req.user);
+    return success(res, updated, "User assigned to team");
+  } catch (err) {
+    return error(res, err.message, 400);
+  }
+}
+
+async removeUserFromTeam(req, res) {
+  try {
+    const updated = await adminService.removeUserFromTeam(req.params.id, req.user);
+    return success(res, updated, "User removed from team");
+  } catch (err) {
+    return error(res, err.message, 400);
+  }
+}
+
 }
 
 
