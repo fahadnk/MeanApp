@@ -17,7 +17,7 @@ import userRepository from "../repositories/user.repository.js";
 import teamRepository from "../repositories/team.repository.js";
 
 // Role constants
-import { ROLES } from "../constants/roles.js";
+import { ROLES } from "../utils/roles.enum.js";
 
 
 // -------------------------

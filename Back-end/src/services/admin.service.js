@@ -112,41 +112,118 @@ class AdminService {
     return true; // Indicate successful deletion
   }
 
-  async promoteUserToManager(req, res) {
-  try {
-    const updated = await adminService.promoteUserToManager(req.params.id, req.user);
-    return success(res, updated, "User promoted to manager");
-  } catch (err) {
-    return error(res, err.message, 400);
-  }
-}
+  // -------------------------------------------
+  // Promote User → Manager
+  // -------------------------------------------
+  async promoteUserToManager(userId) {
+    const user = await userRepository.findById(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
 
-async demoteUserToUser(req, res) {
-  try {
-    const updated = await adminService.demoteUserToUser(req.params.id, req.user);
-    return success(res, updated, "User demoted to user");
-  } catch (err) {
-    return error(res, err.message, 400);
-  }
-}
+    if (user.role === "manager") {
+      throw new Error("User is already a Manager");
+    }
 
-async assignUserToTeam(req, res) {
-  try {
-    const updated = await adminService.assignUserToTeam(req.params.id, req.body.teamId, req.user);
-    return success(res, updated, "User assigned to team");
-  } catch (err) {
-    return error(res, err.message, 400);
-  }
-}
+    user.role = "manager";
+    await user.save();
 
-async removeUserFromTeam(req, res) {
-  try {
-    const updated = await adminService.removeUserFromTeam(req.params.id, req.user);
-    return success(res, updated, "User removed from team");
-  } catch (err) {
-    return error(res, err.message, 400);
+    return user;
   }
-}
+
+
+
+  // -------------------------------------------
+  // Demote Manager → User
+  // -------------------------------------------
+  async demoteUserToNormal(userId) {
+    const user = await userRepository.findById(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    if (user.role !== "manager") {
+      throw new Error("User is not a Manager");
+    }
+
+    user.role = "user";
+    await user.save();
+
+    return user;
+  }
+
+  async assignUserToTeam(userId, teamId, currentUser) {
+    // 1) Only Admin can perform this
+    if (currentUser.role !== "admin") {
+      throw new Error("Only admin can assign users to teams");
+    }
+
+    const user = await userRepository.findById(userId);
+    if (!user) throw new Error("User not found");
+
+    const team = await teamRepository.findById(teamId);
+    if (!team) throw new Error("Team not found");
+
+    // Prevent assigning admins into teams
+    if (user.role === "admin") {
+      throw new Error("Admins cannot be assigned to teams");
+    }
+
+    // Prevent assigning a manager to someone else's team
+    if (user.role === "manager" && team.manager.toString() !== userId) {
+      throw new Error("Managers can only manage their own team");
+    }
+
+    // Add user to team members list (avoid duplicates)
+    if (!team.members.includes(userId)) {
+      team.members.push(userId);
+    }
+
+    // Set user's team
+    user.team = teamId;
+
+    await user.save();
+    await team.save();
+
+    return { user, team };
+  }
+
+
+  async removeUserFromTeam(userId, currentUser) {
+    // 1) Only Admin can perform this
+    if (currentUser.role !== "admin") {
+      throw new Error("Only admin can remove users from teams");
+    }
+
+    const user = await userRepository.findById(userId);
+    if (!user) throw new Error("User not found");
+
+    if (!user.team) {
+      throw new Error("User is not assigned to any team");
+    }
+
+    const team = await teamRepository.findById(user.team);
+    if (!team) throw new Error("Team not found");
+
+    // Special rule: manager cannot be removed from their own team  
+    if (user.role === "manager" && team.manager.toString() === userId) {
+      throw new Error("A team manager cannot be removed from their own team");
+    }
+
+    // Remove user from team list
+    team.members = team.members.filter(
+      (memberId) => memberId.toString() !== userId.toString()
+    );
+
+    // Unassign team from user
+    user.team = null;
+
+    await team.save();
+    await user.save();
+
+    return { user, team };
+  }
+
 
 }
 

@@ -99,6 +99,53 @@ class AdminController {
       return error(res, err.message, 400);
     }
   }
+
+  // -------------------------------------------
+// Promote User → Manager
+// -------------------------------------------
+async promoteUserToManager(req, res) {
+  try {
+    const userId = req.params.id;
+
+    const updatedUser = await adminService.promoteUserToManager(userId);
+
+    return res.status(200).json({
+      success: true,
+      message: "User promoted to Team Manager successfully",
+      data: updatedUser,
+    });
+  } catch (err) {
+    return res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+}
+
+
+
+// -------------------------------------------
+// Demote Manager → User
+// -------------------------------------------
+async demoteUserToNormal(req, res) {
+  try {
+    const userId = req.params.id;
+
+    const updatedUser = await adminService.demoteUserToNormal(userId);
+
+    return res.status(200).json({
+      success: true,
+      message: "User demoted to normal user successfully",
+      data: updatedUser,
+    });
+  } catch (err) {
+    return res.status(400).json({
+      success: false,
+      message: err.message,
+    });
+  }
+}
+
 }
 
 // Export singleton instance of AdminController to ensure single instance usage
