@@ -18,10 +18,7 @@ export const addMemberSchema = Joi.object({
 // 3️⃣ Assign User to Team (Admin assigns user to ANY team)
 // ---------------------------------------------------
 export const assignTeamSchema = Joi.object({
-  teamId: Joi.string().required().messages({
-    "any.required": "teamId is required",
-    "string.empty": "teamId cannot be empty"
-  })
+  teamId: Joi.string().required()
 });
 
 // ---------------------------------------------------

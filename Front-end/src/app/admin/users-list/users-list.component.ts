@@ -25,7 +25,7 @@ export class UserListComponent implements OnInit {
 
   loadUsers() {
     this.admin.getUsers().subscribe((res: any) => {
-      this.users = res.users;
+      this.users = res.data;
     });
   }
 

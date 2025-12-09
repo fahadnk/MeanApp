@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { TeamService } from 'src/app/core/services/team.service';
+import { UserService } from 'src/app/core/services/user.service';
 
 @Component({
   selector: 'app-team-details',

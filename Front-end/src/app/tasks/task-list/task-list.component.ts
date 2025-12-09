@@ -49,8 +49,8 @@ export class TaskListComponent implements OnInit {
 
     this.taskService.list(options).subscribe({
       next: (res) => {
-        this.tasks = res.tasks || res; // supports either paginated or plain array
-        this.total = res.pagination?.total || this.tasks.length;
+        this.tasks = res.data?.tasks || res; // supports either paginated or plain array
+        this.total = res.data?.pagination?.total || this.tasks.length;
       },
       error: (err) => {
         console.error('❌ Error loading tasks:', err);
@@ -79,20 +79,24 @@ export class TaskListComponent implements OnInit {
         },
         error: (err) => {
           console.error('❌ Delete error:', err);
-          this.snack.open('Failed to delete task', 'Close', { duration: 2500 });
+          this.snack.open(err.message, 'Close', { duration: 2500 });
         },
       });
     }
   }
 
   openTask(task: any) {
-      this.dialog.open(TaskDetailsComponent, {
-        width: '600px',
-        maxHeight: '90vh',
-        autoFocus: false,
-        restoreFocus: false,
-        data: task,
-        panelClass: 'task-details-dialog'
-      })
-    }
+    this.dialog.open(TaskDetailsComponent, {
+      width: '600px',
+      maxHeight: '90vh',
+      autoFocus: false,
+      restoreFocus: false,
+      data: task,
+      panelClass: 'task-details-dialog'
+    }).afterClosed().subscribe(result => {
+      if (result) {
+        this.loadTasks();
+      }
+    });
+  }
 }

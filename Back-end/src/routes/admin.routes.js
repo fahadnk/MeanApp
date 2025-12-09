@@ -1,9 +1,9 @@
-// backend/src/routes/admin.routes.js
-
 import express from "express";
 
-// FIXED — removed trailing space + corrected import
-import { addMemberSchema as assignTeamSchema } from "../validators/team.validator.js";
+import {
+  assignTeamSchema,
+  removeTeamSchema
+} from "../validators/team.validator.js";
 
 import authMiddleware from "../middleware/AuthMiddleware.js";
 import roleMiddleware from "../middleware/RoleMiddleware.js";
@@ -16,12 +16,9 @@ import adminController from "../controllers/admin.controller.js";
 
 const router = express.Router();
 
-// All admin routes require authentication + admin role
 router.use(authMiddleware, roleMiddleware("admin"));
 
-// ---------------------------
-// User Management
-// ---------------------------
+// Users
 router.get("/users", adminController.getAllUsers);
 router.get("/users/:id", adminController.getUserById);
 
@@ -33,9 +30,7 @@ router.put(
 
 router.delete("/users/:id", adminController.deleteUser);
 
-// ---------------------------
-// Task Management
-// ---------------------------
+// Tasks
 router.get("/users/:id/tasks", adminController.getUserTasks);
 
 router.post(
@@ -46,25 +41,21 @@ router.post(
 
 router.delete("/tasks/:taskId", adminController.deleteTask);
 
-// ---------------------------
-// Role Management
-// ---------------------------
+// Role management
 router.put("/users/:id/promote", adminController.promoteUserToManager);
-
 router.put("/users/:id/demote", adminController.demoteUserToNormal);
 
-// ---------------------------
-// Team Assignment
-// ---------------------------
+// Assign team
 router.post(
   "/users/:id/assign-team",
-  validateSchema(assignTeamSchema),  // uses addMemberSchema
+  validateSchema(assignTeamSchema),
   adminController.assignUserToTeam
 );
 
-// NO VALIDATION NEEDED — body is empty
+// Remove team
 router.post(
   "/users/:id/remove-team",
+  validateSchema(removeTeamSchema),
   adminController.removeUserFromTeam
 );
 

@@ -145,6 +145,37 @@ async demoteUserToNormal(req, res) {
     });
   }
 }
+// -------------------------------------------
+// Assign user to a team
+// -------------------------------------------
+async assignUserToTeam(req, res) {
+  try {
+    const userId = req.params.id;
+    const teamId = req.body.teamId;
+
+    const updated = await adminService.assignUserToTeam(userId, teamId);
+
+    return success(res, updated, "User assigned to team successfully");
+  } catch (err) {
+    return error(res, err.message, 400);
+  }
+}
+
+// -------------------------------------------
+// Remove user from their team
+// -------------------------------------------
+async removeUserFromTeam(req, res) {
+  try {
+    const userId = req.params.id;
+
+    const updated = await adminService.removeUserFromTeam(userId);
+
+    return success(res, updated, "User removed from team successfully");
+  } catch (err) {
+    return error(res, err.message, 400);
+  }
+}
+
 
 }
 

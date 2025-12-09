@@ -6,7 +6,8 @@ export const createTaskSchema = Joi.object({
   priority: Joi.string().valid("low", "medium", "high").required(),
   status: Joi.string().valid("todo", "in-progress", "done").default("todo"),
   dueDate: Joi.date().required(),
-  assignedTo: Joi.string().optional(),  // ONLY admin/manager allowed
+  assignedTo: Joi.string().required(),
+  createdBy: Joi.string().required(), // ONLY admin/manager allowed
   teamId: Joi.string().optional()       // ONLY admin allowed
 });
 
@@ -16,6 +17,8 @@ export const updateTaskSchema = Joi.object({
   priority: Joi.string().valid("low", "medium", "high").optional(),
   status: Joi.string().valid("todo", "in-progress", "done").optional(),
   dueDate: Joi.date().optional(),
-  assignedTo: Joi.string().optional()
+  assignedTo: Joi.string().optional(),
+  createdBy: Joi.string().optional(), // ONLY admin/manager allowed
+  teamId: Joi.string().optional()
 }).min(1);
 

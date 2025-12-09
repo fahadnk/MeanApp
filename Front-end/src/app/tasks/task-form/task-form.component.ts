@@ -53,7 +53,13 @@ export class TaskFormComponent implements OnInit {
 
   loadTask(id: string) {
     this.taskService.getById(id).subscribe({
-      next: (task) => this.taskForm.patchValue(task.task),
+      next: (task) =>{
+        this.taskForm.patchValue({title: task.data.title});
+        this.taskForm.patchValue({description: task.data.description});
+        this.taskForm.patchValue({status: task.data.status});
+        this.taskForm.patchValue({priority: task.data.priority});
+        this.taskForm.patchValue({dueDate: task.data.dueDate });
+      },
       error: (err) => {
         console.error('Failed to load task', err);
         this.snackBar.open('Failed to load task', 'Close', { duration: 2500 });

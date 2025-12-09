@@ -32,12 +32,7 @@ import { AuthInterceptor } from './core/interceptors/auth.interceptor';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { SharedModule } from './shared/shared.module';
 import { AdminModule } from './admin/admin.module';
-import { HeaderComponent } from './shared/header/header.component';
 import { LoaderComponent } from './core/loader/loader.component';
-import { ManagerDashboardComponent } from './manager/manager-dashboard/manager-dashboard.component';
-import { TeamCreateComponent } from './manager/team-create/team-create.component';
-import { TeamDetailsComponent } from './teams/team-details/team-details.component';
-import { ManagerTasksComponent } from './manager/manager-tasks/manager-tasks.component';
 
 @NgModule({
   declarations: [
@@ -47,11 +42,7 @@ import { ManagerTasksComponent } from './manager/manager-tasks/manager-tasks.com
     TaskListComponent,
     TaskFormComponent,
     TaskDetailsComponent,
-    LoaderComponent,
-    ManagerDashboardComponent,
-    TeamCreateComponent,
-    TeamDetailsComponent,
-    ManagerTasksComponent
+    LoaderComponent
   ],
   imports: [
     BrowserModule,

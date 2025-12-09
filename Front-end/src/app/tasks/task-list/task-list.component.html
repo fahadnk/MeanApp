@@ -104,12 +104,16 @@
               <mat-icon color="warn">delete</mat-icon>
               Delete
             </button>
+            <button mat-menu-item (click)="openTask(task)">
+              <mat-icon>details</mat-icon>
+              View Details
+            </button>
           </mat-menu>
         </td>
       </ng-container>
 
       <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
-      <tr mat-row class="clickable" *matRowDef="let row; columns: displayedColumns" (click)="openTask(row)"></tr>
+      <tr mat-row class="clickable" *matRowDef="let row; columns: displayedColumns"></tr>
     </table>
 
     <!-- Pagination -->

@@ -35,9 +35,9 @@ export class UserDetailsComponent implements OnInit {
   ngOnInit() {
     const id = this.route.snapshot.paramMap.get('id')!;
     this.admin.getUser(id).subscribe((res: any) => {
-      this.user = res.user;
+      this.user = res.data;
+      this.loadUSersTasks();
     });
-    this.loadUSersTasks();
 
     this.dataSource.filterPredicate = (task, filter) => {
       const f = JSON.parse(filter);
@@ -56,7 +56,7 @@ export class UserDetailsComponent implements OnInit {
   loadUSersTasks() {
     const id = this.route.snapshot.paramMap.get('id')!;
     this.admin.getUserTasks(id).subscribe((res: any) => {
-      this.tasks = res.tasks;
+      this.tasks = res.data;
       this.dataSource.data = this.tasks;
       this.dataSource.paginator = this.paginator;
       this.dataSource.sort = this.sort;
