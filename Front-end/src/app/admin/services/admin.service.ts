@@ -38,4 +38,8 @@ export class AdminService {
   deleteTask(taskId: string) {
     return this.http.delete(`${this.base}/tasks/${taskId}`);
   }
+
+  createUser(payload: any) {
+    return this.http.post(`${this.base}/create-user`, payload);
+  }
 }

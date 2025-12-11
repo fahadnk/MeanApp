@@ -59,4 +59,6 @@ router.post(
   adminController.removeUserFromTeam
 );
 
+router.post("/create-user", auth, isAdmin, createUser);
+
 export default router;

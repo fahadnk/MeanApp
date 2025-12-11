@@ -135,6 +135,17 @@ class UserRepository {
   async validatePassword(plainPassword, hashedPassword) {
     return await bcrypt.compare(plainPassword, hashedPassword);
   }
+
+  async updatePassword(userId, hashedPassword) {
+    return User.findByIdAndUpdate(
+      userId,
+      {
+        password: hashedPassword,
+        mustResetPassword: false   // ⭐ turn off reset requirement
+      },
+      { new: true }
+    ).select("-password");
+  }
 }
 
 // -------------------------------------------

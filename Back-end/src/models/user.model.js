@@ -40,6 +40,17 @@ const userSchema = new mongoose.Schema(
       default: "user",
     },
 
+        role: {
+      type: String,
+      enum: ["admin", "manager", "user"],
+      default: "user"
+    },
+
+    mustResetPassword: {
+      type: Boolean,
+      default: true // NEW: user must reset password on first login
+    },
+
     // Reference to a Team document (ObjectId from "Team" collection)
     // Can be null if user is not assigned to any team yet
     team: {

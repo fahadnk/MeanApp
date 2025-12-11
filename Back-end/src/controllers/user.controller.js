@@ -31,7 +31,10 @@ class UserController {
     try {
       // "req.body" contains the data sent by the client (e.g. name, email, password)
       // This data is passed to the service layer for validation and database insertion.
-      const user = await userService.register(req.body);
+      const user = await userService.register({
+        ...req.body,
+        mustResetPassword: false // user registered himself
+      });
 
       // If successful, send a 201 Created response with a success message.
       // The "success" helper ensures a consistent JSON structure.
@@ -67,7 +70,10 @@ class UserController {
       const user = await userService.login(email, password);
 
       // Respond with success message and user data (often includes JWT).
-      return success(res, user, "Login successful");
+      return success(res, {
+        ...user,
+        mustResetPassword: user.mustResetPassword
+      }, "Login successful");
     } catch (err) {
       // If authentication fails (invalid credentials, etc.), send 401 Unauthorized.
       return error(res, err.message, 401);
@@ -115,7 +121,22 @@ class UserController {
       return error(res, err.message, 400);
     }
   }
+
+  async resetPassword(req, res) {
+    try {
+      const { newPassword } = req.body;
+
+      if (!newPassword) return error(res, "New password required", 400);
+
+      const updated = await userService.resetPassword(req.user.id, newPassword);
+
+      return success(res, updated, "Password reset successfully");
+    } catch (err) {
+      return error(res, err.message, 400);
+    }
+  }
 }
+
 
 
 // ---------------------------------------------------

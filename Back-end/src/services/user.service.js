@@ -42,41 +42,50 @@ class UserService {
   // 2️⃣ Uses repository’s password validation (bcrypt.compare inside).
   // 3️⃣ Generates a signed JWT for authentication.
   async login(email, password) {
-  // Normalize email for consistent lookup
-  const normalizedEmail = email.trim().toLowerCase();
+    // Normalize email for consistent lookup
+    const normalizedEmail = email.trim().toLowerCase();
 
-  // Step 1: Find user
-  const user = await userRepository.findByEmail(normalizedEmail);
-  if (!user) {
-    throw new Error("Invalid email or password.");
+    // Step 1: Find user
+    const user = await userRepository.findByEmail(normalizedEmail);
+    if (!user) {
+      throw new Error("Invalid email or password.");
+    }
+
+    // Step 2: Validate password
+    const isValid = await userRepository.validatePassword(password, user.password);
+    if (!isValid) {
+      throw new Error("Invalid email or password.");
+    }
+
+    if (user.mustResetPassword) {
+      return {
+        success: true,
+        mustResetPassword: true,
+        message: "Password reset required before continuing."
+      };
+    }
+
+    // Step 3: Ensure JWT secret
+    if (!process.env.JWT_SECRET) {
+      throw new Error("JWT secret not configured.");
+    }
+
+    // Step 4: Generate token
+    const token = jwt.sign(
+      { id: user._id, email: user.email, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" }
+    );
+
+    // Step 5: Return structured response
+    return {
+      success: true,
+      message: "Login successful.",
+      token,
+      user: userDTO(user),
+      mustResetPassword: false
+    };
   }
-
-  // Step 2: Validate password
-  const isValid = await userRepository.validatePassword(password, user.password);
-  if (!isValid) {
-    throw new Error("Invalid email or password.");
-  }
-
-  // Step 3: Ensure JWT secret
-  if (!process.env.JWT_SECRET) {
-    throw new Error("JWT secret not configured.");
-  }
-
-  // Step 4: Generate token
-  const token = jwt.sign(
-    { id: user._id, email: user.email, role: user.role },
-    process.env.JWT_SECRET,
-    { expiresIn: "1d" }
-  );
-
-  // Step 5: Return structured response
-  return {
-    success: true,
-    message: "Login successful.",
-    token,
-    user: userDTO(user),
-  };
-}
 
 
   // ---------------------------------------------------------------------------
@@ -125,6 +134,24 @@ class UserService {
     return {
       success: true,
       message: "User deleted successfully.",
+    };
+  }
+
+  async resetPassword(userId, newPassword) {
+    // Hash the new password
+    const hashed = await bcrypt.hash(newPassword, 10);
+
+    // Use repository method (never touch User model directly here)
+    const updatedUser = await userRepository.updatePassword(userId, hashed);
+
+    if (!updatedUser) {
+      throw new Error("User not found.");
+    }
+
+    return {
+      success: true,
+      message: "Password reset successfully.",
+      user: updatedUser
     };
   }
 }

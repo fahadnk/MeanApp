@@ -85,5 +85,12 @@ router.get(
   userController.getAllUsers // Controller method: retrieves complete user list (with pagination/filtering)
 );
 
+router.post(
+  "/reset-password",
+  authMiddleware,
+  validateSchema(resetPasswordSchema),
+  userController.resetPassword
+);
+
 // Export the router to be mounted in the main application (usually in app.js or server.js)
 export default router;
