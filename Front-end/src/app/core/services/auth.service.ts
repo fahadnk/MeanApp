@@ -33,6 +33,7 @@ export class AuthService {
       catchError(err => throwError(() => err))
     );
   }
+  
 
   // -------------------------------------------------------
   // Login (Original Logic + Updated BehaviorSubject Handling)
@@ -96,6 +97,29 @@ export class AuthService {
   profile(): Observable<any> {
     return this.http.get(`${this.base}/profile`).pipe(
       catchError(err => throwError(() => err))
+    );
+  }
+
+  // ---------------------------------------------
+  // 🟩 mustResetPassword Check
+  // ---------------------------------------------
+  mustResetPassword(): boolean {
+    return localStorage.getItem('mustResetPassword') === 'true';
+  }
+
+
+  // ---------------------------------------------
+  // 🟦 RESET PASSWORD
+  // ---------------------------------------------
+  resetPassword(email: string, password: string) {
+    return this.http.post(`${this.base}/reset-password`, {
+      email,
+      password,
+    }).pipe(
+      tap(() => {
+        // 🟩 After success → remove flag
+        localStorage.removeItem('mustResetPassword');
+      })
     );
   }
 

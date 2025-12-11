@@ -6,6 +6,7 @@ import { RegisterComponent } from './auth/register/register.component';
 import { TaskListComponent } from './tasks/task-list/task-list.component';
 import { TaskFormComponent } from './tasks/task-form/task-form.component';
 import { TaskDetailsComponent } from './tasks/task-details/task-details.component';
+import { ResetPasswordComponent } from './auth/reset-password/reset-password.component';
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -15,6 +16,10 @@ const routes: Routes = [
   { path: 'tasks/edit/:id', component: TaskFormComponent, canActivate: [AuthGuard]  },
   { path: 'tasks/:id', component: TaskDetailsComponent, canActivate: [AuthGuard] },
   { path: '', redirectTo: '/tasks', pathMatch: 'full' },
+  {
+    path: 'reset-password',
+    component: ResetPasswordComponent
+  },
   {
     path: 'admin',
     loadChildren: () => import('./admin/admin.module').then(m => m.AdminModule)

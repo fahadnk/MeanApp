@@ -18,7 +18,13 @@ export class LoginComponent {
   onSubmit() {
     if (!this.loginForm.valid) return;
     this.auth.login(this.loginForm.value as { email: string; password: string }).subscribe({
-      next: () => this.router.navigate(['/tasks']),
+      next: (res: any) => {
+          if (res?.data?.mustResetPassword) {
+          this.router.navigate(['/reset-password']);
+        } else {
+          this.router.navigate(['/tasks']);
+        }
+      },
       error: err => console.error('Login failed', err)
     });
   }

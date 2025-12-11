@@ -33,6 +33,7 @@ import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { SharedModule } from './shared/shared.module';
 import { AdminModule } from './admin/admin.module';
 import { LoaderComponent } from './core/loader/loader.component';
+import { ResetPasswordComponent } from './auth/reset-password/reset-password.component';
 
 @NgModule({
   declarations: [
@@ -42,7 +43,8 @@ import { LoaderComponent } from './core/loader/loader.component';
     TaskListComponent,
     TaskFormComponent,
     TaskDetailsComponent,
-    LoaderComponent
+    LoaderComponent,
+    ResetPasswordComponent
   ],
   imports: [
     BrowserModule,

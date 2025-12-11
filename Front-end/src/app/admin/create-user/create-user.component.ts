@@ -5,9 +5,9 @@ import { AdminService } from '../services/admin.service';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Component({
-  selector: 'app-create-user-dialog',
-  templateUrl: './create-user-dialog.component.html',
-  styleUrls: ['./create-user-dialog.component.scss']
+  selector: 'app-create-user',
+  templateUrl: './create-user.component.html',
+  styleUrls: ['./create-user.component.scss']
 })
 export class CreateUserComponent {
 

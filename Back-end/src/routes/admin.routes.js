@@ -11,6 +11,7 @@ import validateSchema from "../middleware/ValidateMiddleware.js";
 
 import { updateUserSchema } from "../validators/user.validator.js";
 import { createTaskSchema } from "../validators/task.validator.js";
+import { registerSchema } from "../validators/auth.validator.js";
 
 import adminController from "../controllers/admin.controller.js";
 
@@ -59,6 +60,10 @@ router.post(
   adminController.removeUserFromTeam
 );
 
-router.post("/create-user", auth, isAdmin, createUser);
+router.post(
+  "/create-user",
+  validateSchema(registerSchema),   // <-- use admin create-user schema
+  adminController.createUser        // <-- call controller function
+);
 
 export default router;
