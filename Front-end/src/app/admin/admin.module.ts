@@ -17,12 +17,14 @@ import { AssignTaskComponent } from './assign-task/assign-task.component';
 import { MatIconModule } from '@angular/material/icon';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatDividerModule } from '@angular/material/divider';
+import { CreateUserComponent } from './create-user/create-user.component';
 
 @NgModule({
   declarations: [
     UserListComponent,
     UserDetailsComponent,
     AssignTaskComponent,
+    CreateUserComponent,
   ],
   imports: [
     CommonModule,

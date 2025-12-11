@@ -2,8 +2,9 @@ import { Component, OnInit } from '@angular/core';
 import { AdminService } from '../services/admin.service';
 import { Router } from '@angular/router';
 import { Subject } from 'rxjs/internal/Subject';
-import { debounceTime, distinctUntilChanged } from 'rxjs';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { MatDialog } from '@angular/material/dialog';
+import { CreateUserComponent } from '../create-user/create-user.component';
 
 @Component({
   selector: 'app-user-list',
@@ -15,9 +16,8 @@ export class UserListComponent implements OnInit {
   users: any[] = [];
 
   search = "";
-  private searchSubject = new Subject<string>();
 
-  constructor(private admin: AdminService, private router: Router, private snack: MatSnackBar,) { }
+  constructor(private admin: AdminService, private router: Router, private snack: MatSnackBar, private dialog: MatDialog) { }
 
   ngOnInit() {
     this.loadUsers();
@@ -75,6 +75,18 @@ export class UserListComponent implements OnInit {
           'Close',
           { duration: 5000, panelClass: 'error-snack' }
         );
+      }
+    });
+  }
+
+ openCreateUserDialog() {
+    const dialogRef = this.dialog.open(CreateUserComponent, {
+      width: '500px'
+    });
+
+    dialogRef.afterClosed().subscribe(result => {
+      if (result === 'created') {
+        this.loadUsers(); // refresh list
       }
     });
   }

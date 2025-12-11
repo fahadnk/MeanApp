@@ -21,9 +21,20 @@ mat-card {
     font-weight: 600;
   }
 
+  /* Container for Create User or future buttons */
   .actions {
     display: flex;
     gap: 10px;
+
+    button {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+
+      mat-icon {
+        font-size: 20px;
+      }
+    }
   }
 }
 
@@ -33,10 +44,11 @@ mat-card {
   margin-bottom: 1.3rem;
 
   .search {
-    width: 200px;   // smaller width
+    width: 200px; // your chosen width
     min-width: 200px;
   }
 }
+
 /* Table */
 .full-width-table {
   width: 100%;

@@ -12,7 +12,7 @@ import { finalize } from 'rxjs/operators';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
-
+  private activeRequests = 0;
   constructor(
     private auth: AuthService,
     private loader: LoaderService
@@ -21,7 +21,8 @@ export class AuthInterceptor implements HttpInterceptor {
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     const token = this.auth.getToken();
 
-    // Show loader for every API request
+    // Increment counter and show loader
+    this.activeRequests++;
     this.loader.show();
 
     let modifiedReq = req;
@@ -36,8 +37,11 @@ export class AuthInterceptor implements HttpInterceptor {
 
     return next.handle(modifiedReq).pipe(
       finalize(() => {
-        // Hide loader when API completes
-        this.loader.hide();
+        // Decrement counter and hide loader only when no active requests
+        this.activeRequests--;
+        if (this.activeRequests === 0) {
+          this.loader.hide();
+        }
       })
     );
   }

@@ -4,13 +4,22 @@
     <!-- Toolbar -->
     <div class="toolbar">
       <h2 class="title">User Management</h2>
+
+      <div class="actions">
+        <button mat-raised-button color="primary" (click)="openCreateUserDialog()">
+          <mat-icon>add</mat-icon>
+          Create User
+        </button>
+      </div>
     </div>
+
 
     <!-- Search Filter -->
     <div class="filters">
       <mat-form-field appearance="outline" class="search">
         <mat-label>Search users</mat-label>
-        <input matInput placeholder="Search users" [(ngModel)]="search" (keyup)="onSearch($event)" class="search-input" />
+        <input matInput placeholder="Search users" [(ngModel)]="search" (keyup)="onSearch($event)"
+          class="search-input" />
         <button matSuffix mat-icon-button *ngIf="search" (click)="clearSearch()">
           <mat-icon>close</mat-icon>
         </button>
