@@ -37,7 +37,6 @@ import { error, success } from "../utils/response.js";
  */
 export default function validateSchema(schema) {
   return (req, res, next) => {
-
     // --------------------------------------------------------
     // Step 1: Validate request body using the provided schema
     // --------------------------------------------------------

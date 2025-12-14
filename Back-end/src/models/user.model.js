@@ -48,7 +48,7 @@ const userSchema = new mongoose.Schema(
 
     mustResetPassword: {
       type: Boolean,
-      default: true // NEW: user must reset password on first login
+      default: false // NEW: user must reset password on first login
     },
 
     // Reference to a Team document (ObjectId from "Team" collection)

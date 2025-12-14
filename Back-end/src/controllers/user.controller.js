@@ -70,10 +70,7 @@ class UserController {
       const user = await userService.login(email, password);
 
       // Respond with success message and user data (often includes JWT).
-      return success(res, {
-        ...user,
-        mustResetPassword: user.mustResetPassword
-      }, "Login successful");
+      return success(res, user, user.message || "Login successful");
     } catch (err) {
       // If authentication fails (invalid credentials, etc.), send 401 Unauthorized.
       return error(res, err.message, 401);
@@ -123,18 +120,39 @@ class UserController {
   }
 
   async resetPassword(req, res) {
-    try {
-      const { newPassword } = req.body;
+  try {
+    const { email, password } = req.body;
 
-      if (!newPassword) return error(res, "New password required", 400);
-
-      const updated = await userService.resetPassword(req.user.id, newPassword);
-
-      return success(res, updated, "Password reset successfully");
-    } catch (err) {
-      return error(res, err.message, 400);
+    if (!email || !password) {
+      return error(res, "Email and new password required", 400);
     }
+
+    const updatedUser = await userService.resetPasswordByEmail(
+      email,
+      password
+    );
+
+    return success(res, updatedUser, "Password reset successfully");
+  } catch (err) {
+    return error(res, err.message, 400);
   }
+}
+
+async resetPasswordWithToken(req, res) {
+  try {
+    const { password } = req.body;
+
+    const updated = await userService.resetPasswordWithToken(
+      req.user.id,
+      password
+    );
+
+    return success(res, updated, "Password updated successfully");
+  } catch (err) {
+    return error(res, err.message, 400);
+  }
+}
+
 }
 
 

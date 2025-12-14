@@ -224,6 +224,27 @@ class AdminService {
     return { user, team };
   }
 
+  async createUserByAdmin(data) {
+    const { name, email, password, role } = data;
+
+    // 1️⃣ Check existing user
+    const existing = await userRepository.findByEmail(email);
+    if (existing) {
+      throw new Error("User already exists");
+    }
+
+    // 2️⃣ Create user with forced password reset
+    const user = await userRepository.create({
+      name,
+      email,
+      password,
+      role,
+      mustResetPassword: true, // ⭐ admin-created users
+    });
+
+    return userDTO(user);
+  }
+
 
 }
 

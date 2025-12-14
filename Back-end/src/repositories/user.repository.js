@@ -136,15 +136,20 @@ class UserRepository {
     return await bcrypt.compare(plainPassword, hashedPassword);
   }
 
-  async updatePassword(userId, hashedPassword) {
-    return User.findByIdAndUpdate(
-      userId,
+  async updatePasswordByEmail(email, hashedPassword) {
+    return User.findOneAndUpdate(
+      { email },
       {
         password: hashedPassword,
-        mustResetPassword: false   // ⭐ turn off reset requirement
+        mustResetPassword: false
       },
       { new: true }
     ).select("-password");
+  }
+
+  async hashPassword(password) {
+    const saltRounds = 10;
+    return bcrypt.hash(password, saltRounds);
   }
 }
 

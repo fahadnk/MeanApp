@@ -40,6 +40,6 @@ export class AdminService {
   }
 
   createUser(payload: any) {
-    return this.http.post(`${this.base}/create-user`, payload);
+    return this.http.post(`${this.base}/user`, payload);
   }
 }

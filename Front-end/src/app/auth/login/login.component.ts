@@ -9,7 +9,7 @@ import { Router } from '@angular/router';
 })
 export class LoginComponent {
   hide = true;
-  constructor(private fb: FormBuilder, private auth: AuthService, private router: Router) {}
+  constructor(private fb: FormBuilder, private auth: AuthService, private router: Router) { }
   loginForm = this.fb.group({
     email: ['', [Validators.required, Validators.email]],
     password: ['', Validators.required]
@@ -19,8 +19,12 @@ export class LoginComponent {
     if (!this.loginForm.valid) return;
     this.auth.login(this.loginForm.value as { email: string; password: string }).subscribe({
       next: (res: any) => {
-          if (res?.data?.mustResetPassword) {
-          this.router.navigate(['/reset-password']);
+        if (res?.data?.mustResetPassword) {
+          this.router.navigate(['/reset-password'], {
+            state: {
+              email: this.loginForm.value.email
+            }
+          });
         } else {
           this.router.navigate(['/tasks']);
         }

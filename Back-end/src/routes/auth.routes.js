@@ -87,9 +87,15 @@ router.get(
 
 router.post(
   "/reset-password",
-  authMiddleware,
   validateSchema(resetPasswordSchema),
   userController.resetPassword
+);
+
+router.post(
+  "/reset-password-auth",
+  authMiddleware,
+  validateSchema(resetPasswordSchema),
+  userController.resetPasswordWithToken
 );
 
 // Export the router to be mounted in the main application (usually in app.js or server.js)

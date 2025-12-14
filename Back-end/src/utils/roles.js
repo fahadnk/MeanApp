@@ -9,3 +9,5 @@ export const ROLES = Object.freeze({
   USER: "user",
   MANAGER: "manager",
 });
+
+export const ROLE_VALUES = Object.values(ROLES);

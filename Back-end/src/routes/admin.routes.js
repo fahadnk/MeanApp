@@ -9,9 +9,8 @@ import authMiddleware from "../middleware/AuthMiddleware.js";
 import roleMiddleware from "../middleware/RoleMiddleware.js";
 import validateSchema from "../middleware/ValidateMiddleware.js";
 
-import { updateUserSchema } from "../validators/user.validator.js";
+import { updateUserSchema, createUserByAdminSchema } from "../validators/user.validator.js";
 import { createTaskSchema } from "../validators/task.validator.js";
-import { registerSchema } from "../validators/auth.validator.js";
 
 import adminController from "../controllers/admin.controller.js";
 
@@ -61,8 +60,8 @@ router.post(
 );
 
 router.post(
-  "/create-user",
-  validateSchema(registerSchema),   // <-- use admin create-user schema
+  "/user",
+  validateSchema(createUserByAdminSchema),   // <-- use admin create-user schema
   adminController.createUser        // <-- call controller function
 );
 
