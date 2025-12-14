@@ -147,8 +147,7 @@ class UserRepository {
     ).select("-password");
   }
 
-  async hashPassword(password) {
-    const saltRounds = 10;
+  async hashPassword(password, saltRounds) {
     return bcrypt.hash(password, saltRounds);
   }
 }

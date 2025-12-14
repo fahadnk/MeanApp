@@ -144,7 +144,7 @@ class UserService {
     }
 
     // 🔑 Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await userRepository.hashPassword(password, 10);
 
     // 🗄 Update via repository
     const updatedUser =
