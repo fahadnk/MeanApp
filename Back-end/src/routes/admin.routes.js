@@ -65,4 +65,9 @@ router.post(
   adminController.createUser        // <-- call controller function
 );
 
+router.get("/dashboard/task-stats", adminController.getDashboardTaskStats);
+router.get("/dashboard/user-stats", adminController.getDashboardUserStats);
+router.get("/dashboard/managers", adminController.getDashboardManagers);
+router.get("/dashboard/teams", adminController.getDashboardTeams);
+
 export default router;

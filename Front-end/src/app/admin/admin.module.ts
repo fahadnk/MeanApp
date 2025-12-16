@@ -18,6 +18,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatDividerModule } from '@angular/material/divider';
 import { CreateUserComponent } from './create-user/create-user.component';
+import { AdminDashboardComponent } from './admin-dashboard/admin-dashboard.component';
+import { NgChartsModule } from 'ng2-charts';
 
 @NgModule({
   declarations: [
@@ -25,6 +27,7 @@ import { CreateUserComponent } from './create-user/create-user.component';
     UserDetailsComponent,
     AssignTaskComponent,
     CreateUserComponent,
+    AdminDashboardComponent,
   ],
   imports: [
     CommonModule,
@@ -39,7 +42,8 @@ import { CreateUserComponent } from './create-user/create-user.component';
     MatSelectModule,
     MatIconModule,
     MatDatepickerModule,
-    MatDividerModule
+    MatDividerModule,
+    NgChartsModule,
   ]
 })
 export class AdminModule {}

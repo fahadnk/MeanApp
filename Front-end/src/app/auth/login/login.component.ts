@@ -17,19 +17,39 @@ export class LoginComponent {
 
   onSubmit() {
     if (!this.loginForm.valid) return;
-    this.auth.login(this.loginForm.value as { email: string; password: string }).subscribe({
+
+    this.auth.login(
+      this.loginForm.value as { email: string; password: string }
+    ).subscribe({
       next: (res: any) => {
+        // 🔴 First-time password reset
         if (res?.data?.mustResetPassword) {
           this.router.navigate(['/reset-password'], {
-            state: {
-              email: this.loginForm.value.email
-            }
+            state: { email: this.loginForm.value.email }
           });
-        } else {
-          this.router.navigate(['/tasks']);
+          return;
+        }
+
+        // 🟢 Decode role from token
+        const user = this.auth.getCurrentUser();
+        const role = user?.role;
+
+        // 🔁 Role-based routing
+        switch (role) {
+          case 'admin':
+            this.router.navigate(['/admin']);
+            break;
+
+          case 'manager':
+            this.router.navigate(['/manager']);
+            break;
+
+          default:
+            this.router.navigate(['/tasks']);
         }
       },
       error: err => console.error('Login failed', err)
     });
   }
+
 }

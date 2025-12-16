@@ -104,90 +104,144 @@ class AdminController {
   }
 
   // -------------------------------------------
-// Promote User → Manager
-// -------------------------------------------
-async promoteUserToManager(req, res) {
-  try {
-    const userId = req.params.id;
+  // Promote User → Manager
+  // -------------------------------------------
+  async promoteUserToManager(req, res) {
+    try {
+      const userId = req.params.id;
 
-    const updatedUser = await adminService.promoteUserToManager(userId);
+      const updatedUser = await adminService.promoteUserToManager(userId);
 
-    return res.status(200).json({
-      success: true,
-      message: "User promoted to Team Manager successfully",
-      data: updatedUser,
-    });
-  } catch (err) {
-    return res.status(400).json({
-      success: false,
-      message: err.message,
-    });
+      return res.status(200).json({
+        success: true,
+        message: "User promoted to Team Manager successfully",
+        data: updatedUser,
+      });
+    } catch (err) {
+      return res.status(400).json({
+        success: false,
+        message: err.message,
+      });
+    }
   }
-}
 
 
 
-// -------------------------------------------
-// Demote Manager → User
-// -------------------------------------------
-async demoteUserToNormal(req, res) {
-  try {
-    const userId = req.params.id;
+  // -------------------------------------------
+  // Demote Manager → User
+  // -------------------------------------------
+  async demoteUserToNormal(req, res) {
+    try {
+      const userId = req.params.id;
 
-    const updatedUser = await adminService.demoteUserToNormal(userId);
+      const updatedUser = await adminService.demoteUserToNormal(userId);
 
-    return res.status(200).json({
-      success: true,
-      message: "User demoted to normal user successfully",
-      data: updatedUser,
-    });
-  } catch (err) {
-    return res.status(400).json({
-      success: false,
-      message: err.message,
-    });
+      return res.status(200).json({
+        success: true,
+        message: "User demoted to normal user successfully",
+        data: updatedUser,
+      });
+    } catch (err) {
+      return res.status(400).json({
+        success: false,
+        message: err.message,
+      });
+    }
   }
-}
-// -------------------------------------------
-// Assign user to a team
-// -------------------------------------------
-async assignUserToTeam(req, res) {
-  try {
-    const userId = req.params.id;
-    const teamId = req.body.teamId;
+  // -------------------------------------------
+  // Assign user to a team
+  // -------------------------------------------
+  async assignUserToTeam(req, res) {
+    try {
+      const userId = req.params.id;
+      const teamId = req.body.teamId;
 
-    const updated = await adminService.assignUserToTeam(userId, teamId);
+      const updated = await adminService.assignUserToTeam(userId, teamId);
 
-    return success(res, updated, "User assigned to team successfully");
-  } catch (err) {
-    return error(res, err.message, 400);
+      return success(res, updated, "User assigned to team successfully");
+    } catch (err) {
+      return error(res, err.message, 400);
+    }
   }
-}
 
-// -------------------------------------------
-// Remove user from their team
-// -------------------------------------------
-async removeUserFromTeam(req, res) {
-  try {
-    const userId = req.params.id;
+  // -------------------------------------------
+  // Remove user from their team
+  // -------------------------------------------
+  async removeUserFromTeam(req, res) {
+    try {
+      const userId = req.params.id;
 
-    const updated = await adminService.removeUserFromTeam(userId);
+      const updated = await adminService.removeUserFromTeam(userId);
 
-    return success(res, updated, "User removed from team successfully");
-  } catch (err) {
-    return error(res, err.message, 400);
+      return success(res, updated, "User removed from team successfully");
+    } catch (err) {
+      return error(res, err.message, 400);
+    }
   }
-}
 
-async createUser(req, res) {
-  try {
-    const user = await adminService.createUserByAdmin(req.body);
+  async createUser(req, res) {
+    try {
+      const user = await adminService.createUserByAdmin(req.body);
 
-    return success(res, user, "User created successfully", 201);
-  } catch (err) {
-    return error(res, err.message, 400);
+      return success(res, user, "User created successfully", 201);
+    } catch (err) {
+      return error(res, err.message, 400);
+    }
   }
-}
+
+  // -------------------------------------------
+  // Dashboard → Task Statistics
+  // -------------------------------------------
+  // Returns count of completed, pending & in-progress tasks
+  async getDashboardUserStats(req, res) {
+    try {
+      const usersStats = await adminService.getUserStats();
+      return success(res, usersStats, "User statistics fetched successfully");
+    } catch (err) {
+      return error(res, err.message, 500);
+    }
+  }
+
+  // -------------------------------------------
+  // Dashboard → Task Statistics
+  // -------------------------------------------
+  // Returns count of completed, pending & in-progress tasks
+  async getDashboardTaskStats(req, res) {
+    try {
+      const tasksStats = await adminService.getTaskStats();
+      return success(res, tasksStats, "Task statistics fetched successfully");
+    } catch (err) {
+      return error(res, err.message, 500);
+    }
+  }
+
+  // -------------------------------------------
+  // Dashboard → Managers List
+  // -------------------------------------------
+  // Returns list of all managers for dashboard display
+  async getDashboardManagers(req, res) {
+    try {
+      const managers = await adminService.getManagers();
+      return success(res, managers, "Managers fetched successfully");
+    } catch (err) {
+      return error(res, err.message, 500);
+    }
+  }
+
+  // -------------------------------------------
+  // Dashboard → Teams List
+  // -------------------------------------------
+  // Returns all teams with manager & members populated
+  async getDashboardTeams(req, res) {
+    try {
+      const teams = await adminService.getTeams();
+      return success(res, teams, "Teams fetched successfully");
+    } catch (err) {
+      return error(res, err.message, 500);
+    }
+  }
+
+
 
 }
 

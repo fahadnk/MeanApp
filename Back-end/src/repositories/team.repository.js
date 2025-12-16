@@ -153,6 +153,19 @@ class TeamRepository {
       .lean()                                   // Convert Mongoose docs → plain objects (better perf)
       .exec();                                  // Explicitly execute the query
   }
+
+  // ------------------------------------------------------------
+  // Get all teams (populated, without pagination)
+  // ------------------------------------------------------------
+  // Used for admin dashboard: lists all teams with managers and members
+  async getAllPopulated() {
+    return await Team.find()
+      .populate("manager", "name email role")
+      .populate("members", "name email role")
+      .sort({ createdAt: -1 })  // optional: newest first
+      .lean()
+      .exec();
+  }
 }
 
 // ------------------------------------------------------------

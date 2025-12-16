@@ -245,6 +245,80 @@ class AdminService {
     return userDTO(user);
   }
 
+  // -------------------------------------------
+  // Dashboard → Task Statistics
+  // -------------------------------------------
+  // Returns count of tasks by status
+  // Used for Admin Dashboard charts
+  async getTaskStats() {
+    // Fetch all tasks from DB
+    const tasks = await taskRepository.getAll();
+
+    // Initialize counters
+    const stats = {
+      completed: 0,
+      pending: 0,
+      inProgress: 0,
+      total: tasks.length,
+    };
+
+    // Count task statuses
+    tasks.forEach((task) => {
+      if (task.status === "completed") stats.completed++;
+      else if (task.status === "in-progress") stats.inProgress++;
+      else stats.pending++;
+    });
+
+    return stats;
+  }
+
+  // -------------------------------------------
+  // Dashboard → User Statistics
+  // -------------------------------------------
+  // Returns total users, managers & admins
+  async getUserStats() {
+    const users = await userRepository.getAll();
+
+    const stats = {
+      totalUsers: users.length,
+      managers: 0,
+      admins: 0,
+      normalUsers: 0,
+    };
+
+    users.forEach((user) => {
+      if (user.role === "admin") stats.admins++;
+      else if (user.role === "manager") stats.managers++;
+      else stats.normalUsers++;
+    });
+
+    return stats;
+  }
+
+
+  // -------------------------------------------
+  // Dashboard → Managers List
+  // -------------------------------------------
+  // Returns list of all managers (DTO formatted)
+  async getManagers() {
+    const managers = await userRepository.findByRole("manager");
+    return managers.map(userDTO);
+  }
+
+
+  // -------------------------------------------
+  // Dashboard → Teams List
+  // -------------------------------------------
+  // Returns all teams with manager & members populated
+  async getAllTeamsForDashboard() {
+    const teams = await teamRepository.getAllPopulated();
+    return teams.map(team => ({
+      id: team._id,
+      name: team.name,
+      manager: team.manager,
+      members: team.members
+    }));
+  }
 
 }
 
