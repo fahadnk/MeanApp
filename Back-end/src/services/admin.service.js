@@ -9,6 +9,8 @@ import userRepository from "../repositories/user.repository.js";
 import taskRepository from "../repositories/task.repository.js";
 // ^ Handles all database operations for tasks (CRUD).
 
+import teamRepository from "../repositories/team.repository.js";
+
 
 // -------------------------
 // 2️⃣ Import DTO Functions
@@ -251,73 +253,39 @@ class AdminService {
   // Returns count of tasks by status
   // Used for Admin Dashboard charts
   async getTaskStats() {
-    // Fetch all tasks from DB
-    const tasks = await taskRepository.getAll();
+    const stats = await taskRepository.countTasksByStatus();
 
-    // Initialize counters
-    const stats = {
+    const result = {
       completed: 0,
-      pending: 0,
       inProgress: 0,
-      total: tasks.length,
+      pending: 0
     };
 
-    // Count task statuses
-    tasks.forEach((task) => {
-      if (task.status === "completed") stats.completed++;
-      else if (task.status === "in-progress") stats.inProgress++;
-      else stats.pending++;
+    stats.forEach(s => {
+      result[s.status] = s.total;
     });
 
-    return stats;
+    return result;
   }
 
-  // -------------------------------------------
-  // Dashboard → User Statistics
-  // -------------------------------------------
-  // Returns total users, managers & admins
   async getUserStats() {
-    const users = await userRepository.getAll();
+    const [usersCount, managersCount] = await Promise.all([
+      userRepository.countByRole("user"),
+      userRepository.countByRole("manager"),
+    ]);
 
-    const stats = {
-      totalUsers: users.length,
-      managers: 0,
-      admins: 0,
-      normalUsers: 0,
+    return {
+      usersCount,
+      managersCount,
     };
-
-    users.forEach((user) => {
-      if (user.role === "admin") stats.admins++;
-      else if (user.role === "manager") stats.managers++;
-      else stats.normalUsers++;
-    });
-
-    return stats;
   }
 
-
-  // -------------------------------------------
-  // Dashboard → Managers List
-  // -------------------------------------------
-  // Returns list of all managers (DTO formatted)
   async getManagers() {
-    const managers = await userRepository.findByRole("manager");
-    return managers.map(userDTO);
+    return await userRepository.findByRole("manager");
   }
 
-
-  // -------------------------------------------
-  // Dashboard → Teams List
-  // -------------------------------------------
-  // Returns all teams with manager & members populated
-  async getAllTeamsForDashboard() {
-    const teams = await teamRepository.getAllPopulated();
-    return teams.map(team => ({
-      id: team._id,
-      name: team.name,
-      manager: team.manager,
-      members: team.members
-    }));
+  async getTeams() {
+    return await teamRepository.getAllPopulated();
   }
 
 }

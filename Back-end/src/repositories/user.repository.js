@@ -150,6 +150,17 @@ class UserRepository {
   async hashPassword(password, saltRounds) {
     return bcrypt.hash(password, saltRounds);
   }
+
+  async countByRole(role) {
+    return await User.countDocuments({ role });
+  }
+
+  async findByRole(role) {
+  return await User.find({ role })
+    .select("name email role team")
+    .lean()
+    .exec();
+}
 }
 
 // -------------------------------------------

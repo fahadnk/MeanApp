@@ -20,6 +20,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { CreateUserComponent } from './create-user/create-user.component';
 import { AdminDashboardComponent } from './admin-dashboard/admin-dashboard.component';
 import { NgChartsModule } from 'ng2-charts';
+import { MatListModule } from '@angular/material/list';
 
 @NgModule({
   declarations: [
@@ -44,6 +45,7 @@ import { NgChartsModule } from 'ng2-charts';
     MatDatepickerModule,
     MatDividerModule,
     NgChartsModule,
+    MatListModule
   ]
 })
 export class AdminModule {}

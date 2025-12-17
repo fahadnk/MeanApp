@@ -208,6 +208,13 @@ class TaskRepository {
     if (!mongoose.Types.ObjectId.isValid(userId)) return 0;
     return await Task.countDocuments({ assignedTo: userId });
   }
+
+  async getAllTasks() {
+  return await Task.find({})
+    .select("status")   // only fields you need for stats
+    .lean()
+    .exec();
+}
 }
 
 

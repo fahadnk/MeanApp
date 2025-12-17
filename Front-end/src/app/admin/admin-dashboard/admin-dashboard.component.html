@@ -1,56 +1,79 @@
-<div *ngIf="loading" class="loading-spinner">Loading...</div>
+<div *ngIf="!loading" class="dashboard-grid">
 
-<div *ngIf="!loading">
   <!-- Teams Table -->
-  <mat-card>
-    <mat-card-title>Teams</mat-card-title>
-    <table mat-table [dataSource]="teams" class="mat-elevation-z8">
+<mat-card class="full-width">
+  <mat-card-title>Teams</mat-card-title>
 
-      <ng-container matColumnDef="name">
-        <th mat-header-cell *matHeaderCellDef>Team Name</th>
-        <td mat-cell *matCellDef="let team">{{ team.name }}</td>
-      </ng-container>
+  <table mat-table [dataSource]="teams" class=" full-table">
 
-      <ng-container matColumnDef="manager">
-        <th mat-header-cell *matHeaderCellDef>Manager</th>
-        <td mat-cell *matCellDef="let team">{{ team.manager?.name }}</td>
-      </ng-container>
+    <!-- Team Name -->
+    <ng-container matColumnDef="name">
+      <th mat-header-cell *matHeaderCellDef>Team Name</th>
+      <td mat-cell *matCellDef="let team">{{ team.name }}</td>
+    </ng-container>
 
-      <ng-container matColumnDef="members">
-        <th mat-header-cell *matHeaderCellDef>Members</th>
-        <td mat-cell *matCellDef="let team">{{ team.members.length }}</td>
-      </ng-container>
+    <!-- Manager -->
+    <ng-container matColumnDef="manager">
+      <th mat-header-cell *matHeaderCellDef>Manager</th>
+      <td mat-cell *matCellDef="let team">
+        {{ team.manager?.name || '—' }}
+      </td>
+    </ng-container>
 
-      <tr mat-header-row *matHeaderRowDef="['name', 'manager', 'members']"></tr>
-      <tr mat-row *matRowDef="let row; columns: ['name', 'manager', 'members'];"></tr>
-    </table>
-  </mat-card>
+    <!-- Members -->
+    <ng-container matColumnDef="members">
+      <th mat-header-cell *matHeaderCellDef>Members</th>
+      <td mat-cell *matCellDef="let team">
+        {{ team.members?.length || 0 }}
+      </td>
+    </ng-container>
 
-  <!-- Task Stats Chart -->
+    <!-- Header -->
+    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+
+    <!-- Data Rows -->
+    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+
+    <!-- 🚫 No Records Row -->
+    <tr *ngIf="teams?.length === 0">
+      <td
+        [attr.colspan]="displayedColumns.length"
+        class="no-records">
+        No records found
+      </td>
+    </tr>
+
+  </table>
+</mat-card>
+
+
+  <!-- Task Stats -->
   <mat-card>
     <mat-card-title>Tasks Overview</mat-card-title>
-    <canvas baseChart
-            [data]="[taskStats.completed, taskStats.inProgress, taskStats.pending]"
-            [labels]="['Completed','In Progress','Pending']"
-            [chartType]="'doughnut'">
-    </canvas>
+    <div class="stat-box">
+      <div>✅ Completed: {{ taskStats?.data?.done }}</div>
+      <div>🕒 In Progress: {{ taskStats?.data['in-progress'] }}</div>
+      <div>⏳ Pending: {{ taskStats?.data?.todo }}</div>
+    </div>
   </mat-card>
 
-  <!-- User Stats Chart -->
+  <!-- User Stats -->
   <mat-card>
     <mat-card-title>Users & Managers</mat-card-title>
-    <canvas baseChart
-            [data]="[userStats.usersCount, userStats.managersCount]"
-            [labels]="['Users','Managers']"
-            [chartType]="'pie'">
-    </canvas>
+    <div class="stat-box">
+      <div>👤 Users: {{ userStats?.data?.usersCount }}</div>
+      <div>🧑‍💼 Managers: {{ userStats?.data?.managersCount }}</div>
+      </div>
   </mat-card>
 
   <!-- Managers List -->
   <mat-card>
     <mat-card-title>Managers</mat-card-title>
-    <ul>
-      <li *ngFor="let manager of managers">{{ manager.name }} ({{ manager.email }})</li>
-    </ul>
+    <mat-list>
+      <mat-list-item *ngFor="let manager of managers">
+        {{ manager.name }} — {{ manager.email }}
+      </mat-list-item>
+    </mat-list>
   </mat-card>
+
 </div>

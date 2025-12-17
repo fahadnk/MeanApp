@@ -1,8 +1,6 @@
-// src/app/admin/admin-dashboard/admin-dashboard.component.ts
 import { Component, OnInit } from '@angular/core';
-import { ChartData } from 'chart.js';
-import { AdminDashboardService } from '../services/admin-dashboard.service';
-import { firstValueFrom } from 'rxjs';
+import { forkJoin } from 'rxjs';
+import { AdminService } from '../services/admin.service';
 
 @Component({
   selector: 'app-admin-dashboard',
@@ -11,55 +9,57 @@ import { firstValueFrom } from 'rxjs';
 })
 export class AdminDashboardComponent implements OnInit {
 
-  // Charts
-  taskChartData: ChartData<'doughnut'> = {
-    labels: ['Completed', 'In Progress', 'Pending'],
-    datasets: [{ data: [0, 0, 0] }]
-  };
-
-  userChartData: ChartData<'pie'> = {
-    labels: ['Users', 'Managers'],
-    datasets: [{ data: [0, 0] }]
-  };
-
-  // Table data
-  teams: any;
-  managers: any;
-
+  // ----------------------------
+  // UI State
+  // ----------------------------
   loading = true;
 
-  constructor(private dashboardService: AdminDashboardService) { }
+  // ----------------------------
+  // Table
+  // ----------------------------
+  displayedColumns: string[] = ['name', 'manager', 'members'];
+  teams: any[] = [];
+
+  // ----------------------------
+  // Stats
+  // ----------------------------
+  taskStats :any;
+  userStats :any;
+  // ----------------------------
+  // Managers
+  // ----------------------------
+  managers: any[] = [];
+
+  constructor(private adminService: AdminService) {}
 
   ngOnInit(): void {
     this.loadDashboard();
   }
 
-  async loadDashboard() {
+  // ----------------------------
+  // Load Dashboard Data
+  // ----------------------------
+  loadDashboard(): void {
     this.loading = true;
-    try {
-      const taskStats = await firstValueFrom(this.dashboardService.getTaskStats());
-      const userStats = await firstValueFrom(this.dashboardService.getUserStats());
-      const teams = await firstValueFrom(this.dashboardService.getTeams());
-      const managers = await firstValueFrom(this.dashboardService.getManagers());
 
-      this.teams = teams;
-      this.managers = managers;
-
-      this.taskChartData.datasets[0].data = [
-        taskStats.completed,
-        taskStats.inProgress,
-        taskStats.pending
-      ];
-
-      this.userChartData.datasets[0].data = [
-        userStats.usersCount,
-        userStats.managersCount
-      ];
-
-    } catch (err) {
-      console.error(err);
-    } finally {
-      this.loading = false;
-    }
+    forkJoin({
+      teams: this.adminService.getTeams(),
+      taskStats: this.adminService.getTaskStats(),
+      userStats: this.adminService.getUserStats(),
+      managers: this.adminService.getManagers()
+    }).subscribe({
+      next: (res: any) => {
+        this.teams = res.teams?.data || [];
+        this.taskStats = res.taskStats || this.taskStats;
+        this.userStats = res.userStats || this.userStats;
+        this.managers = res.managers?.data || [];
+      },
+      error: (err) => {
+        console.error('❌ Dashboard load failed', err);
+      },
+      complete: () => {
+        this.loading = false;
+      }
+    });
   }
 }
