@@ -1,20 +1,72 @@
-<div class="manager-dashboard">
+<div class="manager-dashboard-container">
   <mat-card>
-    <mat-card-title>Manager Dashboard</mat-card-title>
-    <mat-card-content>
-      <p>Welcome, {{ currentUser?.email }}</p>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+      <h2 class="title">My Teams</h2>
 
       <div class="actions">
-        <button mat-flat-button color="primary" (click)="createTeam()">Create Team</button>
+        <button mat-raised-button color="primary" (click)="createTeam()">
+          <mat-icon>group_add</mat-icon>
+          Create Team
+        </button>
       </div>
+    </div>
 
-      <mat-list>
-        <mat-list-item *ngFor="let t of teams">
-          <div matLine>{{ t.name }}</div>
-          <div matLine class="muted">Manager: {{ t.manager?.name || t.manager?.email }}</div>
-          <button mat-button (click)="openTeam(t)">Open</button>
-        </mat-list-item>
-      </mat-list>
-    </mat-card-content>
+    <!-- Teams Table -->
+    <table
+      mat-table
+      [dataSource]="teams"
+      class="mat-elevation-z2 full-width-table"
+      *ngIf="teams && teams.length > 0; else noTeams">
+
+      <!-- Team Name -->
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef>Team Name</th>
+        <td mat-cell *matCellDef="let team">{{ team?.name }}</td>
+      </ng-container>
+
+      <!-- Manager -->
+      <ng-container matColumnDef="manager">
+        <th mat-header-cell *matHeaderCellDef>Manager</th>
+        <td mat-cell *matCellDef="let team">
+          {{ team?.manager?.name ?? team?.manager?.email ?? '—' }}
+        </td>
+      </ng-container>
+
+      <!-- Members -->
+      <ng-container matColumnDef="members">
+        <th mat-header-cell *matHeaderCellDef>Members</th>
+        <td mat-cell *matCellDef="let team">
+          {{ team?.members?.length ?? 0 }}
+        </td>
+      </ng-container>
+
+      <!-- Actions -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Actions</th>
+        <td mat-cell *matCellDef="let team">
+          <button mat-icon-button (click)="openTeam(team)">
+            <mat-icon>visibility</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <tr
+        mat-row
+        class="clickable"
+        *matRowDef="let row; columns: displayedColumns">
+      </tr>
+    </table>
+
+    <!-- Empty State -->
+    <ng-template #noTeams>
+      <div class="empty-state">
+        <mat-icon>groups</mat-icon>
+        <p>No teams found</p>
+      </div>
+    </ng-template>
+
   </mat-card>
 </div>

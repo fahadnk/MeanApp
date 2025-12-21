@@ -1,3 +1,33 @@
-.manager-dashboard { padding: 16px; }
-.actions { margin-bottom: 12px; }
-.muted { opacity: .7; font-size: 12px; }
+.manager-dashboard-container {
+  padding: 16px;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.title {
+  margin: 0;
+}
+
+.full-width-table {
+  width: 100%;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  color: #777;
+
+  mat-icon {
+    font-size: 48px;
+    margin-bottom: 8px;
+  }
+}

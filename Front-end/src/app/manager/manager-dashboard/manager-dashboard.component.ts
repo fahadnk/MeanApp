@@ -12,6 +12,7 @@ import { TeamService } from 'src/app/core/services/team.service';
 export class ManagerDashboardComponent implements OnInit {
   teams: any[] = [];
   currentUser: any;
+  displayedColumns: string[] = ['name', 'manager', 'members', 'actions'];
 
   constructor(
     private teamService: TeamService,
@@ -26,17 +27,16 @@ export class ManagerDashboardComponent implements OnInit {
   }
 
   loadTeams() {
-    // manager typically has one team; but we list all teams for admin/manager view
     this.teamService.list().subscribe({
       next: (res:any) => {
-        this.teams = res.data || res;
+        this.teams = res.data?.data || res;
       },
       error: (err:any) => console.error(err)
     });
   }
 
   openTeam(team: any) {
-    this.router.navigate(['/teams', team._id]);
+    this.router.navigate(['/manager/teams', team._id]);
   }
 
   createTeam() {

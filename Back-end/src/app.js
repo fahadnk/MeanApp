@@ -13,7 +13,6 @@ import helmet from "helmet";                 // Sets HTTP headers for better sec
 // import { xss } from "express-xss-sanitizer"; // Prevents XSS attacks in request bodies
 import morgan from "morgan";                 // HTTP request logger middleware
 import { v4 as uuidv4 } from "uuid";         // Generates unique request IDs for tracing
-
 // ----------------------------
 // 🧼 Custom Middleware
 // ----------------------------
@@ -27,6 +26,7 @@ import authRoutes from "./routes/auth.routes.js";
 import taskRoutes from "./routes/task.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import managerRoutes from "./routes/manager.routes.js";
+import teamRoutes from "./routes/team.routes.js";
 
 // ----------------------------
 // ⚠️ Error + Logging Utilities
@@ -89,6 +89,7 @@ app.use("/api/auth", authRoutes);     // Auth routes (login/register)
 app.use("/api/tasks", taskRoutes);    // Task CRUD routes
 app.use("/api/admin", adminRoutes);
 app.use("/api/manager", managerRoutes);
+app.use("/api/teams", teamRoutes);
 
 
 // -----------------------------------------------------------------------------

@@ -19,7 +19,7 @@ import validateSchema from "../middleware/ValidateMiddleware.js";
 import { createTeamSchema, addMemberSchema } from "../validators/team.validator.js";
 
 // Predefined Role constants for RBAC
-import { ROLES } from "../constants/roles.js";
+import { ROLES } from "../utils/roles.js";
 
 // Initialize Express Router instance
 const router = express.Router();

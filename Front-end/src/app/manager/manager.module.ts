@@ -22,6 +22,7 @@ import { MatButtonModule } from '@angular/material/button';
 // Forms
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { TeamDetailsComponent } from '../teams/team-details/team-details.component';
+import { MatIconModule } from '@angular/material/icon';
 
 @NgModule({
   declarations: [
@@ -43,7 +44,7 @@ import { TeamDetailsComponent } from '../teams/team-details/team-details.compone
     MatFormFieldModule,
     MatSelectModule,
     MatButtonModule,
-
+    MatIconModule,
     // Forms
     ReactiveFormsModule,
     FormsModule,

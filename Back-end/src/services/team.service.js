@@ -14,7 +14,7 @@ import teamRepository from "../repositories/team.repository.js";
 import userRepository from "../repositories/user.repository.js";
 
 // Import role constants
-import { ROLES } from "../constants/roles.js";
+import { ROLES } from "../utils/roles.js";
 
 class TeamService {
 
