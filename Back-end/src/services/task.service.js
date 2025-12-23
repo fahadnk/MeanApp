@@ -220,14 +220,45 @@ class TaskService {
   }
 
 
+
   // -------------------------
-  // Get all tasks (with Search, Filter, Pagination)
+  // Get all tasks (Search, Filter, Pagination, Team-aware)
   // -------------------------
   async getTasks(currentUser, queryParams = {}) {
-    const { page = 1, limit = 10, search = "", status, priority } = queryParams;
+    const {
+      page = 1,
+      limit = 10,
+      search = "",
+      status,
+      priority,
+      teamId,
+    } = queryParams;
+
     const filters = { search, status, priority };
 
-    if (currentUser.role !== ROLES.ADMIN) {
+    // -------------------------
+    // ROLE-BASED FILTERING
+    // -------------------------
+
+    // ADMIN → can see everything (optional team filter)
+    if (currentUser.role === ROLES.ADMIN) {
+      if (teamId) {
+        filters.team = teamId;
+      }
+    }
+
+    // MANAGER → can see ONLY his team tasks
+    else if (currentUser.role === ROLES.MANAGER) {
+      const team = await teamRepository.findByManagerId(currentUser.id);
+      if (!team) {
+        return { tasks: [], pagination: { total: 0, page, limit } };
+      }
+
+      filters.team = team._id;
+    }
+
+    // USER → only assigned tasks (no team filter allowed)
+    else {
       filters.assignedTo = currentUser.id;
     }
 
@@ -237,9 +268,12 @@ class TaskService {
       ...filters,
     });
 
-    const dtoList = data.map(taskDTO);
-    return { tasks: dtoList, pagination };
+    return {
+      tasks: data.map(taskDTO),
+      pagination,
+    };
   }
+
 
 
   async countTasksForUser(userId) {

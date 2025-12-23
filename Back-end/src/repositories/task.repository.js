@@ -62,22 +62,21 @@ class TaskRepository {
 
 
   // ---------------------------------------------------------
-  // 📋 Get All Tasks (with filters and pagination)
+  // 📋 Get All Tasks (with filters, pagination, team support)
   // ---------------------------------------------------------
   async getAll({
-    page = 1,        // default page = 1
-    limit = 10,      // default items per page = 10
-    search = "",     // search keyword (optional)
-    status,          // optional filter
-    priority,        // optional filter
-    assignedTo,      // optional filter
+    page = 1,
+    limit = 10,
+    search = "",
+    status,
+    priority,
+    assignedTo,
+    team, // ✅ NEW (ObjectId)
   } = {}) {
 
-    // Initialize MongoDB query object
     const query = {};
 
-    // Search filter (case-insensitive)
-    // Matches either title OR description
+    // 🔎 Search filter
     if (search) {
       query.$or = [
         { title: { $regex: search, $options: "i" } },
@@ -85,28 +84,27 @@ class TaskRepository {
       ];
     }
 
-    // Conditional filters for status/priority/assignedTo
+    // 🎯 Filters
     if (status) query.status = status;
     if (priority) query.priority = priority;
     if (assignedTo) query.assignedTo = assignedTo;
+    if (team) query.team = team; // ✅ KEY ADDITION
 
-    // Pagination skip amount
     const skip = (page - 1) * limit;
 
-    // Use Promise.all for performance: fetch tasks + count in parallel
     const [tasks, total] = await Promise.all([
       Task.find(query)
         .populate("assignedTo", "name email role")
         .populate("createdBy", "name email role")
-        .skip(skip)                // skip previous pages
-        .limit(limit)              // limit per page
-        .sort({ createdAt: -1 })   // newest first
+        .populate("team", "name") // ✅ helpful for UI
+        .skip(skip)
+        .limit(limit)
+        .sort({ createdAt: -1 })
         .lean()
         .exec(),
-      Task.countDocuments(query),  // total task count for pagination metadata
+      Task.countDocuments(query),
     ]);
 
-    // Return both tasks and pagination info
     return {
       data: tasks,
       pagination: {
@@ -117,6 +115,7 @@ class TaskRepository {
       },
     };
   }
+
 
 
   // ---------------------------------------------------------

@@ -18,7 +18,8 @@ export class TaskService {
     limit?: number;
     search?: string;
     status?: string;   // optional status filter (kept for backward compatibility)
-    priority?: string; // optional priority filter (kept for backward compatibility)
+    priority?: string;
+    teamId?: string;  // optional teamId filter (kept for backward compatibility)
   } = {}): Observable<any> {
     let params = new HttpParams();
 

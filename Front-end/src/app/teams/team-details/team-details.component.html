@@ -1,20 +1,177 @@
-<mat-card *ngIf="team">
-  <mat-card-title>{{ team.name }}</mat-card-title>
-  <mat-card-subtitle>Manager: {{ team.manager?.name || team.manager?.email }}</mat-card-subtitle>
+<div class="team-details-container" *ngIf="team">
 
-  <h3>Members</h3>
-  <mat-list>
-    <mat-list-item *ngFor="let m of team.members">
-      <div matLine>{{ m.name || m.email }}</div>
-      <button mat-mini-button color="warn" (click)="removeMember(m._id)">Remove</button>
-    </mat-list-item>
-  </mat-list>
+  <mat-card>
 
-  <h4>Add member</h4>
-  <mat-form-field>
-    <mat-select [(value)]="addUserId">
-      <mat-option *ngFor="let u of allUsers" [value]="u._id">{{ u.name || u.email }}</mat-option>
-    </mat-select>
-  </mat-form-field>
-  <button mat-flat-button color="primary" (click)="addMember()">Add</button>
-</mat-card>
+    <!-- ===== Team Header ===== -->
+    <div class="toolbar">
+      <div>
+        <h2 class="title">{{ team.name }}</h2>
+        <p class="subtitle">
+          Manager: {{ team.manager?.name || team.manager?.email }}
+        </p>
+      </div>
+    </div>
+
+    <!-- ===================================================== -->
+    <!-- =============== USERS (ALL USERS) =================== -->
+    <!-- ===================================================== -->
+
+    <div class="toolbar section-toolbar">
+      <h3 class="section-title">All Users</h3>
+    </div>
+
+    <table mat-table [dataSource]="allUsers" class="mat-elevation-z2 full-width-table">
+
+      <!-- Name -->
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef>Name</th>
+        <td mat-cell *matCellDef="let u">{{ u.name || '—' }}</td>
+      </ng-container>
+
+      <!-- Email -->
+      <ng-container matColumnDef="email">
+        <th mat-header-cell *matHeaderCellDef>Email</th>
+        <td mat-cell *matCellDef="let u">{{ u.email }}</td>
+      </ng-container>
+
+      <!-- Actions -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Actions</th>
+        <td mat-cell *matCellDef="let u">
+          <button mat-icon-button [matMenuTriggerFor]="userMenu">
+            <mat-icon>more_vert</mat-icon>
+          </button>
+
+          <mat-menu #userMenu="matMenu">
+            <button mat-menu-item (click)="viewUser(u)">
+              <mat-icon>person</mat-icon>
+              User Details
+            </button>
+
+            <button mat-menu-item (click)="addUserToTeam(u)">
+              <mat-icon>group_add</mat-icon>
+              Add to team {{ team.name }}
+            </button>
+          </mat-menu>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="userColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: userColumns"></tr>
+    </table>
+
+    <!-- ===================================================== -->
+    <!-- ================= TEAM MEMBERS ====================== -->
+    <!-- ===================================================== -->
+
+    <div class="toolbar section-toolbar">
+      <h3 class="section-title">Team Members</h3>
+    </div>
+
+    <table mat-table [dataSource]="team.members" class="mat-elevation-z2 full-width-table">
+
+      <!-- Name -->
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef>Name</th>
+        <td mat-cell *matCellDef="let m">{{ m.name || '—' }}</td>
+      </ng-container>
+
+      <!-- Email -->
+      <ng-container matColumnDef="email">
+        <th mat-header-cell *matHeaderCellDef>Email</th>
+        <td mat-cell *matCellDef="let m">{{ m.email }}</td>
+      </ng-container>
+
+      <!-- Tasks Count -->
+      <ng-container matColumnDef="tasks">
+        <th mat-header-cell *matHeaderCellDef>Tasks</th>
+        <td mat-cell *matCellDef="let m">
+          {{ m.taskCount || 0 }}
+        </td>
+      </ng-container>
+
+      <!-- Actions -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Actions</th>
+        <td mat-cell *matCellDef="let m">
+
+          <button mat-icon-button [matMenuTriggerFor]="memberMenu">
+            <mat-icon>more_vert</mat-icon>
+          </button>
+
+          <mat-menu #memberMenu="matMenu">
+            <button mat-menu-item (click)="assignTask(m)">
+              <mat-icon>assignment</mat-icon>
+              Assign Task
+            </button>
+
+            <button mat-menu-item color="warn" (click)="removeUserFromTeam(m._id)">
+              <mat-icon color="warn">close</mat-icon>
+              Remove from team
+            </button>
+          </mat-menu>
+
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="membersColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: membersColumns"></tr>
+    </table>
+
+    <!-- ===================================================== -->
+    <!-- ===================== TASKS ========================= -->
+    <!-- ===================================================== -->
+
+    <div class="toolbar section-toolbar">
+      <h3 class="section-title">Tasks</h3>
+
+      <div class="actions">
+        <button mat-raised-button color="primary" (click)="createTask()">
+          <mat-icon>add</mat-icon>
+          Create Task
+        </button>
+      </div>
+    </div>
+
+    <table mat-table [dataSource]="tasks" class="mat-elevation-z2 full-width-table">
+
+      <!-- Title -->
+      <ng-container matColumnDef="title">
+        <th mat-header-cell *matHeaderCellDef>Title</th>
+        <td mat-cell *matCellDef="let t">{{ t.title }}</td>
+      </ng-container>
+
+      <!-- Status -->
+      <ng-container matColumnDef="status">
+        <th mat-header-cell *matHeaderCellDef>Status</th>
+        <td mat-cell *matCellDef="let t">
+          <span class="status-badge" [ngClass]="t.status">
+            {{ t.status }}
+          </span>
+        </td>
+      </ng-container>
+
+      <!-- Assigned To -->
+      <ng-container matColumnDef="assignedTo">
+        <th mat-header-cell *matHeaderCellDef>Assigned To</th>
+        <td mat-cell *matCellDef="let t">
+          {{ t.assignedTo?.name || 'Unassigned' }}
+        </td>
+      </ng-container>
+
+      <!-- Actions -->
+      <ng-container matColumnDef="actions">
+        <th mat-header-cell *matHeaderCellDef>Actions</th>
+        <td mat-cell *matCellDef="let t">
+          <button mat-icon-button color="warn" (click)="deleteTask(t)">
+            <mat-icon>close</mat-icon>
+          </button>
+        </td>
+      </ng-container>
+
+      <tr mat-header-row *matHeaderRowDef="tasksColumns"></tr>
+      <tr mat-row *matRowDef="let row; columns: tasksColumns"></tr>
+    </table>
+
+  </mat-card>
+</div>
