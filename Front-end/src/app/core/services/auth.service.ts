@@ -91,6 +91,11 @@ export class AuthService {
     return this.currentUserSubject.value;
   }
 
+    /** ⭐ REQUIRED by profile page */
+  updateCurrentUser(user: any) {
+    this.currentUserSubject.next(user);
+  }
+
   // -------------------------------------------------------
   // Optional Profile Endpoint (Unchanged)
   // -------------------------------------------------------

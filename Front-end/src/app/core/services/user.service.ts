@@ -7,7 +7,7 @@ import { Observable } from 'rxjs';
 export class UserService {
   private base = `${environment.apiUrl}/auth`; // your users endpoints earlier were under /auth or /admin
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   list(): Observable<any> {
     return this.http.get(`${environment.apiUrl}/admin/users`);
@@ -15,5 +15,17 @@ export class UserService {
 
   getById(id: string): Observable<any> {
     return this.http.get(`${this.base}/users/${id}`);
+  }
+
+  getUsersForManager() {
+    return this.http.get(`${environment.apiUrl}/manager/users`);
+  }
+
+  updateProfile(payload: { name: string }) {
+    return this.http.put(`${environment.apiUrl}/users/profile`, payload);
+  }
+
+  changePassword(payload: any) {
+    return this.http.put(`${environment.apiUrl}/users/change-password`, payload);
   }
 }

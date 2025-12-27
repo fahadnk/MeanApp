@@ -10,7 +10,7 @@ class ManagerController {
   // -----------------------------
   async createTeam(req, res) {
     try {
-      const team = await managerService.createTeam(req.user.id, req.body.name);
+      const team = await managerService.createTeam(req.user._id, req.body.name);
       return success(res, team, "Team created successfully", 201);
     } catch (err) {
       return error(res, err.message, 400);
@@ -23,7 +23,7 @@ class ManagerController {
   async addUserToTeam(req, res) {
     try {
       const team = await managerService.addUserToTeam(
-        req.user.id,
+        req.user._id,
         req.params.teamId,
         req.params.userId
       );
@@ -39,7 +39,7 @@ class ManagerController {
   async removeUserFromTeam(req, res) {
     try {
       const team = await managerService.removeUserFromTeam(
-        req.user.id,
+        req.user._id,
         req.params.teamId,
         req.params.userId
       );
@@ -54,7 +54,7 @@ class ManagerController {
   // -----------------------------
   async getTeamTasks(req, res) {
     try {
-      const tasks = await managerService.getTeamTasks(req.user.id, req.params.teamId);
+      const tasks = await managerService.getTeamTasks(req.user._id, req.params.teamId);
       return success(res, tasks, "Team tasks fetched successfully");
     } catch (err) {
       return error(res, err.message, 400);
@@ -106,12 +106,51 @@ class ManagerController {
   // -----------------------------
   async getAllUsers(req, res) {
     try {
-      const users = await managerService.getAllUsers();
+      const users = await managerService.getAllUsersPaginated(req.query);
       return success(res, users, "Users fetched");
     } catch (err) {
       return error(res, err.message, 400);
     }
   }
+
+  async getAvailableUsers(req, res) {
+    try {
+      const users = await managerService.getAvailableUsers(req.params.teamId);
+      return success(res, users, "Available users fetched");
+    } catch (err) {
+      return error(res, err.message, 400);
+    }
+  }
+
+  // -----------------------------
+  // Get Team Stats
+  // -----------------------------
+  async getTeamStats(req, res) {
+    try {
+      const stats = await managerService.getTeamStats(
+        req.user._id,
+        req.params.teamId
+      );
+
+      return success(res, stats, "Team stats fetched successfully");
+    } catch (err) {
+      return error(res, err.message, 403);
+    }
+  }
+
+  async deleteTeam(req, res) {
+    try {
+      const { teamId } = req.params;
+      const managerId = req.user.id; // ✅ THIS WAS MISSING
+
+      await managerService.deleteTeam(teamId, managerId);
+
+      return success(res, "Team deleted successfully");
+    } catch (err) {
+      return error(res, err.message || "Failed to delete team", 400);
+    }
+  };
+
 }
 
 export default new ManagerController();

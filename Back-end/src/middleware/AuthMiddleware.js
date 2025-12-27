@@ -70,7 +70,11 @@ function authMiddleware(req, res, next) {
     // ---------------------------------------------------
     // By setting req.user = decoded, subsequent middlewares and
     // route handlers can access user info (e.g., req.user.id).
-    req.user = decoded;
+    req.user = {
+      id: decoded.id || decoded._id,
+      role: decoded.role,
+    };
+
 
     // ---------------------------------------------------
     // Step 7: Pass control to the next middleware/route

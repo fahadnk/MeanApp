@@ -7,6 +7,7 @@ import { TaskListComponent } from './tasks/task-list/task-list.component';
 import { TaskFormComponent } from './tasks/task-form/task-form.component';
 import { TaskDetailsComponent } from './tasks/task-details/task-details.component';
 import { ResetPasswordComponent } from './auth/reset-password/reset-password.component';
+import { ProfileComponent } from './shared/profile/profile.component';
 
 const routes: Routes = [
   { path: 'login', component: LoginComponent },
@@ -20,6 +21,7 @@ const routes: Routes = [
     path: 'reset-password',
     component: ResetPasswordComponent
   },
+  { path: 'profile', component: ProfileComponent },
   {
     path: 'admin',
     loadChildren: () => import('./admin/admin.module').then(m => m.AdminModule)

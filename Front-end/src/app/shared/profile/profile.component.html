@@ -1,0 +1,69 @@
+<div class="profile-page">
+
+  <!-- ================= PROFILE ================= -->
+  <mat-card class="card">
+
+    <div class="header">
+      <h2>My Profile</h2>
+      <p>Update your personal information</p>
+    </div>
+<!-- (ngSubmit)="updateProfile()" -->
+    <form [formGroup]="profileForm" >
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Email</mat-label>
+        <input matInput formControlName="email" [disabled]="true" />
+      </mat-form-field>
+
+      <div class="meta">
+        <span><strong>Role:</strong> {{ user?.role }}</span>
+        <span><strong>Created:</strong> {{ user?.createdAt | date:'medium' }}</span>
+        <span *ngIf="user?.createdBy">
+          <strong>Created By:</strong> {{ user?.createdBy?.name || user?.createdBy?.email }}
+        </span>
+      </div>
+
+      <div class="actions">
+        <button mat-flat-button color="primary" type="submit" [disabled]="profileForm.invalid">
+          Save Changes
+        </button>
+      </div>
+
+    </form>
+  </mat-card>
+
+  <!-- ================= SECURITY ================= -->
+  <mat-card class="card">
+
+    <div class="header">
+      <h2>Security</h2>
+      <p>Change your password</p>
+    </div>
+
+    <form [formGroup]="passwordForm" (ngSubmit)="updatePassword()">
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Current Password</mat-label>
+        <input matInput type="password" formControlName="currentPassword" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>New Password</mat-label>
+        <input matInput type="password" formControlName="newPassword" />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="full-width">
+        <mat-label>Confirm Password</mat-label>
+        <input matInput type="password" formControlName="confirmPassword" />
+      </mat-form-field>
+
+      <div class="actions">
+        <button mat-flat-button color="primary" type="submit" [disabled]="passwordForm.invalid">
+          Update Password
+        </button>
+      </div>
+
+    </form>
+  </mat-card>
+
+</div>

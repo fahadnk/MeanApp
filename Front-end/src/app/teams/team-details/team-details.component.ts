@@ -62,12 +62,9 @@ export class TeamDetailsComponent implements OnInit {
   /* ================= USERS ================= */
 
   loadUsers() {
-    this.userService.list().subscribe({
+    this.userService.getUsersForManager().subscribe({
       next: (res: any) => {
-        const users = res.data || res;
-
-        /** ONLY ROLE = USER */
-        this.allUsers = users.filter((u: any) => u.role === 'user');
+        this.allUsers = res.data || res;
       },
       error: err => console.error(err)
     });
@@ -84,8 +81,8 @@ export class TeamDetailsComponent implements OnInit {
     });
   }
 
-  removeUserFromTeam(user: any) {
-    this.teamService.removeMember(this.team._id, user._id).subscribe({
+  removeUserFromTeam(userId: string) {
+    this.teamService.removeMember(this.team._id, userId).subscribe({
       next: (res: any) => {
         this.team = res.data || res;
         this.teamMembers = this.team.members;
@@ -108,7 +105,7 @@ export class TeamDetailsComponent implements OnInit {
   /* ================= TASKS ================= */
 
   loadTasks(teamId: string) {
-    this.taskService.list({ teamId }).subscribe({
+    this.teamService.getTeamTasks(teamId).subscribe({
       next: (res: any) => {
         this.tasks = res.data || res;
       },

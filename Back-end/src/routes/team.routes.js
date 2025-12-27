@@ -16,7 +16,7 @@ import teamController from "../controllers/team.controller.js";
 import validateSchema from "../middleware/ValidateMiddleware.js";
 
 // Joi/Zod validation schemas for team creation and adding members
-import { createTeamSchema, addMemberSchema } from "../validators/team.validator.js";
+import { createTeamSchema, addUserSchema } from "../validators/team.validator.js";
 
 // Predefined Role constants for RBAC
 import { ROLES } from "../utils/roles.js";
@@ -52,7 +52,7 @@ router.post(
 router.post(
   "/:teamId/members",
   authMiddleware,                        // User must be authenticated
-  validateSchema(addMemberSchema),       // Validate payload
+  validateSchema(addUserSchema),       // Validate payload
   teamController.addMember               // Controller handles business flow
 );
 
@@ -67,7 +67,7 @@ router.post(
 router.post(
   "/:teamId/members/remove",
   authMiddleware,
-  validateSchema(addMemberSchema),
+  validateSchema(addUserSchema),
   teamController.removeMember
 );
 

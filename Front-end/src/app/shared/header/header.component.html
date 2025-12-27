@@ -2,12 +2,7 @@
   <mat-toolbar color="primary" class="header-toolbar">
 
     <!-- BACK BUTTON (hidden on /tasks) -->
-    <button
-      *ngIf="showBackButton"
-      mat-icon-button
-      class="back-btn"
-      (click)="goBack()"
-    >
+    <button *ngIf="showBackButton" mat-icon-button class="back-btn" (click)="goBack()">
       <mat-icon>arrow_back</mat-icon>
     </button>
 
@@ -19,21 +14,13 @@
     <span class="spacer"></span>
 
     <!-- ADMIN PANEL BUTTON -->
-    <button
-      *ngIf="user?.role === 'admin'"
-      mat-button
-      class="admin-btn"
-    >
+    <button *ngIf="user?.role === 'admin'" mat-button class="admin-btn">
       <mat-icon>admin_panel_settings</mat-icon>
       Admin Panel
     </button>
 
     <!-- NOTIFICATION BELL -->
-    <button
-      mat-icon-button
-      [matMenuTriggerFor]="notifMenu"
-      class="notification-button"
-    >
+    <button mat-icon-button [matMenuTriggerFor]="notifMenu" class="notification-button">
       <mat-icon>notifications</mat-icon>
 
       <!-- Badge -->
@@ -74,6 +61,13 @@
     </button>
 
     <mat-menu #userMenu="matMenu">
+
+      <button mat-menu-item (click)="goToProfile()">
+        <mat-icon>person</mat-icon>
+        Profile
+      </button>
+
+      <mat-divider></mat-divider>
       <button mat-menu-item (click)="logout()">
         <mat-icon>logout</mat-icon>
         Logout

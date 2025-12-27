@@ -6,6 +6,7 @@ import { TeamService } from 'src/app/core/services/team.service';
 @Component({
   selector: 'app-team-create',
   templateUrl: './team-create.component.html',
+  styleUrls: ['./team-create.component.scss']
 })
 export class TeamCreateComponent {
   // Strongly typed FormGroup

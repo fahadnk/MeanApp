@@ -69,4 +69,8 @@ export class HeaderComponent implements OnInit {
   goToTasks() {
     this.router.navigate(['/tasks']);
   }
+
+  goToProfile(): void {
+    this.router.navigate(['/profile']);
+  }
 }

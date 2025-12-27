@@ -1,15 +1,14 @@
-.main-create-team-container {
-  padding: 20px;
-}
-.team-page {
+.profile-page {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
   padding: 2rem;
+  gap: 2rem;
 }
 
 .card {
   width: 100%;
-  max-width: 500px;
+  max-width: 600px;
 }
 
 .header {
@@ -31,9 +30,17 @@
   width: 100%;
 }
 
+.meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  margin-top: 8px;
+  color: rgba(0, 0, 0, 0.7);
+}
+
 .actions {
   display: flex;
   justify-content: flex-end;
-  gap: 1rem;
   margin-top: 1.5rem;
 }

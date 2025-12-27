@@ -156,11 +156,48 @@ class UserRepository {
   }
 
   async findByRole(role) {
-  return await User.find({ role })
-    .select("name email role team")
-    .lean()
-    .exec();
-}
+    return await User.find({ role })
+      .select("name email role team")
+      .lean()
+      .exec();
+  }
+
+  async findAvailableUsers(teamId) {
+    return await User.find({
+      role: "user",
+      $or: [
+        { team: null },
+        { team: { $ne: teamId } }
+      ]
+    })
+      .select("name email role team")
+      .lean()
+      .exec();
+  }
+
+  async findUsersByRolePaginated(role, { page = 1, limit = 10 }) {
+    const skip = (page - 1) * limit;
+
+    const [users, total] = await Promise.all([
+      User.find({ role })
+        .skip(skip)
+        .limit(limit)
+        .select("name email role team")
+        .lean(),
+      User.countDocuments({ role })
+    ]);
+
+    return {
+      data: users,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit)
+      }
+    };
+  }
+
 }
 
 // -------------------------------------------

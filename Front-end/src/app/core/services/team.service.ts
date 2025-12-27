@@ -7,6 +7,7 @@ import { Observable } from 'rxjs';
 @Injectable({ providedIn: 'root' })
 export class TeamService {
   private base = `${environment.apiUrl}/teams`;
+  private managerBase = `${environment.apiUrl}/manager`;
 
   constructor(private http: HttpClient) {}
 
@@ -26,17 +27,13 @@ export class TeamService {
     return this.http.post(this.base, payload);
   }
 
-  addMember(teamId: string, userId: string): Observable<any> {
-    return this.http.post(`${this.base}/${teamId}/members`, { userId });
-  }
-
-  removeMember(teamId: string, userId: string): Observable<any> {
-    return this.http.post(`${this.base}/${teamId}/members/remove`, { userId });
-  }
-
   delete(teamId: string): Observable<any> {
     return this.http.delete(`${this.base}/${teamId}`);
   }
+
+  deleteAsManager(teamId: string): Observable<any> {
+  return this.http.delete(`${this.managerBase}/team/${teamId}`);
+}
 
   // admin-only helper to assign user to team directly
   assignUserToTeam(userId: string, teamId: string): Observable<any> {
@@ -45,5 +42,23 @@ export class TeamService {
 
   removeUserFromTeamAdmin(userId: string): Observable<any> {
     return this.http.post(`${environment.apiUrl}/admin/users/${userId}/remove-team`, {});
+  }
+
+  addMember(teamId: string, userId: string) {
+    return this.http.post(
+      `${this.managerBase}/team/${teamId}/add-user/${userId}`,
+      {}
+    );
+  }
+
+  removeMember(teamId: string, userId: string) {
+    return this.http.post(
+      `${this.managerBase}/team/${teamId}/remove-user/${userId}`,
+      {}
+    );
+  }
+
+  getTeamTasks(teamId: string) {
+    return this.http.get(`${this.managerBase}/team/${teamId}/tasks`);
   }
 }

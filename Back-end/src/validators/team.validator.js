@@ -6,19 +6,20 @@ import Joi from "joi";
 export const createTeamSchema = Joi.object({
   name: Joi.string().min(3).max(100).required()
 });
-
-// ---------------------------------------------------
-// 2️⃣ Add Member to Team (Manager adds a user)
-// ---------------------------------------------------
-export const addMemberSchema = Joi.object({
-  userId: Joi.string().required()
-});
-
 // ---------------------------------------------------
 // 3️⃣ Assign User to Team (Admin assigns user to ANY team)
 // ---------------------------------------------------
 export const assignTeamSchema = Joi.object({
   teamId: Joi.string().required()
+});
+
+// ---------------------------------------------------
+// 2️⃣ Add Member to Team (Manager adds a user)
+// ---------------------------------------------------
+
+export const addUserSchema = Joi.object({
+  teamId: Joi.string().required(),
+  userId: Joi.string().required()
 });
 
 // ---------------------------------------------------

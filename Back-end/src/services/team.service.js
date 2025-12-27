@@ -126,23 +126,24 @@ class TeamService {
   // - Cleans up team reference for all users
   // - Removes the team from DB
   // ------------------------------------------------------------
-  async deleteTeam(teamId, actingUser) {
-
-    // Ensure team exists
-    const team = await teamRepository.findById(teamId);
+  async deleteTeam(teamId, managerId) {
+    const team = await Team.findById(teamId);
     if (!team) throw new Error("Team not found");
 
-    // Only admin can delete a team
-    const isAdmin = actingUser.role === ROLES.ADMIN;
-    if (!isAdmin) throw new Error("Access denied");
-
-    // Remove "team" ref from all members BEFORE deleting team
-    for (const member of team.members) {
-      await userRepository.update(member._id ?? member, { $unset: { team: "" } });
+    if (team.manager.toString() !== managerId.toString()) {
+      throw new Error("Not authorized");
     }
 
-    // Delete team
-    return await teamRepository.delete(teamId);
+    // 🔥 Remove team from all users
+    await User.updateMany(
+      { team: teamId },
+      { $unset: { team: "" } }
+    );
+
+    // 🔥 Delete team
+    await Team.findByIdAndDelete(teamId);
+
+    return true;
   }
 }
 
