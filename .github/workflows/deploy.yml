@@ -13,22 +13,21 @@ jobs:
       
       - name: Debug - Show key info
         run: |
-          echo "Key length: ${#EC2_SSH_KEY}"
-          echo "First 50 chars: ${EC2_SSH_KEY:0:50}"
-        env:
-          EC2_SSH_KEY: `${{ secrets.EC2_SSH_KEY }}
+          echo "Testing SSH key setup..."
+          echo "Host: ${{ secrets.EC2_HOST }}"
+          echo "Username: ${{ secrets.EC2_USERNAME }}"
       
       - name: Test SSH Connection
         uses: appleboy/ssh-action@v0.1.5
         with:
-          host: `${{ secrets.EC2_HOST }}
-          username: `${{ secrets.EC2_USERNAME }}
-          key: `${{ secrets.EC2_SSH_KEY }}
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
           port: 22
           script_timeout: 30s
           script: |
             echo "✅ Successfully connected to EC2!"
-            echo "Hostname: `$(hostname)"
-            echo "User: `$(whoami)"
-            echo "Date: `$(date)"
+            echo "Hostname: $(hostname)"
+            echo "User: $(whoami)"
+            echo "Date: $(date)"
             echo "Test completed successfully!"
