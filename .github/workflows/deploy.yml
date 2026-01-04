@@ -1,33 +1,64 @@
-name: Test SSH Connection
+name: Deploy to EC2
 
 on:
   push:
     branches: [ main ]
 
 jobs:
-  test:
+  deploy:
     runs-on: ubuntu-latest
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      
-      - name: Debug - Show key info
-        run: |
-          echo "Testing SSH key setup..."
-          echo "Host: ${{ secrets.EC2_HOST }}"
-          echo "Username: ${{ secrets.EC2_USERNAME }}"
-      
-      - name: Test SSH Connection
-        uses: appleboy/ssh-action@v0.1.5
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          port: 22
-          script_timeout: 30s
-          script: |
-            echo "✅ Successfully connected to EC2!"
-            echo "Hostname: $(hostname)"
-            echo "User: $(whoami)"
-            echo "Date: $(date)"
-            echo "Test completed successfully!"
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+    
+    - name: Deploy Application
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          echo "🚀 Starting deployment..."
+          
+          # Go to MeanApp directory
+          cd ~/MeanApp
+          
+          # Pull latest code
+          echo "📥 Pulling latest code..."
+          git pull origin main
+          
+          # Deploy Backend
+          echo "⚙️ Deploying backend..."
+          cd Back-end
+          npm install
+          
+          # Manage with PM2
+          if pm2 list | grep -q "meanapp-backend"; then
+            pm2 restart meanapp-backend
+          else
+            pm2 start src/server.js --name "meanapp-backend"
+            pm2 save
+          fi
+          
+          # Deploy Frontend
+          echo "🎨 Deploying frontend..."
+          cd ../Front-end
+          npm install
+          npm run build -- --configuration production
+          
+          # Copy to web directory
+          echo "📂 Copying files..."
+          sudo cp -r dist/front-end/* /var/www/meanapp/
+          
+          # Restart nginx
+          echo "🔄 Restarting nginx..."
+          sudo systemctl reload nginx
+          
+          echo "✅ Deployment complete! 🎉"
+          echo "🌐 Application URL: http://${{ secrets.EC2_HOST }}"
