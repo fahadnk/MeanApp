@@ -1,0 +1,64 @@
+name: Deploy to EC2
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+    
+    - name: Deploy to EC2 Server
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          echo "🚀 Starting deployment..."
+          
+          # Go to MeanApp directory
+          cd ~/MeanApp
+          
+          # Pull latest code
+          echo "📥 Pulling latest code from GitHub..."
+          git pull origin main
+          
+          # Deploy Backend
+          echo "⚙️ Deploying backend..."
+          cd Back-end
+          npm install
+          
+          # Start/Restart with PM2
+          if pm2 list | grep -q "meanapp-backend"; then
+            pm2 restart meanapp-backend
+          else
+            npm install -g pm2
+            pm2 start src/server.js --name "meanapp-backend"
+            pm2 save
+            pm2 startup
+          fi
+          
+          # Deploy Frontend
+          echo "🎨 Deploying frontend..."
+          cd ../Front-end
+          npm install
+          npm run build
+          
+          # Copy to web directory
+          sudo cp -r dist/front-end/* /var/www/meanapp/
+          
+          # Reload nginx
+          sudo systemctl reload nginx
+          
+          echo "✅ Deployment complete! 🎉"
+          echo "🌐 Application is live at: http://3.26.201.48"
