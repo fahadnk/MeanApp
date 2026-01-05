@@ -36,21 +36,20 @@ jobs:
     - name: Build Angular App
       run: |
         cd Front-end
-        # Build with increased memory and continue on budget warnings
-        NODE_OPTIONS="--max-old-space-size=4096"
-        npm run build -- --configuration production || true
+        # Temporarily ignore budget warnings
+        npm run build -- --configuration production 2>&1 | grep -v "budget" || true
         
         # Verify build was created
         if [ -d "dist/front-end" ] && [ -f "dist/front-end/index.html" ]; then
           echo "✅ Angular build completed successfully!"
-          echo "📁 Build directory contents:"
+          echo "📁 Build files created:"
           ls -la dist/front-end/
         else
-          echo "❌ Build failed - no output directory created!"
+          echo "❌ Build failed!"
           exit 1
         fi
     
-    - name: Deploy to EC2
+    - name: Deploy Backend to EC2
       uses: appleboy/ssh-action@v0.1.5
       with:
         host: ${{ secrets.EC2_HOST }}
@@ -63,7 +62,7 @@ jobs:
           # Go to MeanApp directory
           cd ~/MeanApp
           
-          # Pull latest code (backend only)
+          # Pull latest code
           echo "📥 Pulling latest code..."
           git pull origin main
           
@@ -85,6 +84,10 @@ jobs:
           fi
           
           echo "✅ Backend deployed!"
+          
+          # Prepare frontend directory
+          echo "📂 Preparing frontend directory..."
+          sudo rm -rf /var/www/meanapp/*
     
     - name: Copy Frontend Build to EC2
       uses: appleboy/scp-action@v0.1.4
@@ -92,10 +95,13 @@ jobs:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_SSH_KEY }}
-        source: "Front-end/dist/front-end/*"
+        source: "dist/front-end/*"
         target: "/var/www/meanapp/"
+        overwrite: true
+        strip_components: 0
+      working_directory: Front-end
     
-    - name: Finalize Deployment on EC2
+    - name: Finalize Deployment
       uses: appleboy/ssh-action@v0.1.5
       with:
         host: ${{ secrets.EC2_HOST }}
@@ -117,5 +123,5 @@ jobs:
           echo "📊 PM2 Status:"
           pm2 status
           echo ""
-          echo "📁 Frontend files deployed:"
-          ls -la /var/www/meanapp/ | head -10
+          echo "📁 Deployed files:"
+          ls -la /var/www/meanapp/
