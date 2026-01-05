@@ -5,8 +5,9 @@ on:
     branches: [ main ]
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     
     steps:
     - name: Checkout code
@@ -16,20 +17,43 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: Front-end/package-lock.json
     
-    - name: Deploy Application
+    - name: Cache npm dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-node-${{ hashFiles('Front-end/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+    
+    - name: Install Frontend Dependencies
+      run: |
+        cd Front-end
+        npm ci
+    
+    - name: Build Angular App
+      run: |
+        cd Front-end
+        npm run build -- --configuration production
+        echo "✅ Angular build complete!"
+        ls -la dist/front-end/
+    
+    - name: Deploy to EC2
       uses: appleboy/ssh-action@v0.1.5
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_SSH_KEY }}
+        script_timeout: 120s
         script: |
           echo "🚀 Starting deployment..."
           
           # Go to MeanApp directory
           cd ~/MeanApp
           
-          # Pull latest code
+          # Pull latest code (backend only)
           echo "📥 Pulling latest code..."
           git pull origin main
           
@@ -38,7 +62,11 @@ jobs:
           cd Back-end
           npm install
           
-          # Manage with PM2
+          # Manage with PM2 - Clean up old processes
+          echo "🔄 Managing backend processes..."
+          pm2 stop mean-backend 2>/dev/null || true
+          pm2 delete mean-backend 2>/dev/null || true
+          
           if pm2 list | grep -q "meanapp-backend"; then
             pm2 restart meanapp-backend
           else
@@ -46,19 +74,38 @@ jobs:
             pm2 save
           fi
           
-          # Deploy Frontend
-          echo "🎨 Deploying frontend..."
-          cd ../Front-end
-          npm install
-          npm run build -- --configuration production
+          echo "✅ Backend deployed!"
+    
+    - name: Copy Frontend Build to EC2
+      uses: appleboy/scp-action@v0.1.4
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        source: "Front-end/dist/front-end/*"
+        target: "/var/www/meanapp/"
+    
+    - name: Finalize Deployment on EC2
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: |
+          echo "🎯 Finalizing deployment..."
           
-          # Copy to web directory
-          echo "📂 Copying files..."
-          sudo cp -r dist/front-end/* /var/www/meanapp/
+          # Set correct permissions
+          sudo chown -R nginx:nginx /var/www/meanapp
+          sudo chmod -R 755 /var/www/meanapp
           
           # Restart nginx
-          echo "🔄 Restarting nginx..."
           sudo systemctl reload nginx
           
           echo "✅ Deployment complete! 🎉"
           echo "🌐 Application URL: http://${{ secrets.EC2_HOST }}"
+          echo ""
+          echo "📊 PM2 Status:"
+          pm2 status
+          echo ""
+          echo "📁 Frontend files:"
+          ls -la /var/www/meanapp/ | head -10
