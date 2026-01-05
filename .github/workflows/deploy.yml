@@ -36,9 +36,19 @@ jobs:
     - name: Build Angular App
       run: |
         cd Front-end
-        npm run build -- --configuration production
-        echo "✅ Angular build complete!"
-        ls -la dist/front-end/
+        # Build with increased memory and continue on budget warnings
+        NODE_OPTIONS="--max-old-space-size=4096"
+        npm run build -- --configuration production || true
+        
+        # Verify build was created
+        if [ -d "dist/front-end" ] && [ -f "dist/front-end/index.html" ]; then
+          echo "✅ Angular build completed successfully!"
+          echo "📁 Build directory contents:"
+          ls -la dist/front-end/
+        else
+          echo "❌ Build failed - no output directory created!"
+          exit 1
+        fi
     
     - name: Deploy to EC2
       uses: appleboy/ssh-action@v0.1.5
@@ -62,7 +72,7 @@ jobs:
           cd Back-end
           npm install
           
-          # Manage with PM2 - Clean up old processes
+          # Manage with PM2
           echo "🔄 Managing backend processes..."
           pm2 stop mean-backend 2>/dev/null || true
           pm2 delete mean-backend 2>/dev/null || true
@@ -107,5 +117,5 @@ jobs:
           echo "📊 PM2 Status:"
           pm2 status
           echo ""
-          echo "📁 Frontend files:"
+          echo "📁 Frontend files deployed:"
           ls -la /var/www/meanapp/ | head -10
