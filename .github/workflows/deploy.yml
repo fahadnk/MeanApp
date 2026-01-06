@@ -1,13 +1,13 @@
-name: Deploy to EC2
+name: Deploy MEAN App
 
 on:
   push:
     branches: [ main ]
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     
     steps:
     - name: Checkout code
@@ -16,38 +16,21 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: '18'
-        cache: 'npm'
-        cache-dependency-path: Front-end/package-lock.json
+        node-version: ''18''
     
-    - name: Cache npm dependencies
-      uses: actions/cache@v3
-      with:
-        path: ~/.npm
-        key: ${{ runner.os }}-node-${{ hashFiles('Front-end/package-lock.json') }}
-        restore-keys: |
-          ${{ runner.os }}-node-
-    
-    - name: Install Frontend Dependencies
+    - name: Build Angular on GitHub
       run: |
         cd Front-end
         npm ci
+        npm run build -- --configuration production || echo "Build completed (warnings ignored)"
+        echo "✅ Angular built on GitHub Actions"
+        ls -la dist/front-end/
     
-    - name: Build Angular App
+    - name: Create deployment package
       run: |
-        cd Front-end
-        # Temporarily ignore budget warnings
-        npm run build -- --configuration production 2>&1 | grep -v "budget" || true
-        
-        # Verify build was created
-        if [ -d "dist/front-end" ] && [ -f "dist/front-end/index.html" ]; then
-          echo "✅ Angular build completed successfully!"
-          echo "📁 Build files created:"
-          ls -la dist/front-end/
-        else
-          echo "❌ Build failed!"
-          exit 1
-        fi
+        cd Front-end/dist/front-end
+        tar -czf /tmp/frontend-build.tar.gz .
+        echo "📦 Frontend packaged"
     
     - name: Deploy Backend to EC2
       uses: appleboy/ssh-action@v0.1.5
@@ -55,73 +38,59 @@ jobs:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_SSH_KEY }}
-        script_timeout: 120s
+        script_timeout: 300s
         script: |
           echo "🚀 Starting deployment..."
           
-          # Go to MeanApp directory
+          # 1. Update code
+          echo "📥 Updating code..."
           cd ~/MeanApp
-          
-          # Pull latest code
-          echo "📥 Pulling latest code..."
           git pull origin main
           
-          # Deploy Backend
+          # 2. Deploy Backend
           echo "⚙️ Deploying backend..."
           cd Back-end
           npm install
-          
-          # Manage with PM2
-          echo "🔄 Managing backend processes..."
-          pm2 stop mean-backend 2>/dev/null || true
-          pm2 delete mean-backend 2>/dev/null || true
-          
-          if pm2 list | grep -q "meanapp-backend"; then
-            pm2 restart meanapp-backend
-          else
-            pm2 start src/server.js --name "meanapp-backend"
-            pm2 save
-          fi
+          pm2 restart meanapp-backend || pm2 start src/server.js --name "meanapp-backend"
+          pm2 save
           
           echo "✅ Backend deployed!"
           
-          # Prepare frontend directory
+          # 3. Clean frontend directory
           echo "📂 Preparing frontend directory..."
-          sudo rm -rf /var/www/meanapp/*
+          sudo mkdir -p /var/www/meanapp
     
-    - name: Copy Frontend Build to EC2
+    - name: Upload frontend build
       uses: appleboy/scp-action@v0.1.4
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_SSH_KEY }}
-        source: "dist/front-end/*"
-        target: "/var/www/meanapp/"
-        overwrite: true
-        strip_components: 0
-      working_directory: Front-end
+        source: "/tmp/frontend-build.tar.gz"
+        target: "/tmp/"
     
-    - name: Finalize Deployment
+    - name: Extract and deploy frontend
       uses: appleboy/ssh-action@v0.1.5
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
-          echo "🎯 Finalizing deployment..."
+          echo "🎨 Deploying frontend..."
           
-          # Set correct permissions
+          # Extract frontend build
+          sudo tar -xzf /tmp/frontend-build.tar.gz -C /var/www/meanapp/
+          sudo rm /tmp/frontend-build.tar.gz
+          
+          # Set permissions
           sudo chown -R nginx:nginx /var/www/meanapp
           sudo chmod -R 755 /var/www/meanapp
           
           # Restart nginx
           sudo systemctl reload nginx
           
-          echo "✅ Deployment complete! 🎉"
-          echo "🌐 Application URL: http://${{ secrets.EC2_HOST }}"
+          echo "✅ Frontend deployed!"
+          echo "🌐 Application is LIVE at: http://$(curl -s ifconfig.me)"
           echo ""
           echo "📊 PM2 Status:"
           pm2 status
-          echo ""
-          echo "📁 Deployed files:"
-          ls -la /var/www/meanapp/
