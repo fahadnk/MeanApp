@@ -16,21 +16,21 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: ''18''
+        node-version: "18"
     
     - name: Build Angular on GitHub
       run: |
         cd Front-end
         npm ci
-        npm run build -- --configuration production || echo "Build completed (warnings ignored)"
-        echo "✅ Angular built on GitHub Actions"
+        npm run build -- --configuration production || echo "Build completed"
+        echo "Angular built on GitHub Actions"
         ls -la dist/front-end/
     
     - name: Create deployment package
       run: |
         cd Front-end/dist/front-end
         tar -czf /tmp/frontend-build.tar.gz .
-        echo "📦 Frontend packaged"
+        echo "Frontend packaged"
     
     - name: Deploy Backend to EC2
       uses: appleboy/ssh-action@v0.1.5
@@ -40,24 +40,24 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         script_timeout: 300s
         script: |
-          echo "🚀 Starting deployment..."
+          echo "Starting deployment..."
           
           # 1. Update code
-          echo "📥 Updating code..."
+          echo "Updating code..."
           cd ~/MeanApp
           git pull origin main
           
           # 2. Deploy Backend
-          echo "⚙️ Deploying backend..."
+          echo "Deploying backend..."
           cd Back-end
           npm install
           pm2 restart meanapp-backend || pm2 start src/server.js --name "meanapp-backend"
           pm2 save
           
-          echo "✅ Backend deployed!"
+          echo "Backend deployed!"
           
           # 3. Clean frontend directory
-          echo "📂 Preparing frontend directory..."
+          echo "Preparing frontend directory..."
           sudo mkdir -p /var/www/meanapp
     
     - name: Upload frontend build
@@ -76,7 +76,7 @@ jobs:
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
-          echo "🎨 Deploying frontend..."
+          echo "Deploying frontend..."
           
           # Extract frontend build
           sudo tar -xzf /tmp/frontend-build.tar.gz -C /var/www/meanapp/
@@ -89,8 +89,6 @@ jobs:
           # Restart nginx
           sudo systemctl reload nginx
           
-          echo "✅ Frontend deployed!"
-          echo "🌐 Application is LIVE at: http://$(curl -s ifconfig.me)"
-          echo ""
-          echo "📊 PM2 Status:"
+          echo "Frontend deployed!"
+          echo "Application is LIVE"
           pm2 status
