@@ -21,11 +21,7 @@ export class UserService {
     return this.http.get(`${environment.apiUrl}/manager/users`);
   }
 
-  updateProfile(payload: { name: string }) {
-    return this.http.put(`${environment.apiUrl}/users/profile`, payload);
-  }
-
   changePassword(payload: any) {
-    return this.http.put(`${environment.apiUrl}/users/change-password`, payload);
+    return this.http.post(`${environment.apiUrl}/auth/reset-password-auth`, payload);
   }
 }

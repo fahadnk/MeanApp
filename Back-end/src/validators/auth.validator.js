@@ -17,3 +17,14 @@ export const resetPasswordSchema = Joi.object({
   email: Joi.string().email().required(),
   password: Joi.string().min(6).required()
 });
+
+export const resetPasswordAuthSchema = Joi.object({
+  currentPassword: Joi.string().min(6).required(),
+  newPassword: Joi.string().min(6).required(),
+  confirmPassword: Joi.any()
+    .valid(Joi.ref('newPassword'))
+    .required()
+    .messages({
+      'any.only': 'Passwords do not match'
+    })
+});

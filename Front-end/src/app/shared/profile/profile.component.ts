@@ -1,6 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
+import { Router } from '@angular/router';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { UserService } from 'src/app/core/services/user.service';
 
@@ -20,7 +21,8 @@ export class ProfileComponent implements OnInit {
     private fb: FormBuilder,
     private auth: AuthService,
     private userService: UserService,
-    private snack: MatSnackBar
+    private snack: MatSnackBar,
+    private router: Router
   ) {}
 
   ngOnInit(): void {
@@ -75,6 +77,7 @@ export class ProfileComponent implements OnInit {
         this.loading = false;
         this.passwordForm.reset();
         this.snack.open('Password updated successfully', 'Close', { duration: 2000 });
+        this.router.navigate(['/admin']);
       },
       error: err => {
         this.loading = false;

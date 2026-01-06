@@ -140,11 +140,12 @@ class UserController {
 
 async resetPasswordWithToken(req, res) {
   try {
-    const { password } = req.body;
+    const { currentPassword, newPassword } = req.body;
 
     const updated = await userService.resetPasswordWithToken(
       req.user.id,
-      password
+      currentPassword,
+      newPassword
     );
 
     return success(res, updated, "Password updated successfully");
@@ -152,7 +153,6 @@ async resetPasswordWithToken(req, res) {
     return error(res, err.message, 400);
   }
 }
-
 }
 
 

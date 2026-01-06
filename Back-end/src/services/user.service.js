@@ -153,10 +153,17 @@ class UserService {
     return userDTO(updatedUser);
   }
 
-  async resetPasswordWithToken(userId, newPassword) {
-    const hashed = await userRepository.hashPassword(newPassword);
+  async resetPasswordWithToken(userId, currentPassword, newPassword) {
+    const user = await userRepository.findById(userId);
+    if (!user) throw new Error("User not found");
 
-    return await userRepository.updatePassword(userId, hashed);
+    const isMatch = await userRepository.validatePassword(currentPassword, user.password);
+    if (!isMatch) throw new Error("Current password is incorrect");
+
+    user.password = await userRepository.hashPassword(newPassword, 10);
+    await user.save();
+
+    return { id: user._id };
   }
 
 

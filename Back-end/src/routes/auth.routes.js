@@ -12,7 +12,7 @@ import roleMiddleware from "../middleware/RoleMiddleware.js"; // Checks user rol
 import validateSchema from "../middleware/ValidateMiddleware.js"; // Validates request bodies against predefined schemas
 
 // Import Joi validation schemas for request payload validation
-import { registerSchema, loginSchema, resetPasswordSchema } from "../validators/auth.validator.js";
+import { registerSchema, loginSchema, resetPasswordSchema, resetPasswordAuthSchema } from "../validators/auth.validator.js";
 
 // Create an Express router instance to define modular, mountable route handlers
 const router = express.Router();
@@ -94,7 +94,7 @@ router.post(
 router.post(
   "/reset-password-auth",
   authMiddleware,
-  validateSchema(resetPasswordSchema),
+  validateSchema(resetPasswordAuthSchema),
   userController.resetPasswordWithToken
 );
 
