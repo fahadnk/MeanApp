@@ -1,50 +1,48 @@
 <div *ngIf="!loading" class="dashboard-grid">
 
   <!-- Teams Table -->
-<mat-card class="full-width">
-  <mat-card-title>Teams</mat-card-title>
+  <mat-card class="full-width">
+    <mat-card-title>Teams</mat-card-title>
 
-  <table mat-table [dataSource]="teams" class=" full-table">
+    <table mat-table [dataSource]="teams" class=" full-table">
 
-    <!-- Team Name -->
-    <ng-container matColumnDef="name">
-      <th mat-header-cell *matHeaderCellDef>Team Name</th>
-      <td mat-cell *matCellDef="let team">{{ team.name }}</td>
-    </ng-container>
+      <!-- Team Name -->
+      <ng-container matColumnDef="name">
+        <th mat-header-cell *matHeaderCellDef>Team Name</th>
+        <td mat-cell *matCellDef="let team">{{ team.name }}</td>
+      </ng-container>
 
-    <!-- Manager -->
-    <ng-container matColumnDef="manager">
-      <th mat-header-cell *matHeaderCellDef>Manager</th>
-      <td mat-cell *matCellDef="let team">
-        {{ team.manager?.name || '—' }}
-      </td>
-    </ng-container>
+      <!-- Manager -->
+      <ng-container matColumnDef="manager">
+        <th mat-header-cell *matHeaderCellDef>Manager</th>
+        <td mat-cell *matCellDef="let team">
+          {{ team.manager?.name || '—' }}
+        </td>
+      </ng-container>
 
-    <!-- Members -->
-    <ng-container matColumnDef="members">
-      <th mat-header-cell *matHeaderCellDef>Members</th>
-      <td mat-cell *matCellDef="let team">
-        {{ team.members?.length || 0 }}
-      </td>
-    </ng-container>
+      <!-- Members -->
+      <ng-container matColumnDef="members">
+        <th mat-header-cell *matHeaderCellDef>Members</th>
+        <td mat-cell *matCellDef="let team">
+          {{ team.members?.length || 0 }}
+        </td>
+      </ng-container>
 
-    <!-- Header -->
-    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+      <!-- Header -->
+      <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
 
-    <!-- Data Rows -->
-    <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+      <!-- Data Rows -->
+      <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
 
-    <!-- 🚫 No Records Row -->
-    <tr *ngIf="teams?.length === 0">
-      <td
-        [attr.colspan]="displayedColumns.length"
-        class="no-records">
-        No records found
-      </td>
-    </tr>
+      <!-- 🚫 No Records Row -->
+      <tr *ngIf="teams?.length === 0">
+        <td [attr.colspan]="displayedColumns.length" class="no-records">
+          No records found
+        </td>
+      </tr>
 
-  </table>
-</mat-card>
+    </table>
+  </mat-card>
 
 
   <!-- Task Stats -->
@@ -55,15 +53,28 @@
       <div>🕒 In Progress: {{ taskStats?.data['in-progress'] }}</div>
       <div>⏳ Pending: {{ taskStats?.data?.todo }}</div>
     </div>
+    <div class="card-actions">
+      <button mat-stroked-button color="primary" [routerLink]="['/tasks']">
+        View More
+      </button>
+    </div>
   </mat-card>
 
   <!-- User Stats -->
   <mat-card>
     <mat-card-title>Users & Managers</mat-card-title>
+
     <div class="stat-box">
       <div>👤 Users: {{ userStats?.data?.usersCount }}</div>
       <div>🧑‍💼 Managers: {{ userStats?.data?.managersCount }}</div>
-      </div>
+    </div>
+
+    <!-- Actions -->
+    <div class="card-actions">
+      <button mat-stroked-button color="primary" [routerLink]="['/admin/users']">
+        View More
+      </button>
+    </div>
   </mat-card>
 
   <!-- Managers List -->

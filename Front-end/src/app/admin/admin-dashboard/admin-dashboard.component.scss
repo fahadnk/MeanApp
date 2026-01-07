@@ -13,6 +13,12 @@ admin-dashboard.component.scss
   grid-column: 1 / -1;
 }
 
+.card-actions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
 .full-table {
   width: 100%;
 }

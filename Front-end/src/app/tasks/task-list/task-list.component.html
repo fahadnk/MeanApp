@@ -7,6 +7,11 @@
       <h2 class="title">Tasks</h2>
 
       <div class="actions">
+        <button *ngIf="isAdmin" mat-stroked-button color="primary" routerLink="/admin">
+          <mat-icon>dashboard</mat-icon>
+          Dashboard
+        </button>
+
         <button *ngIf="isAdmin" mat-stroked-button color="primary" routerLink="/admin/users">
           <mat-icon>group</mat-icon>
           Users

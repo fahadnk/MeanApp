@@ -1,4 +1,4 @@
-// backend/src/models/User.js
+// backend/src/models/user.model.js
 
 // -------------------------
 // Import mongoose to define and interact with MongoDB collections
@@ -40,11 +40,6 @@ const userSchema = new mongoose.Schema(
       default: "user",
     },
 
-        role: {
-      type: String,
-      enum: ["admin", "manager", "user"],
-      default: "user"
-    },
 
     mustResetPassword: {
       type: Boolean,

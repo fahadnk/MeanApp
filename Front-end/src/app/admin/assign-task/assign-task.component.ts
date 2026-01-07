@@ -16,7 +16,7 @@ export class AssignTaskComponent implements OnInit {
     form = this.fb.group({
     title: ['', Validators.required],
     description: [''],
-    status: ['pending', Validators.required],
+    status: ['todo', Validators.required],
     priority: ['medium', Validators.required],
     dueDate: ['', Validators.required],
     assignedTo: [''],

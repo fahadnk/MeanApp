@@ -96,7 +96,6 @@ class TaskRepository {
       Task.find(query)
         .populate("assignedTo", "name email role")
         .populate("createdBy", "name email role")
-        .populate("team", "name") // ✅ helpful for UI
         .skip(skip)
         .limit(limit)
         .sort({ createdAt: -1 })
