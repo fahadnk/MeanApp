@@ -28,15 +28,24 @@ jobs:
     - name: Package frontend build
       run: |
         cd Front-end/dist/front-end
-        tar -czf /tmp/frontend.tar.gz .
+        tar -czf frontend.tar.gz .
         echo "📦 Frontend packaged"
+    
+    - name: Copy frontend build to EC2
+      uses: appleboy/scp-action@v0.1.4
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        source: "Front-end/dist/front-end/frontend.tar.gz"
+        target: "/tmp/"
     
     - name: Deploy to EC2
       uses: appleboy/ssh-action@v0.1.5
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USERNAME }}
-        password: ${{ secrets.EC2_PASSWORD }}
+        key: ${{ secrets.EC2_SSH_KEY }}
         script: |
           echo "🚀 Starting deployment..."
           
@@ -48,7 +57,7 @@ jobs:
           # 2. Install backend dependencies
           echo "⚙️ Installing backend dependencies..."
           cd Back-end
-          npm install
+          npm install --production
           
           # 3. Restart backend
           echo "🔄 Restarting backend..."
@@ -56,6 +65,7 @@ jobs:
           
           # 4. Extract frontend
           echo "🎨 Deploying frontend..."
+          sudo rm -rf /var/www/meanapp/*
           sudo tar -xzf /tmp/frontend.tar.gz -C /var/www/meanapp/
           
           # 5. Set permissions
