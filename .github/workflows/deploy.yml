@@ -27,8 +27,13 @@ jobs:
     
     - name: Package frontend build
       run: |
-        cd Front-end/dist/front-end
-        tar -czf frontend.tar.gz .
+        # Wait a moment to ensure build is complete
+        sleep 2
+        # Create tar from a copy instead of the original directory
+        mkdir -p /tmp/frontend_copy
+        cp -r Front-end/dist/front-end/* /tmp/frontend_copy/
+        cd /tmp/frontend_copy
+        tar -czf /tmp/frontend.tar.gz .
         echo "📦 Frontend packaged"
     
     - name: Copy frontend build to EC2
@@ -37,7 +42,7 @@ jobs:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_SSH_KEY }}
-        source: "Front-end/dist/front-end/frontend.tar.gz"
+        source: "/tmp/frontend.tar.gz"
         target: "/tmp/"
     
     - name: Deploy to EC2
