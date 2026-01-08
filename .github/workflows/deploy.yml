@@ -20,21 +20,45 @@ jobs:
     
     - name: Build Angular on GitHub
       run: |
+        echo "Current directory: $(pwd)"
+        echo "Directory contents:"
+        ls -la
+        
+        echo "Building Angular..."
         cd Front-end
+        echo "Front-end directory contents:"
+        ls -la
+        
+        # Check package.json exists
+        if [ ! -f "package.json" ]; then
+          echo "❌ package.json not found in Front-end directory!"
+          exit 1
+        fi
+        
         npm ci
         npm run build -- --configuration production
-        echo "✅ Angular built successfully"
+        
+        echo "Checking build output..."
+        if [ -d "dist/front-end" ]; then
+          echo "✅ Build directory exists"
+          ls -la dist/front-end/ | head -10
+          echo "Total files: $(find dist/front-end/ -type f | wc -l)"
+        else
+          echo "❌ dist/front-end directory not found!"
+          echo "Available in dist/:"
+          ls -la dist/ 2>/dev/null || echo "dist/ directory doesn't exist"
+          exit 1
+        fi
     
     - name: Package frontend build
       run: |
-        # Wait a moment to ensure build is complete
-        sleep 2
-        # Create tar from a copy instead of the original directory
-        mkdir -p /tmp/frontend_copy
-        cp -r Front-end/dist/front-end/* /tmp/frontend_copy/
-        cd /tmp/frontend_copy
-        tar -czf /tmp/frontend.tar.gz .
-        echo "📦 Frontend packaged"
+        echo "Packaging frontend..."
+        # Create tarball directly without changing directory
+        tar -czf /tmp/frontend.tar.gz -C Front-end/dist/front-end .
+        
+        echo "Checking tarball..."
+        tar -tzf /tmp/frontend.tar.gz | head -5
+        echo "Tarball size: $(stat -c%s /tmp/frontend.tar.gz) bytes"
     
     - name: Copy frontend build to EC2
       uses: appleboy/scp-action@v0.1.4
@@ -71,7 +95,16 @@ jobs:
           # 4. Extract frontend
           echo "🎨 Deploying frontend..."
           sudo rm -rf /var/www/meanapp/*
-          sudo tar -xzf /tmp/frontend.tar.gz -C /var/www/meanapp/
+          if [ -f /tmp/frontend.tar.gz ]; then
+            sudo tar -xzf /tmp/frontend.tar.gz -C /var/www/meanapp/
+            echo "   Extracted $(find /var/www/meanapp -type f | wc -l) files"
+          else
+            echo "❌ frontend.tar.gz not found! Building on EC2 instead..."
+            cd ~/MeanApp/Front-end
+            npm install
+            npm run build -- --configuration production
+            sudo cp -r dist/front-end/* /var/www/meanapp/
+          fi
           
           # 5. Set permissions
           echo "🔐 Setting permissions..."
