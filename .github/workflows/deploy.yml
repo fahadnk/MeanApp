@@ -20,45 +20,12 @@ jobs:
     
     - name: Build Angular on GitHub
       run: |
-        echo "Current directory: $(pwd)"
-        echo "Directory contents:"
-        ls -la
-        
-        echo "Building Angular..."
         cd Front-end
-        echo "Front-end directory contents:"
-        ls -la
-        
-        # Check package.json exists
-        if [ ! -f "package.json" ]; then
-          echo "❌ package.json not found in Front-end directory!"
-          exit 1
-        fi
-        
         npm ci
         npm run build -- --configuration production
-        
-        echo "Checking build output..."
-        if [ -d "dist/front-end" ]; then
-          echo "✅ Build directory exists"
-          ls -la dist/front-end/ | head -10
-          echo "Total files: $(find dist/front-end/ -type f | wc -l)"
-        else
-          echo "❌ dist/front-end directory not found!"
-          echo "Available in dist/:"
-          ls -la dist/ 2>/dev/null || echo "dist/ directory doesn't exist"
-          exit 1
-        fi
-    
-    - name: Package frontend build
-      run: |
-        echo "Packaging frontend..."
-        # Create tarball directly without changing directory
-        tar -czf /tmp/frontend.tar.gz -C Front-end/dist/front-end .
-        
-        echo "Checking tarball..."
-        tar -tzf /tmp/frontend.tar.gz | head -5
-        echo "Tarball size: $(stat -c%s /tmp/frontend.tar.gz) bytes"
+        echo "✅ Angular built successfully"
+        # Verify build output
+        ls -la dist/front-end/ | head -5
     
     - name: Copy frontend build to EC2
       uses: appleboy/scp-action@v0.1.4
@@ -66,8 +33,9 @@ jobs:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_SSH_KEY }}
-        source: "/tmp/frontend.tar.gz"
-        target: "/tmp/"
+        source: "Front-end/dist/front-end/*"
+        target: "/tmp/frontend"
+        strip_components: 1  # This removes the parent directory structure
     
     - name: Deploy to EC2
       uses: appleboy/ssh-action@v0.1.5
@@ -92,14 +60,14 @@ jobs:
           echo "🔄 Restarting backend..."
           pm2 restart meanapp-backend || pm2 start src/server.js --name "meanapp-backend"
           
-          # 4. Extract frontend
+          # 4. Deploy frontend from /tmp/frontend
           echo "🎨 Deploying frontend..."
           sudo rm -rf /var/www/meanapp/*
-          if [ -f /tmp/frontend.tar.gz ]; then
-            sudo tar -xzf /tmp/frontend.tar.gz -C /var/www/meanapp/
-            echo "   Extracted $(find /var/www/meanapp -type f | wc -l) files"
+          if [ -d "/tmp/frontend" ]; then
+            echo "   Copying $(find /tmp/frontend -type f | wc -l) files..."
+            sudo cp -r /tmp/frontend/* /var/www/meanapp/
           else
-            echo "❌ frontend.tar.gz not found! Building on EC2 instead..."
+            echo "❌ /tmp/frontend not found! Building locally..."
             cd ~/MeanApp/Front-end
             npm install
             npm run build -- --configuration production
@@ -116,4 +84,4 @@ jobs:
           sudo systemctl reload nginx
           
           echo "✅ Deployment complete!"
-          echo "🌐 App is live at: http://$(curl -s ifconfig.me)"
+          echo "🌐 App is live at: http://3.26.201.48"
