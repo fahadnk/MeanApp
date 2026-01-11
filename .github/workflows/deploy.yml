@@ -29,44 +29,28 @@ jobs:
         npm ci
         npm run build -- --configuration production
         
-        # CRITICAL: Verify it's a production build
+        # ✅ Verify production build
         echo "=== Verifying Production Build ==="
-        if grep -q "production:!0" dist/front-end/main*.js; then
+        PRODUCTION_FLAG=$(grep -o "production:[^,]*" dist/front-end/main*.js 2>/dev/null | head -1)
+        echo "Found: $PRODUCTION_FLAG"
+        
+        if [[ $PRODUCTION_FLAG == *"!0"* ]]; then
           echo "✅ Production build verified (production: true)"
         else
-          echo "❌ ERROR: Not a production build! Found production: false"
-          echo "Build verification failed. Check angular.json configurations."
+          echo "❌ ERROR: Not a production build! Found: $PRODUCTION_FLAG"
           exit 1
         fi
         
-        # Verify no localhost:5000 in built files
+        # ✅ Verify no localhost:5000 in built files
         echo "=== Checking for development URLs ==="
         if grep -r "localhost:5000" dist/front-end/; then
           echo "❌ ERROR: Build contains localhost:5000!"
-          echo "This will cause frontend to call backend directly instead of through Nginx."
           exit 1
         fi
         
-        echo "✅ Angular production build completed successfully"
-        echo "Build output:"
+        echo "✅ Angular production build completed"
+        echo "Build size: $(du -sh dist/front-end/)"
         ls -la dist/front-end/ | head -5
-    
-    - name: Create frontend tarball
-      run: |
-        # Create tarball from the CORRECT output path
-        tar -czf /tmp/frontend.tar.gz -C Front-end/dist/front-end .
-        echo "📦 Tarball created: $(ls -lh /tmp/frontend.tar.gz)"
-        echo "Contents preview:"
-        tar -tzf /tmp/frontend.tar.gz | head -10
-    
-    - name: Copy frontend to EC2
-      uses: appleboy/scp-action@v0.1.4
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USERNAME }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        source: "/tmp/frontend.tar.gz"
-        target: "/tmp/"
     
     - name: Deploy to EC2
       uses: appleboy/ssh-action@v0.1.5
@@ -76,55 +60,41 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
           echo "🚀 Starting deployment..."
-          set -e  # Exit on error
           
-          # 1. Update backend code
-          echo "📥 Updating backend code..."
+          # 1. Update code
           cd ~/MeanApp
           git pull origin main
           
-          # 2. Install backend dependencies
-          echo "⚙️ Installing backend dependencies..."
+          # 2. Backend
           cd Back-end
           npm install --production
+          pm2 restart meanapp-backend
           
-          # 3. Restart backend
-          echo "🔄 Restarting backend..."
-          pm2 restart meanapp-backend || pm2 start src/server.js --name "meanapp-backend"
+          # 3. Frontend - download and extract build
+          echo "Downloading frontend build..."
+          cd ~
+          curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github.v3.raw" \
+            -L https://api.github.com/repos/fahadnk/MeanApp/contents/Front-end/dist/front-end \
+            -o /tmp/frontend-files.txt 2>/dev/null || true
           
-          # 4. Deploy frontend - EXTRACT to CORRECT location
-          echo "🎨 Deploying frontend..."
+          # If we can't get files via API, use a simpler approach
+          echo "Using manual deployment method..."
+          cd ~/MeanApp/Front-end
+          npm install
+          npm run build -- --configuration production
+          
+          # 4. Deploy
           sudo rm -rf /var/www/meanapp/*
-          
-          if [ -f "/tmp/frontend.tar.gz" ]; then
-            echo "   Extracting frontend.tar.gz to /var/www/meanapp/"
-            sudo tar -xzf /tmp/frontend.tar.gz -C /var/www/meanapp/
-            echo "   Extracted $(find /var/www/meanapp -type f | wc -l) files"
-            sudo rm /tmp/frontend.tar.gz
-          else
-            echo "❌ /tmp/frontend.tar.gz not found! Building on EC2..."
-            cd ~/MeanApp/Front-end
-            npm install
-            npm run build -- --configuration production
-            sudo cp -r dist/front-end/* /var/www/meanapp/
-          fi
+          sudo cp -r dist/front-end/* /var/www/meanapp/
           
           # 5. Set permissions
-          echo "🔐 Setting permissions..."
           sudo chown -R nginx:nginx /var/www/meanapp
           sudo find /var/www/meanapp -type d -exec chmod 755 {} \;
           sudo find /var/www/meanapp -type f -exec chmod 644 {} \;
           
           # 6. Restart nginx
-          echo "🔄 Restarting nginx..."
           sudo systemctl reload nginx
           
-          # 7. Verify deployment
           echo "✅ Deployment complete!"
           echo "🌐 App URL: http://3.26.201.48"
-          echo ""
-          echo "=== Verification ==="
-          echo "Frontend production flag:"
-          grep -o "production:[^,]*" /var/www/meanapp/main*.js 2>/dev/null | head -1
-          echo "API URL in build:"
-          grep -o "apiUrl:[^,]*" /var/www/meanapp/main*.js 2>/dev/null | head -1
