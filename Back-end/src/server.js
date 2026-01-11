@@ -23,7 +23,7 @@ import { Server } from "socket.io";
 
 import dotenv from "dotenv";               
 // ^ Loads environment variables from .env file into process.env
-
+import "./config/db.js"; // Initialize MongoDB connection
 
 // -------------------------
 // 2. Local Application Imports

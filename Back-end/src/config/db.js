@@ -24,6 +24,13 @@ class Database {
       .connect(config.mongoURI, {
         useNewUrlParser: true,       // Avoids deprecation warning for MongoDB connection string
         useUnifiedTopology: true,    // Uses new MongoDB topology engine for better stability
+        serverSelectionTimeoutMS: 30000, // 30 seconds timeout for server selection
+        socketTimeoutMS: 45000,         // 45 seconds timeout for sockets
+        connectTimeoutMS: 30000,        // 30 seconds timeout for initial connection
+        maxPoolSize: 10,                // Maximum number of connections in pool
+        minPoolSize: 2,                 // Minimum number of connections in pool
+        retryWrites: true,              // Retry write operations
+        w: 'majority'                   // Write concern
       })
       .then(() => console.log("✅ MongoDB connected"))   // Success message when DB connects
       .catch((err) => console.error("❌ MongoDB connection error:", err)); // Error handling if connection fails
