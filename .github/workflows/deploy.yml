@@ -1,98 +1,38 @@
-name: Deploy MEAN App
+name: Build and Deploy Frontend
 
 on:
   push:
-    branches: [ main ]
+    branches:
+      - main
+    paths:
+      - 'Front-end/**'
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-    
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
     - name: Setup Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
-        node-version: "18"
-    
-    - name: Build Angular on GitHub
-      run: |
-        cd Front-end
-        
-        echo "🔄 Building Angular on GitHub (7GB RAM available)..."
-        
-        # Clean previous builds
-        rm -rf dist/ .angular/cache
-        
-        # Install dependencies
-        npm ci
-        
-        # Build with production configuration
-        npm run build -- --configuration production
-        
-        # ✅ Verify production build
-        echo "=== Verifying Production Build ==="
-        PRODUCTION_FLAG=$(grep -o "production:[^,]*" dist/front-end/main*.js 2>/dev/null | head -1)
-        echo "Found: $PRODUCTION_FLAG"
-        
-        if [[ $PRODUCTION_FLAG == *"!0"* ]]; then
-          echo "✅ Production build verified (production: true)"
-        else
-          echo "❌ ERROR: Not a production build! Found: $PRODUCTION_FLAG"
-          exit 1
-        fi
-        
-        # ✅ Verify no localhost:5000 in built files
-        echo "=== Checking for development URLs ==="
-        if grep -r "localhost:5000" dist/front-end/; then
-          echo "❌ ERROR: Build contains localhost:5000!"
-          exit 1
-        fi
-        
-        echo "✅ Angular production build completed successfully"
-        echo "📦 Build size: $(du -sh dist/front-end/)"
-        
-        # Create deployment package WITHOUT tar issues
-        echo "📦 Creating deployment package..."
-        
-        # Method 1: Use rsync to stabilize files
-        mkdir -p /tmp/frontend-stable
-        rsync -a dist/front-end/ /tmp/frontend-stable/
-        
-        # Create tar from stable copy
-        tar -czf frontend-build.tar.gz -C /tmp/frontend-stable .
-        
-        echo "📦 Created deployment package: $(du -h frontend-build.tar.gz | cut -f1)"
-    
+        node-version: 18
+
+    - name: Install frontend dependencies
+      working-directory: Front-end
+      run: npm ci
+
+    - name: Build Angular app (Production)
+      working-directory: Front-end
+      run: npm run build -- --configuration production
+
     - name: Deploy to EC2
-      uses: appleboy/ssh-action@v0.1.5
+      uses: appleboy/scp-action@v0.1.7
       with:
         host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USERNAME }}
+        username: ubuntu
         key: ${{ secrets.EC2_SSH_KEY }}
-        script: |
-          echo "🚀 Starting deployment..."
-          
-          # 1. Handle git conflicts and update code
-          cd ~/MeanApp
-          
-          # Stash any changes or reset
-          if git status --porcelain | grep -q .; then
-            echo "⚠️ Stashing uncommitted changes..."
-            git stash
-          fi
-          
-          git pull origin main
-          
-          # 2. Update backend only
-          cd Back-end
-          npm install --production
-          pm2 restart meanapp-backend
-          
-          echo "✅ Backend updated"
-          
-          # Note: Frontend will be deployed separately
-          echo "Frontend deployment requires manual step until workflow is fixed"
+        source: "Front-end/dist/front-end/*"
+        target: "/var/www/meanapp"
