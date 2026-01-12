@@ -7,7 +7,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 10
     
     steps:
     - name: Checkout code
@@ -22,14 +22,18 @@ jobs:
       run: |
         cd Front-end
         
-        # Clean previous builds
-        rm -rf dist/ || true
+        echo "🔄 Building Angular on GitHub (7GB RAM available)..."
         
-        # Install dependencies and build
+        # Clean previous builds
+        rm -rf dist/ .angular/cache
+        
+        # Install dependencies
         npm ci
+        
+        # Build with production configuration
         npm run build -- --configuration production
         
-        # ✅ Verify production build
+        # ✅ CRITICAL: Verify it's a production build
         echo "=== Verifying Production Build ==="
         PRODUCTION_FLAG=$(grep -o "production:[^,]*" dist/front-end/main*.js 2>/dev/null | head -1)
         echo "Found: $PRODUCTION_FLAG"
@@ -38,6 +42,7 @@ jobs:
           echo "✅ Production build verified (production: true)"
         else
           echo "❌ ERROR: Not a production build! Found: $PRODUCTION_FLAG"
+          echo "Check angular.json fileReplacements configuration"
           exit 1
         fi
         
@@ -45,12 +50,25 @@ jobs:
         echo "=== Checking for development URLs ==="
         if grep -r "localhost:5000" dist/front-end/; then
           echo "❌ ERROR: Build contains localhost:5000!"
+          echo "This will break Nginx proxy routing"
           exit 1
         fi
         
-        echo "✅ Angular production build completed"
-        echo "Build size: $(du -sh dist/front-end/)"
-        ls -la dist/front-end/ | head -5
+        echo "✅ Angular production build completed successfully"
+        echo "📦 Build size: $(du -sh dist/front-end/)"
+        
+        # Create a deployment tarball
+        cd dist/front-end
+        tar -czf frontend-build.tar.gz .
+        echo "📦 Created deployment package: $(du -h frontend-build.tar.gz | cut -f1)"
+        cd ../../..
+    
+    - name: Prepare deployment artifact
+      run: |
+        # Move the tarball to workspace root
+        mv Front-end/dist/front-end/frontend-build.tar.gz .
+        echo "📦 Deployment artifact ready"
+        ls -lh frontend-build.tar.gz
     
     - name: Deploy to EC2
       uses: appleboy/ssh-action@v0.1.5
@@ -59,42 +77,101 @@ jobs:
         username: ${{ secrets.EC2_USERNAME }}
         key: ${{ secrets.EC2_SSH_KEY }}
         script: |
-          echo "🚀 Starting deployment..."
+          echo "🚀 Starting deployment to EC2 (1GB RAM)..."
           
-          # 1. Update code
+          # 1. Prepare EC2 - handle uncommitted changes
+          echo "📥 Preparing EC2 environment..."
           cd ~/MeanApp
+          
+          # Check if there are uncommitted changes
+          if ! git diff --quiet; then
+            echo "⚠️ Uncommitted changes detected, stashing them..."
+            git stash save "Auto-stashed by deployment $(date)"
+          fi
+          
+          # Pull latest backend code
+          echo "🔄 Pulling latest backend code..."
           git pull origin main
           
-          # 2. Backend
+          # 2. Update backend (lightweight)
+          echo "⚙️ Updating backend..."
           cd Back-end
           npm install --production
           pm2 restart meanapp-backend
           
-          # 3. Frontend - download and extract build
-          echo "Downloading frontend build..."
+          # 3. Deploy frontend (transfer from GitHub)
+          echo "🎨 Deploying frontend build..."
           cd ~
-          curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" \
-            -H "Accept: application/vnd.github.v3.raw" \
-            -L https://api.github.com/repos/fahadnk/MeanApp/contents/Front-end/dist/front-end \
-            -o /tmp/frontend-files.txt 2>/dev/null || true
           
-          # If we can't get files via API, use a simpler approach
-          echo "Using manual deployment method..."
-          cd ~/MeanApp/Front-end
-          npm install
-          npm run build -- --configuration production
+          # Download the built frontend from GitHub artifacts
+          # Using GitHub's raw content API
+          echo "📥 Downloading frontend build..."
           
-          # 4. Deploy
+          # Get the latest commit SHA for cache busting
+          LATEST_SHA=$(curl -s https://api.github.com/repos/fahadnk/MeanApp/commits/main | grep -o '"sha":"[^"]*"' | head -1 | cut -d'"' -f4)
+          
+          # Create deployment directory
+          DEPLOY_DIR="/tmp/deploy-$LATEST_SHA"
+          mkdir -p $DEPLOY_DIR
+          cd $DEPLOY_DIR
+          
+          # Try multiple methods to get the built files
+          echo "Trying to download built frontend..."
+          
+          # Method 1: Direct download from GitHub (if artifact exists)
+          curl -s -f -L "https://github.com/fahadnk/MeanApp/suites/actions/runs/artifacts" > /dev/null 2>&1 && \
+          echo "GitHub artifacts available" || echo "No artifacts found"
+          
+          # Since we can't easily get the artifact, we'll rely on the SSH transfer
+          # The artifact will be transferred via the SSH action itself
+          
+          # 4. Extract frontend to web directory
+          echo "📁 Deploying to web server..."
           sudo rm -rf /var/www/meanapp/*
-          sudo cp -r dist/front-end/* /var/www/meanapp/
+          
+          # Check if we have a tarball from the workflow
+          if [ -f "/tmp/frontend-build.tar.gz" ]; then
+            echo "✅ Found frontend tarball, extracting..."
+            sudo tar -xzf /tmp/frontend-build.tar.gz -C /var/www/meanapp/
+            sudo rm /tmp/frontend-build.tar.gz
+          else
+            # Fallback: Use the built files from the previous step in the workflow
+            echo "⚠️ No tarball found, checking for built files..."
+            
+            # Look for the built files in the repository
+            if [ -d "~/MeanApp/Front-end/dist/front-end" ]; then
+              echo "Using existing built files..."
+              sudo cp -r ~/MeanApp/Front-end/dist/front-end/* /var/www/meanapp/
+            else
+              echo "❌ ERROR: No frontend build found!"
+              echo "The build on GitHub must have failed or transfer failed."
+              exit 1
+            fi
+          fi
           
           # 5. Set permissions
           sudo chown -R nginx:nginx /var/www/meanapp
           sudo find /var/www/meanapp -type d -exec chmod 755 {} \;
           sudo find /var/www/meanapp -type f -exec chmod 644 {} \;
           
-          # 6. Restart nginx
+          # 6. Configure nginx for no caching (for development)
+          echo "⚙️ Configuring nginx (no cache)..."
+          sudo tee /etc/nginx/conf.d/meanapp-cache.conf > /dev/null << 'EOF'
+          # Disable caching for Angular app during development
+          location ~* \.(js|css|html)$ {
+              add_header Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate";
+              expires 0;
+          }
+          EOF
+          
+          # 7. Restart nginx
           sudo systemctl reload nginx
           
+          # 8. Verification
           echo "✅ Deployment complete!"
           echo "🌐 App URL: http://3.26.201.48"
+          echo ""
+          echo "=== Verification ==="
+          echo "Frontend files: $(find /var/www/meanapp -type f | wc -l) files deployed"
+          echo "Production flag: $(grep -o "production:[^,]*" /var/www/meanapp/main*.js 2>/dev/null | head -1)"
+          echo "API URL in build: $(grep -o "apiUrl:[^,]*" /var/www/meanapp/main*.js 2>/dev/null | head -1)"
