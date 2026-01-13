@@ -1,41 +1,15 @@
-name: Deploy MEAN App
+name: Test SSH
 
-on:
-  push:
-    branches: [main]
+on: [push]
 
 jobs:
-  deploy:
-    runs-on: ec2-user
+  test:
+    runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v0.1.5
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            # Update code
-            cd ~/MeanApp
-            git pull origin main
-            
-            # Backend
-            cd Back-end
-            npm install --production
-            pm2 restart meanapp-backend
-            
-            # Frontend
-            cd ../Front-end
-            npm install
-            npm run build -- --configuration production
-            
-            # Deploy
-            sudo rm -rf /var/www/meanapp/*
-            sudo cp -r dist/front-end/* /var/www/meanapp/
-            sudo chown -R nginx:nginx /var/www/meanapp
-            sudo systemctl reload nginx
-            
-            echo "✅ Deployed! Visit: http://3.26.201.48"
+    - name: Test Connection
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        script: echo "✅ SSH connection successful!"
