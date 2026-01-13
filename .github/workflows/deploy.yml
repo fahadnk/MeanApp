@@ -8,35 +8,30 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v3
-    
+
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
         node-version: "18"
-    
+
     - name: Build Angular on GitHub
       run: |
         cd Front-end
         npm ci
         npm run build -- --configuration production
         echo "✅ Angular built successfully"
-        
-        # Verify the build output structure
-        echo "📁 Build output structure:"
         find dist/front-end -type f | head -10
-    
+
     - name: Package frontend build
       run: |
-        # Create tarball from dist/front-end
         cd Front-end/dist/front-end
         tar -czf ../../../frontend-build.tar.gz .
-        echo "📦 Created: frontend-build.tar.gz"
         ls -lh ../../../frontend-build.tar.gz
-    
+
     - name: Transfer frontend to EC2
       uses: appleboy/scp-action@v0.1.4
       with:
@@ -45,68 +40,40 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         source: "frontend-build.tar.gz"
         target: "/tmp/"
-    
+
     - name: Deploy to EC2
       uses: appleboy/ssh-action@v0.1.5
       with:
         host: ${{ secrets.EC2_HOST }}
         username: ${{ secrets.EC2_USERNAME }}
-        key: ${{ secrets.EC2_SSH_KEY }}  # Changed from password to key
+        key: ${{ secrets.EC2_SSH_KEY }}
         script: |
+          set -e
           echo "🚀 Starting deployment..."
-          
-          # 1. Update backend code
+
           echo "📥 Updating backend..."
           cd ~/MeanApp
-          git stash 2>/dev/null || true
+          git stash || true
           git pull origin main
-          
-          # 2. Install backend dependencies
+
           echo "⚙️ Installing backend dependencies..."
           cd Back-end
           npm install --production
-          
-          # 3. Restart backend
+
           echo "🔄 Restarting backend..."
-          pm2 restart meanapp-backend || pm2 start src/server.js --name "meanapp-backend"
-          
-          # 4. Extract frontend (check if tarball exists)
+          pm2 restart meanapp-backend || pm2 start src/server.js --name meanapp-backend
+
           echo "🎨 Deploying frontend..."
-          if [ -f "/tmp/frontend-build.tar.gz" ]; then
-            echo "📦 Found frontend tarball, extracting..."
-            sudo rm -rf /var/www/meanapp/*
-            sudo tar -xzf /tmp/frontend-build.tar.gz -C /var/www/meanapp/
-            
-            # Verify extraction
-            echo "📁 Files extracted: $(find /var/www/meanapp -type f | wc -l)"
-          else
-            echo "❌ ERROR: frontend-build.tar.gz not found!"
-            echo "Creating placeholder..."
-            sudo tee /var/www/meanapp/index.html << 'EOF'
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Task Manager</title>
-</head>
-<body>
-    <h1>Task Management App</h1>
-    <p>Frontend deployment in progress...</p>
-</body>
-</html>
-EOF
-          fi
-          
-          # 5. Set permissions
+          sudo rm -rf /var/www/meanapp/*
+          sudo tar -xzf /tmp/frontend-build.tar.gz -C /var/www/meanapp/
+
           echo "🔐 Setting permissions..."
           sudo chown -R nginx:nginx /var/www/meanapp
           sudo chmod -R 755 /var/www/meanapp
-          
-          # 6. Restart nginx
-          echo "🔄 Restarting nginx..."
+
+          echo "🔄 Reloading nginx..."
           sudo systemctl reload nginx
-          
-          # 7. Cleanup
+
           rm -f /tmp/frontend-build.tar.gz
-          
+
           echo "✅ Deployment complete!"
-          echo "🌐 App is live at: http://3.26.201.48"
