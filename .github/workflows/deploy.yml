@@ -1,15 +1,181 @@
-name: Test SSH
+name: Deploy MEAN App
 
-on: [push]
+on:
+  push:
+    branches: [main]
 
 jobs:
-  test:
+  deploy:
     runs-on: ubuntu-latest
+    
     steps:
-    - name: Test Connection
-      uses: appleboy/ssh-action@v0.1.5
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USERNAME }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        script: echo "✅ SSH connection successful!"
+      # 1. Checkout code
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # 2. Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+
+      # 3. BUILD ANGULAR ON GITHUB ONLY
+      - name: Build Angular on GitHub
+        working-directory: Front-end
+        run: |
+          echo "🔄 Building Angular on GitHub (7GB RAM)..."
+          
+          # Clean and build
+          rm -rf dist/ .angular/cache
+          npm ci
+          npm run build -- --configuration production
+          
+          # Verify it's a production build
+          if grep -q "production:!0" dist/front-end/main*.js; then
+            echo "✅ Production build verified"
+          else
+            echo "❌ ERROR: Not a production build!"
+            exit 1
+          fi
+          
+          # Check for localhost:5000 (should be removed in production)
+          if grep -r "localhost:5000" dist/front-end/ 2>/dev/null; then
+            echo "⚠️ WARNING: Build contains localhost:5000!"
+          fi
+          
+          echo "📦 Build size: $(du -sh dist/front-end/)"
+          echo "✅ Angular built on GitHub"
+
+      # 4. Create tarball for reliable transfer
+      - name: Package frontend for transfer
+        run: |
+          echo "📦 Creating deployment package..."
+          
+          # Copy to temporary directory
+          mkdir -p /tmp/frontend-build
+          cp -r Front-end/dist/front-end/* /tmp/frontend-build/
+          
+          # Add cache busting to prevent browser caching
+          TIMESTAMP=$(date +%s)
+          sed -i "s|\.js\">|.js?v=$TIMESTAMP\">|g" /tmp/frontend-build/index.html
+          sed -i "s|\.css\">|.css?v=$TIMESTAMP\">|g" /tmp/frontend-build/index.html
+          
+          # Create tarball
+          cd /tmp/frontend-build
+          tar -czf /tmp/frontend.tar.gz .
+          
+          echo "✅ Package ready: frontend.tar.gz"
+
+      # 5. Transfer to EC2
+      - name: Transfer to EC2
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          source: "/tmp/frontend.tar.gz"
+          target: "/tmp/"
+
+      # 6. Deploy on EC2
+      - name: Deploy on EC2
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            echo "🚀 Starting deployment..."
+            echo "========================="
+            
+            # A. UPDATE CODE FROM GITHUB
+            echo "📥 Updating code..."
+            cd ~/MeanApp
+            git stash 2>/dev/null || true
+            git pull origin main
+            echo "✅ Code updated"
+            
+            # B. BACKEND DEPLOYMENT
+            echo ""
+            echo "⚙️ BACKEND DEPLOYMENT"
+            echo "===================="
+            cd Back-end
+            
+            # Install dependencies
+            npm install --production --no-audit --no-fund
+            
+            # Restart backend
+            if pm2 list | grep -q "meanapp-backend"; then
+              pm2 restart meanapp-backend
+              echo "✅ Backend restarted"
+            else
+              pm2 start src/server.js --name "meanapp-backend"
+              pm2 save
+              echo "✅ Backend started"
+            fi
+            
+            # C. FRONTEND DEPLOYMENT
+            echo ""
+            echo "🎨 FRONTEND DEPLOYMENT"
+            echo "====================="
+            
+            if [ -f "/tmp/frontend.tar.gz" ]; then
+              echo "📦 Extracting frontend build..."
+              sudo rm -rf /var/www/meanapp/*
+              sudo tar -xzf /tmp/frontend.tar.gz -C /var/www/meanapp/
+              
+              # Add cache control headers file (won't override your main nginx config)
+              sudo tee /var/www/meanapp/.htaccess > /dev/null << 'HEADERS'
+# Cache control headers for Angular app
+<FilesMatch "\.(html|js|css|json)$">
+  Header set Cache-Control "no-store, no-cache, must-revalidate"
+  Header set Pragma "no-cache"
+  Header set Expires "0"
+</FilesMatch>
+HEADERS
+              
+              # Set permissions
+              sudo chown -R nginx:nginx /var/www/meanapp
+              sudo chmod -R 755 /var/www/meanapp
+              
+              echo "✅ Frontend deployed"
+              echo "📁 Files: $(find /var/www/meanapp -type f | wc -l)"
+            else
+              echo "❌ ERROR: frontend.tar.gz not found!"
+              echo "Creating maintenance page..."
+              sudo tee /var/www/meanapp/index.html << 'HTML'
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Task Manager - Deployment in Progress</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+</head>
+<body>
+    <h1>Task Management Application</h1>
+    <p>Deployment in progress. Please check back in a few minutes.</p>
+    <p><a href="/api/health">Backend API Status</a></p>
+</body>
+</html>
+HTML
+            fi
+            
+            # D. RESTART NGINX (to pick up new files)
+            echo ""
+            echo "🌐 RESTARTING NGINX"
+            echo "=================="
+            sudo systemctl reload nginx
+            echo "✅ Nginx reloaded"
+            
+            # E. CLEANUP
+            rm -f /tmp/frontend.tar.gz
+            
+            # F. VERIFICATION
+            echo ""
+            echo "✅ DEPLOYMENT COMPLETE!"
+            echo "======================="
+            echo "🌐 Application: http://3.26.201.48"
+            echo "🔧 API Health: http://3.26.201.48/api/health"
+            echo ""
+            echo "⚠️ Clear browser cache to see changes!"
+            echo "   Ctrl+Shift+Delete → 'Cached images & files'"
