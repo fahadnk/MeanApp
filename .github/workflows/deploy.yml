@@ -2,175 +2,40 @@ name: Deploy MEAN App
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    
+    runs-on: ec2-user
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-    
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: "18"
-    
-    # 1. Build Angular on GitHub (7GB RAM)
-    - name: Build Frontend
-      working-directory: Front-end
-      run: |
-        echo "🔄 Building Angular on GitHub (7GB RAM)..."
-        
-        # Clean previous builds
-        rm -rf dist/ .angular/cache
-        
-        # Install dependencies
-        npm ci
-        
-        # Build production
-        npm run build -- --configuration production
-        
-        # Verify build
-        echo "✅ Build verification..."
-        if grep -q "production:!0" dist/front-end/main*.js; then
-          echo "✅ Production build verified"
-        else
-          echo "❌ ERROR: Not a production build!"
-          exit 1
-        fi
-        
-        # Check for localhost:5000 (should be removed)
-        echo "🔍 Checking for localhost references..."
-        if grep -r "localhost:5000" dist/front-end/ 2>/dev/null; then
-          echo "⚠️ WARNING: localhost:5000 found in build!"
-          echo "Please check environment.prod.ts or api service"
-        fi
-        
-        echo "📊 Build output:"
-        ls -la dist/front-end/
-        echo "✅ Frontend build complete"
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-    # 2. Create a reliable tarball for transfer
-    - name: Package Frontend for Transfer
-      run: |
-        echo "📦 Creating deployment package..."
-        
-        # Create a clean directory
-        mkdir -p /tmp/frontend-deploy
-        
-        # Copy ALL files from dist/front-end
-        cp -r Front-end/dist/front-end/* /tmp/frontend-deploy/
-        
-        # Add cache-busting version
-        TIMESTAMP=$(date +%s)
-        sed -i "s|\.js\">|.js?v=$TIMESTAMP\">|g" /tmp/frontend-deploy/index.html
-        sed -i "s|\.css\">|.css?v=$TIMESTAMP\">|g" /tmp/frontend-deploy/index.html
-        
-        # Create tarball
-        cd /tmp/frontend-deploy
-        tar -czf /tmp/frontend.tar.gz .
-        
-        echo "📦 Package created: frontend.tar.gz ($(du -h /tmp/frontend.tar.gz | cut -f1))"
-        echo "📁 Contains: $(tar -tzf /tmp/frontend.tar.gz | wc -l) files"
-
-    # 3. Transfer tarball to EC2
-    - name: Transfer to EC2
-      uses: appleboy/scp-action@v0.1.4
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USERNAME }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        source: "/tmp/frontend.tar.gz"
-        target: "/tmp/"
-
-    # 4. Deploy Everything in One SSH Session
-    - name: Deploy on EC2
-      uses: appleboy/ssh-action@v0.1.5
-      with:
-        host: ${{ secrets.EC2_HOST }}
-        username: ${{ secrets.EC2_USERNAME }}
-        key: ${{ secrets.EC2_SSH_KEY }}
-        script_timeout: 300
-        script: |
-          echo "🚀 Starting deployment..."
-          
-          # A. Update code from GitHub
-          echo "📥 Updating code from GitHub..."
-          cd ~/MeanApp
-          git stash 2>/dev/null || true
-          git pull origin main
-          
-          # B. Update backend
-          echo "⚙️ Updating backend..."
-          cd Back-end
-          npm install --production --no-audit --no-fund
-          pm2 restart meanapp-backend || pm2 start src/server.js --name "meanapp-backend"
-          
-          # C. Deploy frontend
-          echo "🎨 Deploying frontend..."
-          
-          # Check if tarball exists
-          if [ -f "/tmp/frontend.tar.gz" ]; then
-            echo "📦 Extracting frontend files..."
-            sudo rm -rf /var/www/meanapp/*
-            sudo tar -xzf /tmp/frontend.tar.gz -C /var/www/meanapp/
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # Update code
+            cd ~/MeanApp
+            git pull origin main
             
-            echo "✅ Frontend deployed from GitHub build"
-            echo "📁 Files deployed: $(find /var/www/meanapp -type f | wc -l)"
-          else
-            echo "⚠️ Tarball not found! Building on EC2..."
-            cd ~/MeanApp/Front-end
+            # Backend
+            cd Back-end
+            npm install --production
+            pm2 restart meanapp-backend
+            
+            # Frontend
+            cd ../Front-end
             npm install
             npm run build -- --configuration production
+            
+            # Deploy
             sudo rm -rf /var/www/meanapp/*
             sudo cp -r dist/front-end/* /var/www/meanapp/
-            echo "✅ Frontend built locally on EC2"
-          fi
-          
-          # D. Set permissions
-          echo "🔐 Setting permissions..."
-          sudo chown -R nginx:nginx /var/www/meanapp
-          sudo find /var/www/meanapp -type d -exec chmod 755 {} \;
-          sudo find /var/www/meanapp -type f -exec chmod 644 {} \;
-          
-          # E. Update nginx config for no caching
-          echo "⚙️ Updating nginx configuration..."
-          sudo tee /etc/nginx/conf.d/meanapp-cache.conf > /dev/null << 'NGINX'
-# Force no caching for Angular app
-location ~* \.(js|css|html|json)$ {
-    add_header Cache-Control "no-store, no-cache, must-revalidate, proxy-revalidate";
-    add_header Pragma "no-cache";
-    add_header Expires "0";
-    add_header Last-Modified $date_gmt;
-    if_modified_since off;
-    expires off;
-    etag off;
-}
-NGINX
-          
-          # F. Restart nginx
-          echo "🔄 Restarting nginx..."
-          sudo nginx -t && sudo systemctl reload nginx
-          
-          # G. Cleanup
-          rm -f /tmp/frontend.tar.gz
-          
-          # H. Verification
-          echo ""
-          echo "✅ DEPLOYMENT COMPLETE!"
-          echo "========================"
-          echo ""
-          echo "🔍 VERIFICATION:"
-          echo "1. Backend status: $(pm2 list | grep meanapp-backend | awk '{print $18}')"
-          echo "2. Nginx status: $(sudo systemctl is-active nginx)"
-          echo "3. Frontend files: $(find /var/www/meanapp -type f | wc -l) files"
-          echo "4. Production flag: $(grep -o "production:[^,]*" /var/www/meanapp/main*.js 2>/dev/null | head -1)"
-          echo ""
-          echo "🌐 Application URL: http://3.26.201.48"
-          echo ""
-          echo "⚠️ IMPORTANT: Clear browser cache!"
-          echo "   Chrome: Ctrl+Shift+Delete → 'Cached images & files' → Clear"
-          echo "   OR Use Incognito: Ctrl+Shift+N"
+            sudo chown -R nginx:nginx /var/www/meanapp
+            sudo systemctl reload nginx
+            
+            echo "✅ Deployed! Visit: http://3.26.201.48"
