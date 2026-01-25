@@ -3,7 +3,11 @@
   <!-- Teams Table -->
   <mat-card class="full-width">
     <mat-card-title>Teams</mat-card-title>
-
+    <div class="card-actions">
+      <button mat-stroked-button color="primary" [routerLink]="['/manager/team/create']">
+        Create Team
+      </button>
+    </div>
     <table mat-table [dataSource]="teams" class=" full-table">
 
       <!-- Team Name -->

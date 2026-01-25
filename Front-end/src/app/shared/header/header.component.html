@@ -2,7 +2,7 @@
   <mat-toolbar color="primary" class="header-toolbar">
 
     <!-- BACK BUTTON (hidden on /tasks) -->
-    <button *ngIf="showBackButton" mat-icon-button class="back-btn" (click)="goBack()">
+    <button *ngIf="showBackButton || (user?.role === 'admin')" mat-icon-button class="back-btn" (click)="goBack()">
       <mat-icon>arrow_back</mat-icon>
     </button>
 
