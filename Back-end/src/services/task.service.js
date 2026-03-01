@@ -5,6 +5,8 @@
 // -------------------------
 // Repository → handles all DB operations
 import taskRepository from "../repositories/task.repository.js";
+import taskActivityService from "./taskActivity.service.js";
+import { diffObjects } from "../utils/diff.js";
 
 // DTO → ensures safe, consistent response structures
 import { taskDTO } from "./dto.js";
@@ -71,6 +73,20 @@ class TaskService {
       createdBy: currentUser.id,
       assignedTo: taskData.assignedTo || currentUser.id,
     });
+
+    // 🔥 ACTIVITY LOG
+
+    await taskActivityService.log({
+      task: task._id,
+      action: "TASK_CREATED",
+      performedBy: currentUser.id,
+      changes: {
+        title: task.title,
+        priority: task.priority,
+        assignedTo: task.assignedTo
+      }
+    });
+
 
     const dto = taskDTO(task);
     notificationService.taskCreated(dto);
@@ -164,8 +180,28 @@ class TaskService {
         throw new Error("Access denied");
       }
     }
+    // Activity log - track only specific fields
+    const allowedFields = ["status", "priority", "assignedTo", "title"];
+
+    const changes = diffObjects(task, updateData, allowedFields);
 
     const updated = await taskRepository.update(id, updateData);
+
+    // 🔍 Determine action type
+    let action = "TASK_UPDATED";
+
+    if (changes.status) action = "STATUS_CHANGED";
+    else if (changes.assignedTo) action = "ASSIGNED_CHANGED";
+    else if (changes.priority) action = "PRIORITY_CHANGED";
+
+    if (Object.keys(changes).length > 0) {
+      await taskActivityService.log({
+        task: id,
+        action,
+        performedBy: currentUser.id,
+        changes,
+      });
+    }
     const dto = taskDTO(updated);
 
     notificationService.taskUpdated(dto);
@@ -183,21 +219,22 @@ class TaskService {
 
     const assignedToId =
       typeof task.assignedTo === "object"
-        ? task.assignedTo._id?.toString()
+        ? task.assignedTo?._id?.toString()
         : task.assignedTo?.toString();
 
     const createdById =
       typeof task.createdBy === "object"
-        ? task.createdBy._id?.toString()
+        ? task.createdBy?._id?.toString()
         : task.createdBy?.toString();
 
-    // ADMIN → can delete anything
+    // --------------------
+    // AUTHORIZATION
+    // --------------------
     if (currentUser.role === ROLES.ADMIN) {
       // allowed
-    }
-    // MANAGER → same rules as update
-    else if (currentUser.role === ROLES.MANAGER) {
+    } else if (currentUser.role === ROLES.MANAGER) {
       const team = await teamRepository.findByManagerId(currentUser.id);
+
       const isMember = team?.members?.some(
         m => (m._id ?? m).toString() === assignedToId
       );
@@ -205,19 +242,42 @@ class TaskService {
       if (!isMember && createdById !== currentUser.id && assignedToId !== currentUser.id) {
         throw new Error("Access denied");
       }
-    }
-    // REGULAR USER → only own created or assigned tasks
-    else {
+    } else {
       if (createdById !== currentUser.id && assignedToId !== currentUser.id) {
         throw new Error("Access denied");
       }
     }
 
-    const deleted = await taskRepository.delete(id);
-    notificationService.taskDeleted(id);
+    // --------------------
+    // DELETE TASK
+    // --------------------
+    const deletedTask = await taskRepository.delete(id);
 
-    return deleted;
+    // --------------------
+    // ACTIVITY LOG (STEP 5)
+    // --------------------
+    await taskActivityService.log({
+      task: id,
+      action: "TASK_DELETED",
+      performedBy: currentUser.id,
+      changes: {
+        title: task.title,
+        assignedTo: task.assignedTo
+      }
+    });
+
+    // --------------------
+    // NOTIFICATION
+    // --------------------
+    await notificationService.taskDeleted({
+      taskId: id,
+      deletedBy: currentUser.id,
+      assignedTo: assignedToId
+    });
+
+    return deletedTask;
   }
+
 
 
 

@@ -5,7 +5,7 @@ import express from "express";
 
 // Import controller that contains business logic for task operations (CRUD, queries, stats)
 import taskController from "../controllers/task.controller.js";
-
+import taskActivityController from "../controllers/taskActivity.controller.js";
 // Import custom middleware functions for authentication, authorization, and validation
 import authMiddleware from "../middleware/AuthMiddleware.js"; // Verifies JWT tokens and authenticates users
 import roleMiddleware from "../middleware/RoleMiddleware.js"; // Checks user roles and permissions
@@ -176,6 +176,13 @@ router.delete(
   roleMiddleware("admin"), // Authorization: restricts to admin users only - critical for safety
   taskController.deleteAll // Controller: performs bulk delete with proper error handling
 );
+
+router.get(
+  "/tasks/:taskId/activity",
+  authMiddleware,
+  taskActivityController.getByTask
+);
+
 
 // Export the router to be mounted in the main application (usually in app.js or server.js)
 export default router;
