@@ -39,6 +39,40 @@
     <span class="label">Updated At:</span>
     <span class="value">{{ task.updatedAt | date: 'medium' }}</span>
   </div>
+
+  <!-- ========================= -->
+  <!-- Activity Timeline Section -->
+  <!-- ========================= -->
+
+  <div class="activity-section">
+    <h3>Activity Timeline</h3>
+
+    <div *ngIf="activityLoading">Loading activity...</div>
+
+    <div *ngIf="!activityLoading && activityLogs.length === 0">
+      No activity yet.
+    </div>
+
+    <div class="activity-item" *ngFor="let log of activityLogs">
+      <div class="activity-header">
+        <strong>{{ log.performedBy?.name }}</strong>
+        <span class="action">{{ log.action }}</span>
+      </div>
+
+      <div class="changes" *ngIf="log.changes">
+        <div *ngFor="let key of objectKeys(log.changes)">
+          <span class="field">{{ key }}:</span>
+          <span class="from">{{ log.changes[key]?.from }}</span>
+          →
+          <span class="to">{{ log.changes[key]?.to }}</span>
+        </div>
+      </div>
+
+      <div class="timestamp">
+        {{ log.createdAt | date: 'medium' }}
+      </div>
+    </div>
+  </div>
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">

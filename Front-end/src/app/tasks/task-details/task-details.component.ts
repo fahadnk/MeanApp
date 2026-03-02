@@ -13,6 +13,9 @@ import { AuthService } from 'src/app/core/services/auth.service';
 export class TaskDetailsComponent implements OnInit {
   loading = false;
   isAdmin = false;
+  activityLogs: any[] = [];
+  activityLoading = false;
+  objectKeys = Object.keys;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public task: any,
@@ -27,6 +30,7 @@ export class TaskDetailsComponent implements OnInit {
     this.authService.currentUser$.subscribe(user => {
       this.isAdmin = user?.role === 'admin';
     });
+    this.loadActivity();
   }
 
   // ----------------------------
@@ -59,9 +63,9 @@ export class TaskDetailsComponent implements OnInit {
     this.router.navigate(['/tasks/edit', this.task.id]);
   }
 
-  // ----------------------------
-  // Delete task
-  // ----------------------------
+    // ----------------------------
+    // Delete task
+    // ----------------------------
   onDelete(): void {
     if (!confirm('Are you sure you want to delete this task?')) return;
 
@@ -80,4 +84,23 @@ export class TaskDetailsComponent implements OnInit {
       },
     });
   }
+
+  // ----------------------------
+  // Task Activity Logs
+  // ----------------------------
+  loadActivity(): void {
+    this.activityLoading = true;
+
+    this.taskService.getTaskActivity(this.task.id).subscribe({
+      next: (logs) => {
+        this.activityLogs = logs;
+        this.activityLoading = false;
+      },
+      error: (err) => {
+        console.error('Failed to load activity', err);
+        this.activityLoading = false;
+      }
+    });
+  }
+  
 }

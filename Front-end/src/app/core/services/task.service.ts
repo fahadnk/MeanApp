@@ -3,6 +3,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { environment } from '../../../../environment/environment';
 import { Observable } from 'rxjs';
+import { TaskActivity } from 'src/app/models/task-activity.model';
 
 @Injectable({ providedIn: 'root' })
 export class TaskService {
@@ -71,4 +72,10 @@ export class TaskService {
   stats(groupBy: string = 'status'): Observable<any> {
     return this.http.get(`${this.base}/stats/${groupBy}`);
   }
+
+  getTaskActivity(taskId: string) {
+  return this.http.get<TaskActivity[]>(
+    `${this.base}/${taskId}/activity`
+  );
+}
 }
