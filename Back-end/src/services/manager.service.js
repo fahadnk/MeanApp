@@ -61,7 +61,7 @@ class ManagerService {
     return team;
   }
 
- // -------------------------------------
+  // -------------------------------------
   // Get All Tasks of This Team (with pagination & filters)
   // -------------------------------------
   async getTeamTasks(managerId, teamId, queryParams = {}) {
@@ -70,21 +70,57 @@ class ManagerService {
     console.log('TeamId:', teamId);
     console.log('QueryParams:', queryParams);
     
+    // Validate inputs
+    if (!managerId) {
+      console.log('❌ ManagerId is undefined or null');
+      throw new Error("Manager ID is required");
+    }
+    
     const team = await teamRepository.findById(teamId);
     if (!team) {
-      console.log('Team not found');
+      console.log('❌ Team not found');
       throw new Error("Team not found");
     }
 
     console.log('Team found:', team.name);
-    console.log('Team manager:', team.manager?.toString());
+    console.log('Team manager type:', typeof team.manager);
+    console.log('Team manager value:', team.manager);
 
-    if (team.manager.toString() !== managerId.toString()) {
-      console.log('Authorization failed');
-      throw new Error("Not authorized");
+    // SAFELY extract manager ID regardless of whether it's populated or just an ID
+    let teamManagerId = null;
+    
+    if (!team.manager) {
+      console.log('❌ Team has no manager assigned');
+      throw new Error("Team has no manager assigned");
+    }
+    
+    // Handle different possible formats
+    if (typeof team.manager === 'object') {
+      // If populated, it will have _id
+      if (team.manager._id) {
+        teamManagerId = team.manager._id.toString();
+        console.log('Team manager is populated object, ID:', teamManagerId);
+      } else {
+        // If it's an object but no _id, try toString
+        teamManagerId = team.manager.toString();
+        console.log('Team manager is object, toString result:', teamManagerId);
+      }
+    } else {
+      // If it's a string or ObjectId
+      teamManagerId = team.manager.toString();
+      console.log('Team manager is primitive, toString result:', teamManagerId);
     }
 
-    console.log('Authorization successful, fetching tasks...');
+    // Convert managerId to string for comparison
+    const managerIdStr = managerId.toString();
+    console.log('Comparing:', { teamManagerId, managerIdStr });
+
+    if (teamManagerId !== managerIdStr) {
+      console.log('❌ Authorization failed - manager mismatch');
+      throw new Error("Not authorized to access this team");
+    }
+
+    console.log('✅ Authorization successful, fetching tasks...');
 
     // Create a currentUser object for taskService
     const currentUser = {
@@ -96,7 +132,7 @@ class ManagerService {
     // Pass queryParams to the task service
     const result = await taskService.getTasksForTeam(teamId, currentUser, queryParams);
     
-    console.log('Tasks fetched successfully');
+    console.log('✅ Tasks fetched successfully, count:', result.tasks?.length || 0);
     
     return {
       team: {

@@ -28,17 +28,35 @@ class TeamRepository {
   // - Validates ID before querying
   // - Populates manager & members fields
   // ------------------------------------------------------------
-  async findById(id) {
-    // If id is not a valid ObjectId, return null instead of throwing an error
-    if (!mongoose.Types.ObjectId.isValid(id)) return null;
 
-    // Query the database for a team by ID
-    return await Team.findById(id)
-      .populate("manager", "name email role")   // Populate manager details
-      .populate("members", "name email role")    // Populate members details
-      .lean()                                    // Convert Mongo document into plain JS object
-      .exec();                                   // Execute query
+async findById(id) {
+  console.log('TeamRepository.findById - Looking for team:', id);
+  
+  if (!mongoose.Types.ObjectId.isValid(id)) {
+    console.log('Invalid team ID format');
+    return null;
   }
+
+  const team = await Team.findById(id)
+    .populate({
+      path: 'manager',
+      select: 'name email role _id'
+    })
+    .populate({
+      path: 'members',
+      select: 'name email role _id'
+    })
+    .lean();
+
+  if (team) {
+    console.log('Team found:', team.name);
+    console.log('Manager populated:', !!team.manager);
+  } else {
+    console.log('Team not found');
+  }
+
+  return team;
+}
 
   // ------------------------------------------------------------
   // Find a team by its name

@@ -102,6 +102,30 @@ table {
   }
 }
 
+/* ================= Priority Badges ================= */
+.priority-badge {
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  text-transform: capitalize;
+  font-weight: 500;
+
+  &.pending {
+    background-color: #5b76ff;
+    color: #2c22ea;
+  }
+
+  &.in-progress {
+    background-color: #fae5a9;
+    color: #e97c07;
+  }
+
+  &.completed {
+    background-color: #a2f0b4;
+    color: #01d532;
+  }
+}
+
 /* ================= Empty States ================= */
 .empty-state {
   text-align: center;

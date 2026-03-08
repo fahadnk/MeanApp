@@ -64,7 +64,7 @@ export class TeamDetailsComponent implements OnInit {
   loadUsers() {
     this.userService.getUsersForManager().subscribe({
       next: (res: any) => {
-        this.allUsers = res.data || res;
+        this.allUsers = res.data?.data || res.data || res;
       },
       error: err => console.error(err)
     });
@@ -107,7 +107,7 @@ export class TeamDetailsComponent implements OnInit {
   loadTasks(teamId: string) {
     this.teamService.getTeamTasks(teamId).subscribe({
       next: (res: any) => {
-        this.tasks = res.data || res;
+        this.tasks = res.data?.tasks || res.data || res;
       },
       error: err => console.error(err)
     });

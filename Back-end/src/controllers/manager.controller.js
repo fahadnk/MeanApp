@@ -52,22 +52,32 @@ class ManagerController {
   // -----------------------------
   // Get All Team Tasks
   // -----------------------------
+  // backend/src/controllers/manager.controller.js
+
+  // -----------------------------
+  // Get All Team Tasks
+  // -----------------------------
   async getTeamTasks(req, res) {
     try {
-      console.log('ManagerController.getTeamTasks - Start');
-      console.log('User:', req.user._id);
-      console.log('TeamId:', req.params.teamId);
-      console.log('Query:', req.query);
-      
+      // SAFELY get user ID from multiple possible locations
+      const userId = req.user?._id || req.user?.id || req.user?.userId;
+
+      if (!userId) {
+        console.log('❌ No user ID found in request');
+        return error(res, "User not authenticated - no user ID", 401);
+      }
+
+      console.log('✅ Using userId:', userId);
+
       const tasks = await managerService.getTeamTasks(
-        req.user._id, 
+        userId,
         req.params.teamId,
-        req.query  // Pass the query parameters (page, limit, status, priority, search)
+        req.query
       );
-      
+
       return success(res, tasks, "Team tasks fetched successfully");
     } catch (err) {
-      console.error('Error in getTeamTasks:', err);
+      console.error('❌ Error in getTeamTasks:', err);
       return error(res, err.message, 400);
     }
   }
