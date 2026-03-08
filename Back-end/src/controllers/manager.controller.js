@@ -54,9 +54,20 @@ class ManagerController {
   // -----------------------------
   async getTeamTasks(req, res) {
     try {
-      const tasks = await managerService.getTeamTasks(req.user._id, req.params.teamId);
+      console.log('ManagerController.getTeamTasks - Start');
+      console.log('User:', req.user._id);
+      console.log('TeamId:', req.params.teamId);
+      console.log('Query:', req.query);
+      
+      const tasks = await managerService.getTeamTasks(
+        req.user._id, 
+        req.params.teamId,
+        req.query  // Pass the query parameters (page, limit, status, priority, search)
+      );
+      
       return success(res, tasks, "Team tasks fetched successfully");
     } catch (err) {
+      console.error('Error in getTeamTasks:', err);
       return error(res, err.message, 400);
     }
   }

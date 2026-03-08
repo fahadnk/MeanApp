@@ -40,39 +40,198 @@
     <span class="value">{{ task.updatedAt | date: 'medium' }}</span>
   </div>
 
-  <!-- ========================= -->
-  <!-- Activity Timeline Section -->
-  <!-- ========================= -->
+<!-- task-activity.component.html -->
+<div class="activity-section">
+  <h3>Activity Timeline</h3>
 
-  <div class="activity-section">
-    <h3>Activity Timeline</h3>
+  <!-- Loading State -->
+  <div *ngIf="activityLoading" class="loading-state">
+    <div class="spinner"></div>
+    <span>Loading activity...</span>
+  </div>
 
-    <div *ngIf="activityLoading">Loading activity...</div>
+  <!-- Empty State -->
+  <div *ngIf="!activityLoading && activityLogs.length === 0" class="empty-state">
+    <span class="material-icons">history</span>
+    <p>No activity yet</p>
+    <small>Changes to this task will appear here</small>
+  </div>
 
-    <div *ngIf="!activityLoading && activityLogs.length === 0">
-      No activity yet.
-    </div>
+  <!-- Activity Timeline -->
+  <div class="timeline" *ngIf="!activityLoading && activityLogs.length > 0">
+    <div class="timeline-item" *ngFor="let log of activityLogs">
 
-    <div class="activity-item" *ngFor="let log of activityLogs">
-      <div class="activity-header">
-        <strong>{{ log.performedBy?.name }}</strong>
-        <span class="action">{{ log.action }}</span>
+      <!-- Avatar -->
+      <div class="timeline-avatar" 
+          [style.background-color]="getAvatarColor(log.performedBy?.name)"
+          [matTooltip]="log.performedBy?.name || 'System'">  <!-- Add fallback -->
+        {{ getInitials(log.performedBy?.name) }}
       </div>
 
-      <div class="changes" *ngIf="log.changes">
-        <div *ngFor="let key of objectKeys(log.changes)">
-          <span class="field">{{ key }}:</span>
-          <span class="from">{{ log.changes[key]?.from }}</span>
-          →
-          <span class="to">{{ log.changes[key]?.to }}</span>
+      <!-- Content -->
+      <div class="timeline-content">
+        
+        <!-- Header -->
+        <div class="activity-header">
+          <div class="header-left">
+            <strong class="user-name">{{ log.performedBy?.name || 'System' }}</strong>
+            <span class="action-badge" [ngClass]="getActionClass(log.action)">
+              {{ formatAction(log.action) }}
+            </span>
+          </div>
+          <div class="header-right">
+            <span class="timestamp" [matTooltip]="getTooltipText(log)">
+              {{ log.timeAgo || (log.createdAt | date: 'medium') }}
+            </span>
+          </div>
         </div>
-      </div>
 
-      <div class="timestamp">
-        {{ log.createdAt | date: 'medium' }}
+        <!-- Human-readable message (if available) -->
+        <div class="activity-message" *ngIf="log.message">
+          {{ log.message }}
+        </div>
+
+        <!-- Detailed Changes -->
+        <div class="changes-details" *ngIf="log.changes && Object.keys(log.changes).length > 0">
+          
+          <!-- TASK CREATED - Show all details in a grid -->
+          <div *ngIf="log.action === 'TASK_CREATED'" class="created-details">
+            <div class="detail-item" *ngFor="let key of getDisplayFields(log.changes)">
+              <span class="detail-label">{{ formatFieldName(key) }}:</span>
+              
+              <!-- Priority with badge -->
+              <span *ngIf="key === 'priority'" class="priority-badge" [ngClass]="log.changes[key]">
+                {{ log.changes[key] }}
+              </span>
+              
+              <!-- Status with badge -->
+              <span *ngIf="key === 'status'" class="status-badge" [ngClass]="log.changes[key]">
+                {{ formatStatus(log.changes[key]) }}
+              </span>
+              
+              <!-- Assigned To -->
+              <span *ngIf="key === 'assignedTo'" class="assigned-user">
+                {{ getUserName(log.changes[key]) }}
+              </span>
+              
+              <!-- Due Date -->
+              <span *ngIf="key === 'dueDate'" class="date-value">
+                {{ log.changes[key] | date:'mediumDate' || 'Not set' }}
+              </span>
+              
+              <!-- Default -->
+              <span *ngIf="!['priority', 'status', 'assignedTo', 'dueDate'].includes(key)">
+                {{ log.changes[key] }}
+              </span>
+            </div>
+          </div>
+
+          <!-- FIELD CHANGES - Show what changed -->
+          <div *ngIf="log.action !== 'TASK_CREATED'" class="field-changes">
+            
+            <!-- Loop through each changed field -->
+            <div class="change-item" *ngFor="let key of Object.keys(log.changes)">
+              
+              <!-- Title Change -->
+              <ng-container *ngIf="key === 'title'">
+                <span class="field-name">Title:</span>
+                <div class="change-values">
+                  <span class="old-value">{{ log.changes[key].from }}</span>
+                  <span class="material-icons arrow">arrow_forward</span>
+                  <span class="new-value">{{ log.changes[key].to }}</span>
+                </div>
+              </ng-container>
+
+              <!-- Description Change -->
+              <ng-container *ngIf="key === 'description'">
+                <span class="field-name">Description:</span>
+                <div class="description-diff">
+                  <div class="old-desc" *ngIf="log.changes[key].from">
+                    <span class="material-icons">remove</span>
+                    {{ getDescriptionPreview(log.changes[key].from) }}
+                  </div>
+                  <div class="new-desc" *ngIf="log.changes[key].to">
+                    <span class="material-icons">add</span>
+                    {{ getDescriptionPreview(log.changes[key].to) }}
+                  </div>
+                </div>
+              </ng-container>
+
+              <!-- Priority Change -->
+              <ng-container *ngIf="key === 'priority'">
+                <span class="field-name">Priority:</span>
+                <div class="change-values">
+                  <span class="priority-badge old" [ngClass]="log.changes[key].from?.value || log.changes[key].from">
+                    {{ log.changes[key].from?.label || log.changes[key].from }}
+                  </span>
+                  <span class="material-icons arrow">arrow_forward</span>
+                  <span class="priority-badge new" [ngClass]="log.changes[key].to?.value || log.changes[key].to">
+                    {{ log.changes[key].to?.label || log.changes[key].to }}
+                  </span>
+                </div>
+              </ng-container>
+
+              <!-- Status Change -->
+              <ng-container *ngIf="key === 'status'">
+                <span class="field-name">Status:</span>
+                <div class="change-values">
+                  <span class="status-badge old" [ngClass]="log.changes[key].from?.value || log.changes[key].from">
+                    {{ log.changes[key].from?.label || formatStatus(log.changes[key].from) }}
+                  </span>
+                  <span class="material-icons arrow">arrow_forward</span>
+                  <span class="status-badge new" [ngClass]="log.changes[key].to?.value || log.changes[key].to">
+                    {{ log.changes[key].to?.label || formatStatus(log.changes[key].to) }}
+                  </span>
+                </div>
+              </ng-container>
+
+              <!-- Assignment Change -->
+              <ng-container *ngIf="key === 'assignedTo'">
+                <span class="field-name">Assigned:</span>
+                <div class="change-values">
+                  <span class="user-tag">{{ log.changes[key].from?.name || log.changes[key].from || 'Unassigned' }}</span>
+                  <span class="material-icons arrow">arrow_forward</span>
+                  <span class="user-tag">{{ log.changes[key].to?.name || log.changes[key].to || 'Unassigned' }}</span>
+                </div>
+              </ng-container>
+
+              <!-- Due Date Change -->
+              <ng-container *ngIf="key === 'dueDate'">
+                <span class="field-name">Due Date:</span>
+                <div class="change-values">
+                  <span class="date-value">{{ formatDate(log.changes[key].from) }}</span>
+                  <span class="material-icons arrow">arrow_forward</span>
+                  <span class="date-value">{{ formatDate(log.changes[key].to) }}</span>
+                </div>
+              </ng-container>
+
+              <!-- Generic Change (for other fields) -->
+              <ng-container *ngIf="!['title', 'description', 'priority', 'status', 'assignedTo', 'dueDate'].includes(key)">
+                <span class="field-name">{{ formatFieldName(key) }}:</span>
+                <div class="change-values">
+                  <span class="old-value">{{ log.changes[key].from || 'Not set' }}</span>
+                  <span class="material-icons arrow">arrow_forward</span>
+                  <span class="new-value">{{ log.changes[key].to || 'Not set' }}</span>
+                </div>
+              </ng-container>
+
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Metadata (if any) -->
+        <div class="activity-metadata" *ngIf="log.metadata && Object.keys(log.metadata).length > 0">
+          <small class="text-muted">
+            <span *ngIf="log.metadata.ipAddress">IP: {{ log.metadata.ipAddress }}</span>
+            <span *ngIf="log.metadata.userAgent"> • {{ log.metadata.userAgent }}</span>
+          </small>
+        </div>
+
       </div>
     </div>
   </div>
+</div>
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">

@@ -178,7 +178,7 @@ router.delete(
 );
 
 router.get(
-  "/tasks/:taskId/activity",
+  "/:taskId/activity",
   authMiddleware,
   taskActivityController.getByTask
 );

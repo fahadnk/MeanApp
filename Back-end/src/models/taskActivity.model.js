@@ -1,3 +1,4 @@
+// models/taskActivity.model.js
 import mongoose from "mongoose";
 
 const TaskActivitySchema = new mongoose.Schema(
@@ -17,7 +18,11 @@ const TaskActivitySchema = new mongoose.Schema(
         "STATUS_CHANGED",
         "ASSIGNED_CHANGED",
         "PRIORITY_CHANGED",
+        "DUE_DATE_CHANGED",
+        "DESCRIPTION_CHANGED",
+        "TITLE_CHANGED",
         "TASK_DELETED",
+        "COMMENT_ADDED",
       ],
     },
 
@@ -28,6 +33,11 @@ const TaskActivitySchema = new mongoose.Schema(
     },
 
     changes: {
+      type: Object,
+      default: {},
+    },
+
+    metadata: {
       type: Object,
       default: {},
     },

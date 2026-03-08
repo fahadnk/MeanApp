@@ -61,18 +61,58 @@ class ManagerService {
     return team;
   }
 
+ // -------------------------------------
+  // Get All Tasks of This Team (with pagination & filters)
   // -------------------------------------
-  // Get All Tasks of This Team
-  // -------------------------------------
-  async getTeamTasks(managerId, teamId) {
+  async getTeamTasks(managerId, teamId, queryParams = {}) {
+    console.log('ManagerService.getTeamTasks - Start');
+    console.log('ManagerId:', managerId);
+    console.log('TeamId:', teamId);
+    console.log('QueryParams:', queryParams);
+    
     const team = await teamRepository.findById(teamId);
-    if (!team) throw new Error("Team not found");
+    if (!team) {
+      console.log('Team not found');
+      throw new Error("Team not found");
+    }
 
-    if (team.manager.toString() !== managerId) {
+    console.log('Team found:', team.name);
+    console.log('Team manager:', team.manager?.toString());
+
+    if (team.manager.toString() !== managerId.toString()) {
+      console.log('Authorization failed');
       throw new Error("Not authorized");
     }
 
-    return await taskService.getTasksForTeam(teamId);
+    console.log('Authorization successful, fetching tasks...');
+
+    // Create a currentUser object for taskService
+    const currentUser = {
+      id: managerId,
+      _id: managerId,
+      role: 'manager'
+    };
+
+    // Pass queryParams to the task service
+    const result = await taskService.getTasksForTeam(teamId, currentUser, queryParams);
+    
+    console.log('Tasks fetched successfully');
+    
+    return {
+      team: {
+        id: team._id,
+        name: team.name,
+        description: team.description,
+        memberCount: team.members?.length || 0
+      },
+      tasks: result.tasks || [],
+      pagination: result.pagination || {
+        page: 1,
+        limit: 10,
+        total: 0,
+        pages: 0
+      }
+    };
   }
 
   // -------------------------------------

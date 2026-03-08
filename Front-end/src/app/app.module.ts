@@ -12,6 +12,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDialogModule } from '@angular/material/dialog';
+
 import { MatDatepickerModule } from '@angular/material/datepicker';
 import { MatNativeDateModule } from '@angular/material/core';
 import { MatToolbarModule } from '@angular/material/toolbar';
@@ -34,6 +35,8 @@ import { SharedModule } from './shared/shared.module';
 import { AdminModule } from './admin/admin.module';
 import { LoaderComponent } from './core/loader/loader.component';
 import { ResetPasswordComponent } from './auth/reset-password/reset-password.component';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner'; 
 
 @NgModule({
   declarations: [
@@ -70,7 +73,11 @@ import { ResetPasswordComponent } from './auth/reset-password/reset-password.com
     MatPaginatorModule,
     MatChipsModule,
     MatSnackBarModule, 
-    MatMenuModule 
+    MatMenuModule,
+    MatTooltipModule,
+    MatDialogModule,
+    MatSnackBarModule,
+    MatProgressSpinnerModule
   ],
   providers: [
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
