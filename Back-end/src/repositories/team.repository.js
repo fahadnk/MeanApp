@@ -29,27 +29,27 @@ class TeamRepository {
   // - Populates manager & members fields
   // ------------------------------------------------------------
 
-async findById(id) {
-  console.log('TeamRepository.findById - Looking for team:', id);
-  
-  if (!mongoose.Types.ObjectId.isValid(id)) {
-    console.log('Invalid team ID format');
-    return null;
+  async findById(id) {
+    console.log('TeamRepository.findById - Looking for team:', id);
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      console.log('Invalid team ID format');
+      return null;
+    }
+
+    const team = await Team.findById(id)
+      .populate({
+        path: 'manager',
+        select: 'name email role _id'
+      })
+      .populate({
+        path: 'members',
+        select: 'name email role _id'
+      })
+      .lean();
+
+    return team;
   }
-
-  const team = await Team.findById(id)
-    .populate({
-      path: 'manager',
-      select: 'name email role _id'
-    })
-    .populate({
-      path: 'members',
-      select: 'name email role _id'
-    })
-    .lean();
-
-  return team;
-}
 
   // ------------------------------------------------------------
   // Find a team by its name
@@ -152,28 +152,28 @@ async findById(id) {
   // - Returns total count + total pages
   // ------------------------------------------------------------
   async getAllForManager(managerId, { page = 1, limit = 20 } = {}) {
-    const skip = (page - 1) * limit;            // Calculate number of documents to skip
+    // ✅ Convert string to ObjectId
+    const objectId = new mongoose.Types.ObjectId(managerId);
 
-    // Execute both queries in parallel for performance
+    const skip = (page - 1) * limit;
+
     const [data, total] = await Promise.all([
-      Team.find({ manager: managerId })
+      Team.find({ manager: objectId })  // Use ObjectId, not string
         .populate("manager", "name email role")
         .skip(skip)
         .limit(limit)
         .lean()
         .exec(),
-
-      Team.countDocuments({ manager: managerId }) // Total number of teams for the specified manager
+      Team.countDocuments({ manager: objectId })
     ]);
 
-    // Return formatted pagination response
     return {
       data,
       pagination: {
-        total,                                   // Total documents in Team collection
-        page,                                    // Current page number
-        limit,                                   // Documents per page
-        totalPages: Math.ceil(total / limit),    // Total pages available
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
       },
     };
   }

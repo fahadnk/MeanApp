@@ -104,7 +104,7 @@ router.get(
 // -------------------------------------------------------
 
 router.get(
-  "/:managerId",
+  "/manager/:managerId",  // Changed: Add /manager/ prefix
   authMiddleware,
   teamController.listTeamsForManager
 );

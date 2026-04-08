@@ -27,7 +27,7 @@ export class TeamService {
     let httpParams = new HttpParams();
     if (params.page) httpParams = httpParams.set('page', params.page.toString());
     if (params.limit) httpParams = httpParams.set('limit', params.limit.toString());
-    return this.http.get(`${this.base}/${managerId}`, { params: httpParams });
+    return this.http.get(`${this.base}/manager/${managerId}`, { params: httpParams });
   }
 
   create(payload: { name: string }): Observable<any> {
