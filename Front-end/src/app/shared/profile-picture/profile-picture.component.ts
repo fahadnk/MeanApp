@@ -53,7 +53,7 @@ export class ProfilePictureComponent implements OnInit {
 
     this.http.put<any>(this.apiUrl, formData).subscribe({
       next: (response) => {
-        const imageUrl = this.currentProfilePictureUrl || this.backendUrl + response.data?.profilePicture || this.backendUrl + response.profilePicture;
+        const imageUrl = this.backendUrl + (response.data?.profilePicture || response.profilePicture);
         this.profilePictureUrl = imageUrl;
         this.profilePictureUpdated.emit(this.profilePictureUrl);
         
