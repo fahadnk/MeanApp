@@ -16,6 +16,7 @@ export class ProfileComponent implements OnInit {
   profileForm!: FormGroup;
   passwordForm!: FormGroup;
   loading = false;
+  private backendUrl = 'http://localhost:5000';
   profilePictureUrl: string | null = null;
 
   constructor(
@@ -28,7 +29,7 @@ export class ProfileComponent implements OnInit {
 
   ngOnInit(): void {
     this.user = this.auth.getCurrentUser();
-    this.profilePictureUrl = this.user?.profilePicture ? this.user.profilePicture : null;
+    this.profilePictureUrl = this.user?.profilePicture ? this.backendUrl + this.user.profilePicture : null;
 
     this.profileForm = this.fb.group({
       email: [{ value: this.user?.email, disabled: true }]

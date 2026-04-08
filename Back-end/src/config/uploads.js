@@ -1,40 +1,71 @@
-// Import the multer library (used for handling file uploads in Node.js / Express)
+// Import multer (middleware for handling file uploads)
 import multer from 'multer';
 
-// Configure storage to use memory instead of saving files to disk
-const storage = multer.memoryStorage();   // ← Files will be stored in RAM as buffers
+// Import path module (helps handle file paths)
+import path from 'path';
 
-// Define a file filter function to allow only specific file types
+// Import function to get current file path in ES modules
+import { fileURLToPath } from 'url';
+
+// Convert import.meta.url to actual file path
+const __filename = fileURLToPath(import.meta.url);
+
+// Get directory name from file path
+const __dirname = path.dirname(__filename);
+
+// Configure storage settings for multer
+// We can use const storage = new GridFsStorage({ ... }) if we want to store files in MongoDB instead of local filesystem
+const storage = multer.diskStorage({
+
+  // Set destination folder where files will be saved
+  destination: (req, file, cb) => {
+    // Save files inside uploads/profile folder
+    cb(null, path.join(__dirname, '../../uploads/profile'));
+  },
+
+  // Set filename for uploaded files
+  filename: (req, file, cb) => {
+    // Create a unique suffix using timestamp + random number
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+
+    // Create filename: profile-userId-uniqueSuffix.extension
+    cb(null, `profile-${req.user.id}-${uniqueSuffix}${path.extname(file.originalname)}`);
+  }
+});
+
+// File filter to allow only specific image types
 const fileFilter = (req, file, cb) => {
 
-  // Regular expression to match allowed image formats
+  // Allowed file extensions
   const allowedTypes = /jpeg|jpg|png|gif|webp/;
 
-  // Check if the uploaded file's MIME type matches allowed formats
-  if (allowedTypes.test(file.mimetype)) {
+  // Check file extension (like .jpg, .png)
+  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
 
-    // Accept the file (no error, true = allowed)
-    cb(null, true);
+  // Check MIME type (like image/jpeg, image/png)
+  const mimetype = allowedTypes.test(file.mimetype);
 
-  } else {
-
-    // Reject the file with an error message
-    cb(new Error('Only images allowed!'), false);
+  // If both extension and MIME type are valid → accept file
+  if (extname && mimetype) {
+    return cb(null, true);
   }
+
+  // Otherwise reject file with error
+  cb(new Error('Only image files (jpg, jpeg, png, gif, webp) are allowed!'), false);
 };
 
-// Create the multer upload instance with custom configuration
+// Create multer upload instance with configuration
 const upload = multer({
 
-  // Use memory storage (files won't be saved to disk)
+  // Use defined storage configuration
   storage: storage,
 
-  // Set file size limit to 5MB
-  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB in bytes
+  // Limit file size to 5MB
+  limits: { fileSize: 5 * 1024 * 1024 },
 
-  // Apply the custom file filter function
+  // Apply file filter
   fileFilter: fileFilter
 });
 
-// Export the configured upload middleware for use in routes
+// Export upload middleware to use in routes
 export default upload;

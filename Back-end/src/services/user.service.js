@@ -167,16 +167,19 @@ class UserService {
   }
 
   async updateProfilePictureService(userId, file) {
-    if (!file) throw new Error('No file uploaded');
+    if (!file) {
+      throw new Error('No profile picture uploaded');
+    }
 
-    // Convert to Base64
-    const base64Image = `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
+    const profilePictureUrl = `/uploads/profile/${file.filename}`;
 
-    const updatedUser = await userRepository.updateProfilePicture(userId, base64Image);
+    const updatedUser = await userRepository.updateProfilePicture(userId, profilePictureUrl);
 
-    if (!updatedUser) throw new Error('User not found');
+    if (!updatedUser) {
+      throw new Error('User not found');
+    }
 
-    return updatedUser;
+    return userDTO(updatedUser);
   }
 
 
