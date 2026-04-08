@@ -77,7 +77,6 @@ export class HeaderComponent implements OnInit {
 
    getProfileImageUrl(profilePicture: string | null): string {
     if (!profilePicture) return '';
-    else if (profilePicture.startsWith('http')) return profilePicture; // External URL
-    else return `${this.backendUrl}${profilePicture}`;
+    else return profilePicture;
   }
 }

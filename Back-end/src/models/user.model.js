@@ -73,9 +73,8 @@ const userSchema = new mongoose.Schema(
     ],
     // URL or path to the user's profile picture - optional field
     profilePicture: {
-      type: String,
-      default: null,
-      trim: true
+      type: String,        // Will store Base64 string
+      default: null
     },
   },
   {
