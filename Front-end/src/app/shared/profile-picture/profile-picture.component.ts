@@ -2,6 +2,8 @@ import { Component, EventEmitter, Input, OnInit, Output, ViewChild, ElementRef }
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { AuthService } from '../../core/services/auth.service';   // ← FIXED PATH
+import { environment } from '../../../../environment/environment';
+import { Observable } from 'rxjs/internal/Observable';
 
 @Component({
   selector: 'app-profile-picture',
@@ -15,18 +17,16 @@ export class ProfilePictureComponent implements OnInit {
 
   profilePictureUrl: string | null = null;
   isUploading = false;
-  message = '';
-  success = true;
+  user: any;
 
   @ViewChild('fileInput') fileInput!: ElementRef<HTMLInputElement>;
 
-  private apiUrl = 'http://localhost:5000/api/auth/profile-picture';
-  private backendUrl = 'http://localhost:5000'; // Base URL for constructing full image paths
+  private apiUrl = `${environment.apiUrl}/auth/profile-picture`;
   constructor(
     private http: HttpClient,
     private snack: MatSnackBar,
     private authService: AuthService     // ← Injected correctly
-  ) {}
+  ) { }
 
   ngOnInit() {
     this.profilePictureUrl = this.currentProfilePictureUrl;
@@ -46,7 +46,6 @@ export class ProfilePictureComponent implements OnInit {
 
   uploadProfilePicture(file: File): void {
     this.isUploading = true;
-    this.message = '';
 
     const formData = new FormData();
     formData.append('profilePicture', file);
@@ -54,15 +53,27 @@ export class ProfilePictureComponent implements OnInit {
     this.http.put<any>(this.apiUrl, formData).subscribe({
       next: (response) => {
         const imageUrl = response.data?.profilePicture || response.profilePicture;
-        this.profilePictureUrl = imageUrl;
-        this.profilePictureUpdated.emit(this.profilePictureUrl);
-        
+
+        // Update local variable
+        this.profilePictureUrl = imageUrl || 'assets/default-avatar.jpg';
+
+        // Emit to parent component
+        this.profilePictureUpdated.emit(imageUrl);
+
+        // 🔥 Important: Update BehaviorSubject in AuthService
+        this.authService.updateUserProfilePicture(imageUrl);
+
         if (this.fileInput) this.fileInput.nativeElement.value = '';
+
+        this.showMessage('Profile picture updated successfully!', true);
       },
       error: (error: HttpErrorResponse) => {
+        console.error('Upload failed:', error);
         this.showMessage(error.error?.message || 'Failed to upload image', false);
       },
-      complete: () => this.isUploading = false
+      complete: () => {
+        this.isUploading = false;
+      }
     });
   }
 
@@ -78,9 +89,7 @@ export class ProfilePictureComponent implements OnInit {
   }
 
   private showMessage(msg: string, success: boolean): void {
-    this.message = msg;
-    this.success = success;
-    this.snack.open(msg, 'Close', { 
+    this.snack.open(msg, 'Close', {
       duration: 4000,
       panelClass: success ? 'success-snack' : 'error-snack'
     });

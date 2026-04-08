@@ -146,6 +146,22 @@ export class AuthService {
     // But for now, this is sufficient
   }
 
+  loadAndUpdateProfilePicture(): void {
+    const currentUser = this.getCurrentUser();
+    if (!currentUser) return;
+
+    this.http.get<any>(`${environment.apiUrl}/auth/profile-picture/${currentUser.id}`).subscribe({
+      next: (res) => {
+        const imageUrl = res.profilePicture || null;
+        this.updateUserProfilePicture(imageUrl);
+      },
+      error: (err) => {
+        console.error('Failed to load profile picture:', err);
+        this.updateUserProfilePicture(null);   // Set to null on error
+      }
+    });
+  }
+
 
   // ======================================================
   // 🌟 MERGED NEW HELPER FUNCTIONS (Updated Internal Decoders)

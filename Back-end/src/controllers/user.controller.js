@@ -171,6 +171,18 @@ class UserController {
       next(error);
     }
   }
+
+  async getProfilePicture(req, res, next) {
+    try {
+      const userId = req.params.userId || req.user?.id; // Allow both param and authenticated user
+
+      const result = await userService.getProfilePictureService(userId);
+
+      res.status(200).json(result);
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 

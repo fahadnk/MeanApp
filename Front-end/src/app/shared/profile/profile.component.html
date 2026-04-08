@@ -9,7 +9,7 @@
     </div>
 
     <!-- Only this component - as you requested -->
-    <app-profile-picture 
+    <app-profile-picture *ngIf="profilePictureUrl"
       [currentProfilePictureUrl]="profilePictureUrl" 
       (profilePictureUpdated)="onProfilePictureUpdated($event)">
     </app-profile-picture>

@@ -1,7 +1,9 @@
+import { HttpClient } from '@angular/common/http';
 import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
+import { environment } from '../../../../environment/environment';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { UserService } from 'src/app/core/services/user.service';
 
@@ -23,12 +25,15 @@ export class ProfileComponent implements OnInit {
     private auth: AuthService,
     private userService: UserService,
     private snack: MatSnackBar,
-    private router: Router
+    private router: Router,
+    private http: HttpClient,
   ) { }
 
-  ngOnInit(): void {
-    this.user = this.auth.getCurrentUser();
-    this.profilePictureUrl = this.user?.profilePicture ? this.user.profilePicture : null;
+  ngOnInit(): void {;
+    this.auth.currentUser$.subscribe(user => {
+      this.user = user;
+      this.profilePictureUrl = user?.profilePicture
+    });
 
     this.profileForm = this.fb.group({
       email: [{ value: this.user?.email, disabled: true }]
@@ -40,6 +45,8 @@ export class ProfileComponent implements OnInit {
       confirmPassword: ['', Validators.required]
     });
   }
+
+
 
   /* ================= PROFILE UPDATE ================= */
 
@@ -90,13 +97,12 @@ export class ProfileComponent implements OnInit {
 
   // This method will be called when profile picture is updated or deleted
   onProfilePictureUpdated(newUrl: string | null) {
-    this.user = {
-      ...this.user,
-      profilePicture: newUrl
-    };
+    const finalUrl = newUrl || 'assets/default-avatar.jpg';
 
-    // Update in AuthService so other parts of app see the change
-    this.auth.updateCurrentUser(this.user);
+    this.profilePictureUrl = finalUrl;
+    this.user = { ...this.user, profilePicture: newUrl };
+
+    this.auth.updateUserProfilePicture(newUrl);
   }
 
   onImageError(event: any): void {

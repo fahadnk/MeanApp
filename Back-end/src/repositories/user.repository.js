@@ -198,12 +198,18 @@ class UserRepository {
     };
   }
 
-  async updateProfilePicture (userId, profilePictureUrl){
+  async updateProfilePicture(userId, profilePictureUrl) {
     return await User.findByIdAndUpdate(
       userId,
       { profilePicture: profilePictureUrl },
       { new: true, select: '-password' }
     );
+  }
+
+  async getProfilePicture(userId) {
+    return await User.findById(userId)
+      .select('profilePicture name email')
+      .lean();
   }
 
 }

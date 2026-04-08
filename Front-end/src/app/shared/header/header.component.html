@@ -58,8 +58,7 @@
     <button mat-button [matMenuTriggerFor]="userMenu">
       <div class="header-profile-image-name">
         <img 
-          *ngIf="user?.profilePicture" 
-          [src]="getProfileImageUrl(user.profilePicture)" 
+          [src]="user?.profilePicture" 
           alt="Profile" 
           class="profile-image"
         />

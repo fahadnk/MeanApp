@@ -67,7 +67,7 @@ class UserService {
     }
 
     const token = jwt.sign(
-      { id: user._id, email: user.email, role: user.role, profilePicture: user.profilePicture },
+      { id: user._id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
@@ -165,7 +165,7 @@ class UserService {
 
     return { id: user._id };
   }
-
+// update profile picture
   async updateProfilePictureService(userId, file) {
     if (!file) throw new Error('No file uploaded');
 
@@ -177,6 +177,21 @@ class UserService {
     if (!updatedUser) throw new Error('User not found');
 
     return updatedUser;
+  }
+// get profile picture
+  async getProfilePictureService(userId) {
+    const user = await userRepository.getProfilePicture(userId);
+
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    return {
+      success: true,
+      profilePicture: user.profilePicture,
+      name: user.name,
+      email: user.email
+    };
   }
 
 

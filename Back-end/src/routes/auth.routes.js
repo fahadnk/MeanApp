@@ -107,5 +107,12 @@ router.put(
   userController.updateProfilePicture
 );
 
+// Get Profile Picture by User ID
+router.get(
+  '/profile-picture/:userId',           // Required userId
+  authMiddleware,
+  userController.getProfilePicture
+);
+
 // Export the router to be mounted in the main application (usually in app.js or server.js)
 export default router;

@@ -29,11 +29,10 @@ export class LoginComponent {
           });
           return;
         }
-
         // 🟢 Decode role from token
         const user = this.auth.getCurrentUser();
         const role = user?.role;
-
+        this.auth.loadAndUpdateProfilePicture();
         // 🔁 Role-based routing
         switch (role) {
           case 'admin':

@@ -18,7 +18,7 @@ export class HeaderComponent implements OnInit {
   notifications: any[] = [];
   unreadCount = 0;
   showBackButton = true;
-  private backendUrl = 'http://localhost:5000';
+  profilePictureUrl: string | null = null;
 
   private notificationSub?: Subscription;
 
@@ -46,6 +46,10 @@ export class HeaderComponent implements OnInit {
         this.unreadCount = list.filter(n => !n.read).length;
       }
     );
+    const user = this.auth.getCurrentUser();
+    if (!user?.profilePicture) {
+      this.auth.loadAndUpdateProfilePicture();
+    }
   }
 
   ngOnDestroy(): void {
