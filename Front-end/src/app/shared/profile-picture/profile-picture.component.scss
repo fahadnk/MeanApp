@@ -1,0 +1,45 @@
+.profile-pic-section {
+  text-align: center;
+  margin: 20px 0 30px 0;
+}
+
+.profile-image-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.profile-image {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 5px solid #fff;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.upload-btn, .remove-btn {
+  position: absolute;
+  bottom: 8px;
+}
+
+.upload-btn {
+  right: 8px;
+}
+
+.remove-btn {
+  left: 8px;
+}
+
+.uploading-text {
+  margin-top: 12px;
+  color: #1976d2;
+  font-weight: 500;
+}
+
+.message {
+  margin-top: 10px;
+  font-weight: 500;
+}
+
+.success { color: #4caf50; }
+.error   { color: #f44336; }

@@ -1,0 +1,53 @@
+<div class="profile-pic-section">
+
+  <!-- Large Profile Image with Upload Icon -->
+  <div class="profile-image-wrapper">
+    <img 
+      [src]="profilePictureUrl || 'assets/default-avatar.jpg'" 
+      alt="Profile Picture"
+      class="profile-image"
+      (error)="onImageError($event)"
+    >
+    
+    <!-- Upload Icon Button -->
+    <button 
+     *ngIf="!profilePictureUrl"
+      mat-mini-fab 
+      color="primary" 
+      class="upload-btn"
+      (click)="fileInput.click()"
+      title="Upload Profile Picture">
+      <mat-icon>upload</mat-icon>
+    </button>
+
+    <!-- Remove Button (only show if image exists) -->
+    <button 
+      *ngIf="profilePictureUrl" 
+      mat-mini-fab 
+      color="warn" 
+      class="remove-btn"
+      (click)="deleteProfilePicture()"
+      title="Remove Profile Picture">
+      <mat-icon>delete</mat-icon>
+    </button>
+  </div>
+
+  <input 
+    #fileInput 
+    type="file" 
+    accept="image/jpeg,image/png,image/gif,image/webp,image/jpg"
+    (change)="onFileSelected($event)"
+    style="display: none;"
+  >
+
+  <div *ngIf="isUploading" class="uploading-text">
+    Uploading...
+  </div>
+
+  <div *ngIf="message" 
+       [ngClass]="{'success': success, 'error': !success}" 
+       class="message">
+    {{ message }}
+  </div>
+
+</div>

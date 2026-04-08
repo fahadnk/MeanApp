@@ -18,6 +18,7 @@ export class HeaderComponent implements OnInit {
   notifications: any[] = [];
   unreadCount = 0;
   showBackButton = true;
+  private backendUrl = 'http://localhost:5000';
 
   private notificationSub?: Subscription;
 
@@ -72,5 +73,11 @@ export class HeaderComponent implements OnInit {
 
   goToProfile(): void {
     this.router.navigate(['/profile']);
+  }
+
+   getProfileImageUrl(profilePicture: string | null): string {
+    if (!profilePicture) return '';
+    else if (profilePicture.startsWith('http')) return profilePicture; // External URL
+    else return `${this.backendUrl}${profilePicture}`;
   }
 }

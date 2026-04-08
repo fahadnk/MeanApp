@@ -56,8 +56,16 @@
 
     <!-- USER MENU -->
     <button mat-button [matMenuTriggerFor]="userMenu">
-      <mat-icon>account_circle</mat-icon>
-      {{ user?.email }}
+      <div class="header-profile-image-name">
+        <img 
+          *ngIf="user?.profilePicture" 
+          [src]="getProfileImageUrl(user.profilePicture)" 
+          alt="Profile" 
+          class="profile-image"
+        />
+        <mat-icon *ngIf="!user?.profilePicture">account_circle</mat-icon>
+        <span>{{ user?.email }}</span>
+      </div>
     </button>
 
     <mat-menu #userMenu="matMenu">

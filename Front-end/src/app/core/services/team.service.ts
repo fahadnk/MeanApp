@@ -23,6 +23,13 @@ export class TeamService {
     return this.http.get(`${this.base}/${id}`);
   }
 
+  getTeamsByManagerId(managerId: string, params: { page?: number; limit?: number } = {}): Observable<any> {
+    let httpParams = new HttpParams();
+    if (params.page) httpParams = httpParams.set('page', params.page.toString());
+    if (params.limit) httpParams = httpParams.set('limit', params.limit.toString());
+    return this.http.get(`${this.base}/${managerId}`, { params: httpParams });
+  }
+
   create(payload: { name: string }): Observable<any> {
     return this.http.post(this.base, payload);
   }
@@ -45,9 +52,13 @@ export class TeamService {
   }
 
   addMember(teamId: string, userId: string) {
+  const body = {
+    teamId: teamId,
+    userId: userId
+  };
     return this.http.post(
       `${this.managerBase}/team/${teamId}/add-user/${userId}`,
-      {}
+      body
     );
   }
 

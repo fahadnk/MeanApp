@@ -48,13 +48,6 @@ async findById(id) {
     })
     .lean();
 
-  if (team) {
-    console.log('Team found:', team.name);
-    console.log('Manager populated:', !!team.manager);
-  } else {
-    console.log('Team not found');
-  }
-
   return team;
 }
 
@@ -139,6 +132,38 @@ async findById(id) {
         .exec(),
 
       Team.countDocuments()                     // Total number of teams (without pagination)
+    ]);
+
+    // Return formatted pagination response
+    return {
+      data,
+      pagination: {
+        total,                                   // Total documents in Team collection
+        page,                                    // Current page number
+        limit,                                   // Documents per page
+        totalPages: Math.ceil(total / limit),    // Total pages available
+      },
+    };
+  }
+
+  // ------------------------------------------------------------
+  // Get paginated list of all teams for Manager
+  // - Supports pagination using page & limit
+  // - Returns total count + total pages
+  // ------------------------------------------------------------
+  async getAllForManager(managerId, { page = 1, limit = 20 } = {}) {
+    const skip = (page - 1) * limit;            // Calculate number of documents to skip
+
+    // Execute both queries in parallel for performance
+    const [data, total] = await Promise.all([
+      Team.find({ manager: managerId })
+        .populate("manager", "name email role")
+        .skip(skip)
+        .limit(limit)
+        .lean()
+        .exec(),
+
+      Team.countDocuments({ manager: managerId }) // Total number of teams for the specified manager
     ]);
 
     // Return formatted pagination response

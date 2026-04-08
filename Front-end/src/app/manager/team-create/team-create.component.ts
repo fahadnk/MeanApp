@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TeamService } from 'src/app/core/services/team.service';
+import { Location } from '@angular/common';
 
 @Component({
   selector: 'app-team-create',
@@ -15,7 +16,8 @@ export class TeamCreateComponent {
   constructor(
     private fb: FormBuilder,
     private teamService: TeamService,
-    private router: Router
+    private router: Router,
+    private location: Location
   ) {
     this.initializeForm();
   }
@@ -56,5 +58,9 @@ export class TeamCreateComponent {
         console.error('Error creating team:', err);
       },
     });
+  }
+
+  goBack() {
+    this.location.back();
   }
 }

@@ -16,7 +16,6 @@ const userSchema = new mongoose.Schema(
       required: true,
       trim: true,
     },
-
     // Email address - must be unique across all users, stored in lowercase for consistency
     email: {
       type: String,
@@ -72,6 +71,12 @@ const userSchema = new mongoose.Schema(
         },
       },
     ],
+    // URL or path to the user's profile picture - optional field
+    profilePicture: {
+      type: String,
+      default: null,
+      trim: true
+    },
   },
   {
     // Automatically add `createdAt` and `updatedAt` timestamps to every user document

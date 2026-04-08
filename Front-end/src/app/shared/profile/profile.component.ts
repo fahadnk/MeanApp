@@ -16,6 +16,8 @@ export class ProfileComponent implements OnInit {
   profileForm!: FormGroup;
   passwordForm!: FormGroup;
   loading = false;
+  private backendUrl = 'http://localhost:5000';
+  profilePictureUrl: string | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -23,10 +25,11 @@ export class ProfileComponent implements OnInit {
     private userService: UserService,
     private snack: MatSnackBar,
     private router: Router
-  ) {}
+  ) { }
 
   ngOnInit(): void {
     this.user = this.auth.getCurrentUser();
+    this.profilePictureUrl = this.user?.profilePicture ? this.backendUrl + this.user.profilePicture : null;
 
     this.profileForm = this.fb.group({
       email: [{ value: this.user?.email, disabled: true }]
@@ -84,5 +87,20 @@ export class ProfileComponent implements OnInit {
         console.error(err);
       }
     });
+  }
+
+  // This method will be called when profile picture is updated or deleted
+  onProfilePictureUpdated(newUrl: string | null) {
+    this.user = {
+      ...this.user,
+      profilePicture: newUrl
+    };
+
+    // Update in AuthService so other parts of app see the change
+    this.auth.updateCurrentUser(this.user);
+  }
+
+  onImageError(event: any): void {
+    event.target.src = 'assets/default-avatar.jpg';   // same as your fallback
   }
 }

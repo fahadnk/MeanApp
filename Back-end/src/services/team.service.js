@@ -120,6 +120,14 @@ class TeamService {
     return await teamRepository.getAll(query);
   }
 
+
+  // ------------------------------------------------------------
+  // Get paginated list of teams
+  // - Delegates to repository for pagination logic
+  // ------------------------------------------------------------
+async getAllTeamsForManager(managerId, pagination = { page: 1, limit: 20 }) {
+  return await teamRepository.getAllForManager(managerId, pagination);
+}
   // ------------------------------------------------------------
   // Delete a team
   // - Only admin can delete a team

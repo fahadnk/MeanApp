@@ -67,7 +67,7 @@ class UserService {
     }
 
     const token = jwt.sign(
-      { id: user._id, email: user.email, role: user.role },
+      { id: user._id, email: user.email, role: user.role, profilePicture: user.profilePicture },
       process.env.JWT_SECRET,
       { expiresIn: "1d" }
     );
@@ -164,6 +164,22 @@ class UserService {
     await user.save();
 
     return { id: user._id };
+  }
+
+  async updateProfilePictureService(userId, file) {
+    if (!file) {
+      throw new Error('No profile picture uploaded');
+    }
+
+    const profilePictureUrl = `/uploads/profile/${file.filename}`;
+
+    const updatedUser = await userRepository.updateProfilePicture(userId, profilePictureUrl);
+
+    if (!updatedUser) {
+      throw new Error('User not found');
+    }
+
+    return userDTO(updatedUser);
   }
 
 

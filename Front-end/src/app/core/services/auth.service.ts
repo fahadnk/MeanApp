@@ -4,7 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../../../environment/environment';
 import { Observable, of, throwError, BehaviorSubject } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
-import { jwtDecode }from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 
 interface LoginResponse {
   data: {
@@ -23,7 +23,7 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<any | null>(this.loadUserFromToken());
   public currentUser$ = this.currentUserSubject.asObservable();
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
   // -------------------------------------------------------
   // Register (Unchanged)
@@ -33,7 +33,7 @@ export class AuthService {
       catchError(err => throwError(() => err))
     );
   }
-  
+
 
   // -------------------------------------------------------
   // Login (Original Logic + Updated BehaviorSubject Handling)
@@ -91,7 +91,7 @@ export class AuthService {
     return this.currentUserSubject.value;
   }
 
-    /** ⭐ REQUIRED by profile page */
+  /** ⭐ REQUIRED by profile page */
   updateCurrentUser(user: any) {
     this.currentUserSubject.next(user);
   }
@@ -126,6 +126,24 @@ export class AuthService {
         localStorage.removeItem('mustResetPassword');
       })
     );
+  }
+
+  /**
+  * Update only the profile picture and persist it
+  */
+  updateUserProfilePicture(profilePictureUrl: string | null): void {
+    const currentUser = this.getCurrentUser();
+    if (!currentUser) return;
+
+    const updatedUser = {
+      ...currentUser,
+      profilePicture: profilePictureUrl
+    };
+
+    this.updateCurrentUser(updatedUser);
+
+    // Optional: Also update token payload if needed (advanced)
+    // But for now, this is sufficient
   }
 
 

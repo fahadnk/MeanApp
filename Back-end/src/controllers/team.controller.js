@@ -99,6 +99,26 @@ class TeamController {
     }
   }
 
+
+
+  // --------------------------------------------
+  // Controller: Fetch all teams for a Manager (paginated)
+  // Route: GET /teams?page=1&limit=10
+  // Access: Admin (or as per service rules)
+  // --------------------------------------------
+  async listTeamsForManager(req, res) {
+    try {
+      const { page = 1, limit = 20 } = req.query;
+      const data = await teamService.getAllTeamsForManager(
+        req.params.managerId,
+        { page, limit }
+      );
+      return success(res, data, "Teams fetched");
+    } catch (err) {
+      return error(res, err.message, 400);
+    }
+  }
+
   // --------------------------------------------
   // Controller: Delete a team
   // Route: DELETE /teams/:teamId

@@ -120,39 +120,57 @@ class UserController {
   }
 
   async resetPassword(req, res) {
-  try {
-    const { email, password } = req.body;
+    try {
+      const { email, password } = req.body;
 
-    if (!email || !password) {
-      return error(res, "Email and new password required", 400);
+      if (!email || !password) {
+        return error(res, "Email and new password required", 400);
+      }
+
+      const updatedUser = await userService.resetPasswordByEmail(
+        email,
+        password
+      );
+
+      return success(res, updatedUser, "Password reset successfully");
+    } catch (err) {
+      return error(res, err.message, 400);
     }
-
-    const updatedUser = await userService.resetPasswordByEmail(
-      email,
-      password
-    );
-
-    return success(res, updatedUser, "Password reset successfully");
-  } catch (err) {
-    return error(res, err.message, 400);
   }
-}
 
-async resetPasswordWithToken(req, res) {
-  try {
-    const { currentPassword, newPassword } = req.body;
+  async resetPasswordWithToken(req, res) {
+    try {
+      const { currentPassword, newPassword } = req.body;
 
-    const updated = await userService.resetPasswordWithToken(
-      req.user.id,
-      currentPassword,
-      newPassword
-    );
+      const updated = await userService.resetPasswordWithToken(
+        req.user.id,
+        currentPassword,
+        newPassword
+      );
 
-    return success(res, updated, "Password updated successfully");
-  } catch (err) {
-    return error(res, err.message, 400);
+      return success(res, updated, "Password updated successfully");
+    } catch (err) {
+      return error(res, err.message, 400);
+    }
   }
-}
+
+  async updateProfilePicture(req, res, next) {
+    try {
+      // This now returns a DTO with ALL user fields including profilePicture
+      const updatedUser = await userService.updateProfilePictureService(req.user.id, req.file);
+
+      res.status(200).json({
+        success: true,
+        message: 'Profile picture updated successfully',
+        data: {
+          user: updatedUser,  // ✅ Return full user DTO
+          profilePicture: updatedUser.profilePicture  // Also keep this for convenience
+        }
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 
 

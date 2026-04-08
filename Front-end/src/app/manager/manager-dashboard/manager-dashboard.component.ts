@@ -27,7 +27,7 @@ export class ManagerDashboardComponent implements OnInit {
   }
 
   loadTeams() {
-    this.teamService.list().subscribe({
+    this.teamService.getTeamsByManagerId(this.currentUser?.id).subscribe({
       next: (res: any) => {
         this.teams = res.data?.data || res;
       },

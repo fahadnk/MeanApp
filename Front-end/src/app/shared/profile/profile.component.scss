@@ -63,3 +63,51 @@
   margin-top: 16px;
   text-align: right;
 }
+
+/* ================= PROFILE IMAGE HEADER ================= */
+
+.profile-header-image {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.profile-image-wrapper {
+  position: relative;
+  width: 150px;
+  height: 150px;
+}
+
+.profile-image {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 5px solid #fff;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.default-avatar {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background-color: #f0f0f0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 5px solid #fff;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.default-avatar mat-icon {
+  font-size: 75px;
+  color: #757575;
+}
+
+/* Style the upload component nicely inside the card */
+app-profile-picture {
+  display: block;
+  margin: 16px 0 24px 0;
+  padding-top: 20px;
+  border-top: 1px solid #eeeeee;
+}

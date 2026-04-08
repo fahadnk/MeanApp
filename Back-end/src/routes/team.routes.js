@@ -35,7 +35,7 @@ const router = express.Router();
 // NOTE: Route-level restriction NOT required because logic happens inside service.
 // -------------------------------------------------------
 router.post(
-  "/", 
+  "/",
   authMiddleware,                        // Must be logged in
   validateSchema(createTeamSchema),      // Validate request body
   teamController.createTeam              // Controller action
@@ -97,6 +97,17 @@ router.get(
   teamController.listTeams
 );
 
+// -------------------------------------------------------
+// ROUTE: List Teams (Paginated)
+// METHOD: GET /teams?page=1&limit=20
+// ACCESS: Any authenticated user (admin can see all, others can be restricted in service)
+// -------------------------------------------------------
+
+router.get(
+  "/:managerId",
+  authMiddleware,
+  teamController.listTeamsForManager
+);
 
 // -------------------------------------------------------
 // ROUTE: Delete a Team

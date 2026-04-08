@@ -82,10 +82,6 @@ class ManagerService {
       throw new Error("Team not found");
     }
 
-    console.log('Team found:', team.name);
-    console.log('Team manager type:', typeof team.manager);
-    console.log('Team manager value:', team.manager);
-
     // SAFELY extract manager ID regardless of whether it's populated or just an ID
     let teamManagerId = null;
     

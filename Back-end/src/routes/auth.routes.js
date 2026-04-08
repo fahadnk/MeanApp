@@ -2,6 +2,7 @@
 
 // Import Express framework to create router instances and handle HTTP routing
 import express from "express";
+import upload from '../config/uploads.js';
 
 // Import controller that contains the business logic for authentication operations
 import userController from "../controllers/user.controller.js";
@@ -96,6 +97,14 @@ router.post(
   authMiddleware,
   validateSchema(resetPasswordAuthSchema),
   userController.resetPasswordWithToken
+);
+
+// New Profile Picture Upload Route
+router.put(
+  '/profile-picture',
+  authMiddleware,
+  upload.single('profilePicture'),
+  userController.updateProfilePicture
 );
 
 // Export the router to be mounted in the main application (usually in app.js or server.js)

@@ -28,9 +28,10 @@ import { HttpClientModule } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { BrowserModule } from '@angular/platform-browser';
+import { ProfilePictureComponent } from './profile-picture/profile-picture.component';
 
 @NgModule({
-  declarations: [NotificationBellComponent, HeaderComponent, ProfileComponent],
+  declarations: [NotificationBellComponent, HeaderComponent, ProfileComponent, ProfilePictureComponent],
   imports: [
     CommonModule,
     MatBadgeModule,
@@ -64,6 +65,6 @@ import { BrowserModule } from '@angular/platform-browser';
     MatMenuModule,
     MatDividerModule
   ],
-  exports: [NotificationBellComponent, HeaderComponent]
+  exports: [NotificationBellComponent, HeaderComponent, ProfilePictureComponent]
 })
 export class SharedModule {}

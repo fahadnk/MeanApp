@@ -1,4 +1,5 @@
 // Convert a User MongoDB document into a simplified DTO (Data Transfer Object)
+
 // This hides internal fields (like password, __v, etc.) and ensures consistent API responses
 export function userDTO(user) {
   // If no user is provided (null/undefined), return null
@@ -11,6 +12,7 @@ export function userDTO(user) {
     email: user.email,     // User's email
     role: user.role,       // User's role (user/admin)
     createdAt: user.createdAt, // Timestamp when user was created
+    profilePicture: user.profilePicture // URL to user's profile picture (if any)
   };
 }
 
