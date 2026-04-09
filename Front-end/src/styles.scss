@@ -1,4 +1,3 @@
-
 @use '@angular/material' as mat;
 
 // 1️⃣ Define a color palette
@@ -18,10 +17,26 @@ $my-theme: mat.define-light-theme((
 // 3️⃣ Apply all component themes
 @include mat.all-component-themes($my-theme);
 
-.mat-card {
-  overflow: visible !important;
+// ============ GLOBAL STYLES ============
+html, body {
+  position: relative;
+  height: 100%;
+  z-index: 1;
 }
 
+/* Your main app container */
+veepn-lock-screen {
+  position: relative;
+  z-index: 1;
+}
+
+/* Any wrapper around the menu trigger */
+.menu-trigger-container {
+  position: relative;
+  z-index: 10;
+}
+
+// ============ AUTH PAGES ============
 .auth-container {
   display: flex;
   justify-content: center;
@@ -86,6 +101,7 @@ $my-theme: mat.define-light-theme((
   }
 }
 
+// ============ TASK LIST ============
 .task-list-container {
   padding: 1.5rem;
 
@@ -145,6 +161,7 @@ $my-theme: mat.define-light-theme((
   }
 }
 
+// ============ TASK FORM ============
 .task-form {
   display: flex;
   flex-direction: column;
@@ -165,6 +182,7 @@ $my-theme: mat.define-light-theme((
   width: 100%;
 }
 
+// ============ SNACKBAR STYLES ============
 .success-snack {
   background: #4caf50 !important;
   color: #fff !important;
@@ -175,6 +193,7 @@ $my-theme: mat.define-light-theme((
   color: #fff !important;
 }
 
+// ============ TASK DETAILS ============
 .details-container {
   display: flex;
   flex-direction: column;
@@ -198,82 +217,11 @@ $my-theme: mat.define-light-theme((
 
 .back-btn-container {
   display: flex;
-  justify-content: flex-end; /* pushes button to the RIGHT */
+  justify-content: flex-end;
   width: 100%;
 }
 
-// COMPREHENSIVE OVERLAY FIX
-.cdk-overlay-container {
-  position: fixed !important;
-  z-index: 100000 !important;
-  pointer-events: none;
-  top: 0;
-  left: 0;
-  height: 100%;
-  width: 100%;
-}
-
-.cdk-global-overlay-wrapper {
-  display: flex;
-  position: absolute;
-  z-index: 100000 !important;
-  pointer-events: none;
-  top: 0;
-  left: 0;
-  height: 100%;
-  width: 100%;
-}
-
-.cdk-overlay-pane {
-  position: absolute !important;
-  z-index: 100001 !important;
-  pointer-events: auto;
-  box-sizing: border-box;
-}
-
-.cdk-overlay-backdrop {
-  position: absolute !important;
-  z-index: 100000 !important;
-  pointer-events: auto;
-}
-
-.mat-select-panel,
-.mat-autocomplete-panel,
-.mat-menu-panel {
-  position: relative !important;
-  z-index: 100002 !important;
-  transform: none !important;
-}
-
-// Force all potential clipping containers
-body, html {
-  overflow: visible !important;
-  position: relative !important;
-}
-
-app-root {
-  display: block;
-  overflow: visible !important;
-  position: relative !important;
-}
-
-// Remove overflow from ALL Material and app containers
-.mat-app-background,
-.mat-drawer-container,
-.mat-sidenav-container,
-.mat-sidenav-content,
-.task-list-container,
-.task-card,
-.mat-card,
-.task-page,
-.task-form,
-.mat-form-field,
-.mat-form-field-wrapper,
-.mat-form-field-flex {
-  overflow: visible !important;
-  position: relative !important;
-}
-
+// ============ STATUS & PRIORITY BADGES ============
 .status-badge {
   padding: 4px 10px;
   border-radius: 12px;
@@ -294,7 +242,6 @@ app-root {
   }
 }
 
-/* Priority Badges */
 .priority-badge {
   padding: 4px 10px;
   border-radius: 12px;
@@ -321,4 +268,48 @@ app-root {
   &:hover {
     background: #f7f7f7;
   }
+}
+
+/* Fix overlay container positioning */
+.cdk-overlay-container {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1050 !important;
+  pointer-events: none;
+}
+
+.cdk-overlay-pane {
+  position: absolute !important;
+  z-index: 1051 !important;
+  pointer-events: auto;
+}
+
+/* Fix the bounding box */
+.cdk-overlay-connected-position-bounding-box {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  z-index: 1050 !important;
+}
+
+/* Specific fix for your menu */
+.mat-mdc-menu-panel {
+  position: relative !important;
+  z-index: 1052 !important;
+  background: white;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+/* If menu is inside a static parent, make it fixed */
+.cdk-overlay-pane .mat-mdc-menu-panel {
+  position: fixed !important;
+  top: auto !important;
+  bottom: auto !important;
+  transform-origin: right top !important;
 }

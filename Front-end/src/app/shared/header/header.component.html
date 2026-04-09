@@ -61,8 +61,8 @@
           [src]="user?.profilePicture" 
           alt="Profile" 
           class="profile-image"
+          (error)="onImageError($event)"
         />
-        <mat-icon *ngIf="!user?.profilePicture">account_circle</mat-icon>
         <span>{{ user?.email }}</span>
       </div>
     </button>

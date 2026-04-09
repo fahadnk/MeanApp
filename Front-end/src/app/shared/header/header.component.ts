@@ -83,4 +83,8 @@ export class HeaderComponent implements OnInit {
     if (!profilePicture) return '';
     else return profilePicture;
   }
+  
+  onImageError(event: any): void {
+    event.target.src = 'assets/default-avatar.jpg';
+  }
 }

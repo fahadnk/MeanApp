@@ -1,16 +1,15 @@
-import { Component, EventEmitter, Input, OnInit, Output, ViewChild, ElementRef } from '@angular/core';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild, ElementRef, OnChanges, SimpleChanges } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { AuthService } from '../../core/services/auth.service';   // ← FIXED PATH
 import { environment } from '../../../../environment/environment';
-import { Observable } from 'rxjs/internal/Observable';
 
 @Component({
   selector: 'app-profile-picture',
   templateUrl: './profile-picture.component.html',
   styleUrls: ['./profile-picture.component.scss']
 })
-export class ProfilePictureComponent implements OnInit {
+export class ProfilePictureComponent implements OnInit, OnChanges {
 
   @Input() currentProfilePictureUrl: string | null = null;
   @Output() profilePictureUpdated = new EventEmitter<string | null>();
@@ -30,6 +29,16 @@ export class ProfilePictureComponent implements OnInit {
 
   ngOnInit() {
     this.profilePictureUrl = this.currentProfilePictureUrl;
+  }
+
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes['currentProfilePictureUrl']) {
+      this.updateProfilePictureState();
+    }
+  }
+
+  private updateProfilePictureState() {
+    this.profilePictureUrl = this.currentProfilePictureUrl;// true if image exists
   }
 
   onFileSelected(event: any): void {

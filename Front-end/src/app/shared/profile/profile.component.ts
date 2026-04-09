@@ -3,9 +3,9 @@ import { Component, OnInit } from '@angular/core';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { MatSnackBar } from '@angular/material/snack-bar';
 import { Router } from '@angular/router';
-import { environment } from '../../../../environment/environment';
 import { AuthService } from 'src/app/core/services/auth.service';
 import { UserService } from 'src/app/core/services/user.service';
+import { Observable } from 'rxjs';
 
 @Component({
   selector: 'app-profile',
@@ -18,7 +18,8 @@ export class ProfileComponent implements OnInit {
   profileForm!: FormGroup;
   passwordForm!: FormGroup;
   loading = false;
-  profilePictureUrl: string | null = null;
+  profilePictureUrl: string = 'assets/default-avatar.jpg';
+  currentUser$: Observable<any>;
 
   constructor(
     private fb: FormBuilder,
@@ -27,13 +28,25 @@ export class ProfileComponent implements OnInit {
     private snack: MatSnackBar,
     private router: Router,
     private http: HttpClient,
-  ) { }
+  ) {
+    this.currentUser$ = this.auth.currentUser$;
+  }
 
-  ngOnInit(): void {;
-    this.auth.currentUser$.subscribe(user => {
-      this.user = user;
-      this.profilePictureUrl = user?.profilePicture
+  ngOnInit(): void {
+    this.user = this.auth.getCurrentUser();
+
+    // Subscribe to currentUser$ - this is the most reliable way
+    this.auth.currentUser$.subscribe(currentUser => {
+      if (currentUser) {
+        this.user = currentUser;
+        this.profilePictureUrl = currentUser.profilePicture
+          ? currentUser.profilePicture
+          : 'assets/default-avatar.jpg';
+      }
     });
+
+    // Force refresh profile picture from backend (important on hard refresh)
+    this.auth.loadAndUpdateProfilePicture();
 
     this.profileForm = this.fb.group({
       email: [{ value: this.user?.email, disabled: true }]
@@ -103,9 +116,5 @@ export class ProfileComponent implements OnInit {
     this.user = { ...this.user, profilePicture: newUrl };
 
     this.auth.updateUserProfilePicture(newUrl);
-  }
-
-  onImageError(event: any): void {
-    event.target.src = 'assets/default-avatar.jpg';   // same as your fallback
   }
 }

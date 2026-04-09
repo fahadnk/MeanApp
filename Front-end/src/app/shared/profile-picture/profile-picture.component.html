@@ -11,7 +11,7 @@
     
     <!-- Upload Icon Button -->
     <button 
-     *ngIf="!profilePictureUrl"
+     *ngIf="!profilePictureUrl || profilePictureUrl === 'assets/default-avatar.jpg'"
       mat-mini-fab 
       color="primary" 
       class="upload-btn"
@@ -22,7 +22,7 @@
 
     <!-- Remove Button (only show if image exists) -->
     <button 
-      *ngIf="profilePictureUrl" 
+      *ngIf="profilePictureUrl && profilePictureUrl !== 'assets/default-avatar.jpg'" 
       mat-mini-fab 
       color="warn" 
       class="remove-btn"
