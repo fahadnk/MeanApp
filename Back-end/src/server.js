@@ -42,7 +42,8 @@ import notificationService from "./services/notification.service.js";
 
 dotenv.config();                           
 // ^ Must be called early – populates process.env.PORT, JWT secrets, etc.
-
+app.use(validateEnvMiddleware);
+// ^ Middleware to validate critical environment variables before processing requests
 
 // -------------------------
 // 4. Configure Server Port

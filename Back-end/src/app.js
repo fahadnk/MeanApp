@@ -12,6 +12,12 @@ import morgan from "morgan";
 import { v4 as uuidv4 } from "uuid";
 
 // ----------------------------
+// 📘 Swagger (ADD THIS)
+// ----------------------------
+import swaggerUi from "swagger-ui-express";
+import swaggerSpec from "./config/swagger.js"; // make sure extension is .js
+
+// ----------------------------
 // 🧼 Custom Middleware
 // ----------------------------
 import sanitizeRequest from "./middleware/SanitizeMiddleware.js";
@@ -85,6 +91,11 @@ app.use(
     stream: { write: (msg) => logger.http(msg.trim()) },
   })
 );
+
+// -----------------------------------------------------------------------------
+// 📚 4. Swagger Docs (ADD THIS)
+// -----------------------------------------------------------------------------
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 
 // -----------------------------------------------------------------------------

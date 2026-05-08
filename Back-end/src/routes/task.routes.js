@@ -2,7 +2,7 @@
 
 // Import Express framework to create router instances for task-related endpoints
 import express from "express";
-
+import rateLimiter from "../middleware/RateLimiterMiddleware.js";
 // Import controller that contains business logic for task operations (CRUD, queries, stats)
 import taskController from "../controllers/task.controller.js";
 import taskActivityController from "../controllers/taskActivity.controller.js";
@@ -109,6 +109,7 @@ router.delete(
 router.get(
   "/", 
   authMiddleware, // Authentication: ensures user is logged in
+  rateLimiter({ windowMs: 100000, max: 2 }),
   taskController.queryTasks // Controller: handles complex filtering, pagination, and sorting
 );
 

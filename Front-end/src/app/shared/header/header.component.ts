@@ -35,7 +35,8 @@ export class HeaderComponent implements OnInit {
     this.router.events
       .pipe(filter((event) => event instanceof NavigationEnd))
       .subscribe((event: any) => {
-        this.showBackButton = event.url !== '/tasks';
+        const hiddenRoutes = ['/tasks', '/manager', '/admin'];
+        this.showBackButton = !hiddenRoutes.includes(event.url);
       });
   }
 
